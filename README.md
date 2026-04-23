@@ -37,16 +37,37 @@ Hosted on Vercel as static assets. No server-side code to deploy.
    - RLS policies on every table
    - RPCs: `log_mood`, `toggle_helpful_vote`, `admin_analytics`, `is_admin`
    - A trigger that auto-creates a `profiles` row on every `auth.users` insert
-4. **Create the first admin** (Supabase doesn't let you insert into `auth.users` directly):
-   - **Authentication → Users → Add user**: `admin@uniwell.edu.ph` + a password. Check "Auto Confirm User".
-   - Then in the **SQL Editor**, elevate the role:
+4. **Create admin accounts** — two options:
+
+   **(a) Automated seed script (recommended).** From the repo root:
+
+   ```bash
+   cp .env.example .env           # one-time
+   # then edit .env and paste SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
+   npm install                    # installs @supabase/supabase-js at root
+   npm run seed:admins
+   ```
+
+   This creates `admin@uniwell.edu.ph / Admin@UniWell2024` plus two staff accounts defined in
+   [scripts/seed-admins.js](scripts/seed-admins.js). The script is idempotent — rerun it to
+   reset passwords or refresh profile metadata. To use a different list, either edit
+   `DEFAULT_ADMINS` in the script or drop a `scripts/admins.json` file next to it (array of
+   `{email, password, name, student_id, course, year_level}`).
+
+   The `SUPABASE_SERVICE_ROLE_KEY` lives in **Project Settings → API → service_role**. It
+   bypasses RLS — **never** put it in the frontend bundle or commit it. The root `.env` is
+   git-ignored.
+
+   **(b) Manually via the dashboard.**
+   - **Authentication → Users → Add user**: pick an email + password, check "Auto Confirm User".
+   - Then in the **SQL Editor**:
      ```sql
      update public.profiles
         set name = 'Guidance Admin', student_id = 'ADMIN-001',
             course = 'Administration', year_level = 1, role = 'admin'
       where id = (select id from auth.users where email = 'admin@uniwell.edu.ph');
      ```
-5. **(Optional) Auth settings** — under **Authentication → Providers → Email**, decide whether to require email confirmation. If on, new sign-ups won't have a session until the email link is clicked; `Register.jsx` already handles that path.
+5. **(Optional) Auth settings** — under **Authentication → Providers → Email**, decide whether to require email confirmation. If on, new sign-ups won't have a session until the email link is clicked; `Register.jsx` already handles that path. The seed script uses `email_confirm: true`, so seeded admins can sign in immediately regardless of this setting.
 
 ---
 

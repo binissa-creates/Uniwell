@@ -92,3 +92,4 @@ build/
 # Temporary files
 *.tmp
 *.temp
+scripts/seed-admins.js
