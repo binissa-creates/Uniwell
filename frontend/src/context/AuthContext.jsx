@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [portalValidation, setPortalValidation] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -60,6 +61,14 @@ export function AuthProvider({ children }) {
     setProfile(null)
   }
 
+  const beginPortalValidation = (portal) => {
+    setPortalValidation(portal)
+  }
+
+  const endPortalValidation = () => {
+    setPortalValidation(null)
+  }
+
   const user = session?.user
     ? {
         id: session.user.id,
@@ -76,6 +85,9 @@ export function AuthProvider({ children }) {
         profile,
         loading,
         signOut,
+        portalValidation,
+        beginPortalValidation,
+        endPortalValidation,
         isAdmin: profile?.role === 'admin',
       }}
     >

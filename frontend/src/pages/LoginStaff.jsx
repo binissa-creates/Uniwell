@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import {
+  fetchProfileRole,
+  getHomeForRole,
+  getPortalDeniedMessage,
+  roleMatchesPortal,
+} from '../lib/portalAccess'
 import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle } from 'lucide-react'
 
 export default function LoginStaff() {
   const navigate = useNavigate()
+  const { signOut, beginPortalValidation, endPortalValidation } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -16,29 +24,30 @@ export default function LoginStaff() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    beginPortalValidation('staff')
+
+    let signedIn = false
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       })
       if (signInError) throw signInError
+      signedIn = true
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle()
-      if (profileError) throw profileError
-
-      if (profile?.role !== 'admin') {
-        await supabase.auth.signOut()
-        setError('Access denied. This portal is for staff and guidance counselors only.')
+      const role = await fetchProfileRole(data?.user?.id)
+      if (!roleMatchesPortal('staff', role)) {
+        await signOut()
+        setError(getPortalDeniedMessage('staff', role))
         return
       }
-      navigate('/admin/analytics')
+
+      navigate(getHomeForRole(role))
     } catch (err) {
+      if (signedIn) await signOut()
       setError(err?.message || 'Login failed. Please try again.')
     } finally {
+      endPortalValidation()
       setLoading(false)
     }
   }
@@ -186,6 +195,4 @@ export default function LoginStaff() {
     </div>
   )
 }
-
-
 

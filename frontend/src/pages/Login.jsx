@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle, GraduationCap } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import {
+  fetchProfileRole,
+  getHomeForRole,
+  getPortalDeniedMessage,
+  roleMatchesPortal,
+} from '../lib/portalAccess'
+import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { signOut, beginPortalValidation, endPortalValidation } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -16,24 +24,30 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
+    beginPortalValidation('student')
+
+    let signedIn = false
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       })
       if (signInError) throw signInError
+      signedIn = true
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .maybeSingle()
-      if (profileError) throw profileError
+      const role = await fetchProfileRole(data?.user?.id)
+      if (!roleMatchesPortal('student', role)) {
+        await signOut()
+        setError(getPortalDeniedMessage('student', role))
+        return
+      }
 
-      navigate(profile?.role === 'admin' ? '/admin/analytics' : '/dashboard')
+      navigate(getHomeForRole(role))
     } catch (err) {
+      if (signedIn) await signOut()
       setError(err?.message || 'Login failed. Please try again.')
     } finally {
+      endPortalValidation()
       setLoading(false)
     }
   }

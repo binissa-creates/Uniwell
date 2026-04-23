@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { getHomeForRole, isPortalValidationActive, roleCanAccess } from './lib/portalAccess'
 
 // Pages
 import Login       from './pages/Login'
@@ -25,19 +26,29 @@ function LoadingScreen() {
   )
 }
 
-function ProtectedRoute({ children, adminOnly = false }) {
-  const { session, profile, loading, isAdmin } = useAuth()
+function ProtectedRoute({ children, allowedRole }) {
+  const { session, profile, loading } = useAuth()
   if (!session) return <Navigate to="/login" replace />
   if (loading || !profile) return <LoadingScreen />
-  if (adminOnly && !isAdmin) return <Navigate to="/dashboard" replace />
+  if (!roleCanAccess(allowedRole, profile.role)) {
+    return <Navigate to={getHomeForRole(profile.role)} replace />
+  }
   return children
 }
 
 function GuestRoute({ children }) {
-  const { session, profile, loading, isAdmin } = useAuth()
+  const location = useLocation()
+  const { session, profile, loading, portalValidation } = useAuth()
+
+  if (isPortalValidationActive(location.pathname, portalValidation)) {
+    return children
+  }
+
   if (session && loading) return <LoadingScreen />
-  if (session && profile)
-    return <Navigate to={isAdmin ? '/admin/analytics' : '/dashboard'} replace />
+  if (session && profile) {
+    const home = getHomeForRole(profile.role)
+    if (home !== '/login') return <Navigate to={home} replace />
+  }
   return children
 }
 
@@ -53,20 +64,20 @@ export default function App() {
           <Route path="/register"     element={<GuestRoute><Register /></GuestRoute>} />
 
           {/* Student */}
-          <Route path="/dashboard"    element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/mood"         element={<ProtectedRoute><MoodTracker /></ProtectedRoute>} />
-          <Route path="/journal"      element={<ProtectedRoute><Journal /></ProtectedRoute>} />
-          <Route path="/peer-insights" element={<ProtectedRoute><PeerInsights /></ProtectedRoute>} />
+          <Route path="/dashboard"    element={<ProtectedRoute allowedRole="student"><Dashboard /></ProtectedRoute>} />
+          <Route path="/mood"         element={<ProtectedRoute allowedRole="student"><MoodTracker /></ProtectedRoute>} />
+          <Route path="/journal"      element={<ProtectedRoute allowedRole="student"><Journal /></ProtectedRoute>} />
+          <Route path="/peer-insights" element={<ProtectedRoute allowedRole="student"><PeerInsights /></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin"              element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/analytics"    element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/students"     element={<ProtectedRoute adminOnly><AdminStudents /></ProtectedRoute>} />
-          <Route path="/admin/mood-reports" element={<ProtectedRoute adminOnly><AdminMoodReports /></ProtectedRoute>} />
-          <Route path="/admin/alerts"       element={<ProtectedRoute adminOnly><AdminAlerts /></ProtectedRoute>} />
-          <Route path="/admin/moderation"   element={<ProtectedRoute adminOnly><AdminModeration /></ProtectedRoute>} />
+          <Route path="/admin"              element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/analytics"    element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/students"     element={<ProtectedRoute allowedRole="admin"><AdminStudents /></ProtectedRoute>} />
+          <Route path="/admin/mood-reports" element={<ProtectedRoute allowedRole="admin"><AdminMoodReports /></ProtectedRoute>} />
+          <Route path="/admin/alerts"       element={<ProtectedRoute allowedRole="admin"><AdminAlerts /></ProtectedRoute>} />
+          <Route path="/admin/moderation"   element={<ProtectedRoute allowedRole="admin"><AdminModeration /></ProtectedRoute>} />
           <Route path="/admin/interventions" element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute allowedRole="admin">
               <AdminComingSoon
                 eyebrow="Admin Hub · Case Management"
                 title="Guidance"
@@ -83,7 +94,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/settings" element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute allowedRole="admin">
               <AdminComingSoon
                 eyebrow="Admin Hub · Preferences"
                 title="Admin"
@@ -100,7 +111,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/admin/help" element={
-            <ProtectedRoute adminOnly>
+            <ProtectedRoute allowedRole="admin">
               <AdminComingSoon
                 eyebrow="Admin Hub · Resources"
                 title="Help &"
