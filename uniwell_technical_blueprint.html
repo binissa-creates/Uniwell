@@ -1,0 +1,65 @@
+# UniWell: Technical Design Specification & Capstone Blueprint
+
+## 1. System Overview
+UniWell is a campus-based digital well-being platform designed for preventive, non-clinical mental health support. It uses a sunflower-inspired visual metaphor to represent growth, resilience, and optimism.
+
+### Tech Stack
+- **Frontend:** React.js, Tailwind CSS, Axios, Lucide React (Icons), Recharts/Chart.js (Analytics).
+- **Backend:** Node.js + Express.js (Core), Flask (Auxiliary analytics logic).
+- **Database:** Supabase Postgres.
+- **Auth:** JWT-based role-based access control (Student vs. Admin).
+
+---
+
+## 2. Core Modules & Functionality
+
+### A. Authentication & Onboarding
+- **Student Portal:** Registration via Student ID, Name, Course (Tourism, CS, Psych, etc.), and Year Level (1st-4th).
+- **Admin Portal:** Secure login for guidance office personnel.
+- **Security:** Hashed passwords, protected API routes, and session management.
+
+### B. Student Experience (The Wellness Sanctuary)
+1. **Dashboard ({{DATA:SCREEN:SCREEN_16}}):**
+   - Personal greeting: "Hi Bea 🌻..."
+   - Quick Mood Logging: Interactive emoji selector.
+   - Wellness Streak: "Sunflower Growth" progress tracker.
+   - Daily Affirmation: Dynamically updated motivational quotes.
+2. **Mood Tracker ({{DATA:SCREEN:SCREEN_12}}):**
+   - 1-5 Intensity Slider: Refined visual feedback on emotional strength.
+   - Trigger Identification: Categorize stress (Academics, Social, etc.).
+   - Historical Trends: Weekly/Monthly visualization of mood patterns.
+3. **Journal Sanctuary ({{DATA:SCREEN:SCREEN_7}}):**
+   - Guided Prompts: "What made you smile today?"
+   - Privacy-First: End-to-end encrypted reflection logs.
+   - Reflection Timeline: Chronological archive of student growth.
+4. **Peer Insights & Library ({{DATA:SCREEN:SCREEN_6}}):**
+   - Smart Peer Matching: Anonymized coping strategies based on shared triggers.
+   - Resource Library: Searchable database of healthy habits (Relaxation, Time Management).
+   - Interaction: "Helpful" upvotes for peer-submitted content.
+
+### C. Admin Experience (The Analytics Hub)
+1. **Analytics Dashboard ({{DATA:SCREEN:SCREEN_2}}):**
+   - Aggregate Trends: Campus-wide mood pulse without revealing student IDs.
+   - Advanced Filtering: Break down stress by **Year Level** and **Course/Program**.
+   - Peak Stress Alerts: Identify high-pressure periods (e.g., Finals Week).
+2. **Content Moderation:**
+   - Approval Workflow: Review student-submitted coping strategies before public listing.
+   - Flagging System: Automatic keyword filtering for safety and non-clinical compliance.
+
+---
+
+## 3. Database Schema (Conceptual)
+- **Users Table:** id, name, email, student_id, course, year_level, role, password_hash.
+- **MoodLogs Table:** id, user_id, mood_type, intensity, note, timestamp.
+- **Triggers Table:** id, log_id, trigger_category (e.g., 'Academics').
+- **JournalEntries Table:** id, user_id, content, prompt_id, created_at.
+- **CopingStrategies Table:** id, submitter_id, category, title, description, status (pending/approved), helpful_count.
+
+---
+
+## 4. Development Implementation Guide
+1. **Phase 1: Foundation.** Setup Express/Node backend and PostgreSQL schema. Implement JWT Auth.
+2. **Phase 2: Core Logging.** Build the Mood Tracker and Reflection Journal React components.
+3. **Phase 3: Peer Engine.** Develop the recommendation logic for matching similar triggers to coping strategies.
+4. **Phase 4: Admin Hub.** Build the Analytics Dashboard using Recharts for data visualization.
+5. **Phase 5: Refinement.** Apply Tailwind theme colors and Plus Jakarta Sans typography for the "Solaris" brand feel.

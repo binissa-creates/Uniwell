@@ -1,0 +1,12 @@
+{
+  "name": "uniwell",
+  "version": "1.0.0",
+  "description": "UniWell - campus wellness platform on Supabase + Vercel",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix frontend install",
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview"
+  }
+}

@@ -1,0 +1,52 @@
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        jakarta: ['"Plus Jakarta Sans"', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'serif'],
+      },
+      colors: {
+        surface: '#fff8f6',
+        'surface-low': '#fff1ed',
+        'surface-lowest': '#ffffff',
+        'surface-variant': '#f5e8e3',
+        'surface-container': '#fde8e0',
+        'surface-container-high': '#f5ded6',
+        'surface-container-highest': '#eedfd8',
+        primary: '#e8a800',
+        'primary-container': '#f6c945',
+        'primary-fixed': '#fde68a',
+        'on-primary': '#3d2600',
+        'on-primary-container': '#5D4037',
+        secondary: '#4a7c59',
+        'secondary-container': '#c3e0cc',
+        'secondary-fixed-dim': '#b0cfad',
+        tertiary: '#5a7d93',
+        'tertiary-container': '#c1d0db',
+        outline: '#8a7060',
+        'outline-variant': '#c8b5a8',
+        warm: '#5D4037',
+        error: '#ba1a1a',
+        'error-container': '#ffdad6',
+      },
+      borderRadius: {
+        xl: '1rem',
+        '2xl': '1.5rem',
+        '3xl': '2rem',
+        '4xl': '3rem',
+      },
+      boxShadow: {
+        suncast: '0 12px 32px -4px rgba(93, 64, 55, 0.06)',
+        glow: '0 0 20px 4px rgba(246, 201, 69, 0.25)',
+      },
+      spacing: {
+        18: '4.5rem',
+        22: '5.5rem',
+        26: '6.5rem',
+      },
+    },
+  },
+  plugins: [],
+}
