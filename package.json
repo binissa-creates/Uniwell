@@ -8,7 +8,9 @@
     "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
     "preview": "npm --prefix frontend run preview",
-    "seed:admins": "node scripts/seed-admins.js"
+    "seed:admins": "node scripts/seed-admins.js",
+    "seed:students": "node scripts/seed-students.js",
+    "seed:all": "npm run seed:admins && npm run seed:students"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4"

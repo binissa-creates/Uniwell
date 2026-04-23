@@ -92,4 +92,7 @@ build/
 # Temporary files
 *.tmp
 *.temp
-scripts/seed-admins.js
+
+# Ignore the entire scripts directory except for seed-admins.js
+scripts
+

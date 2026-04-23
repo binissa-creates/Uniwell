@@ -69,6 +69,10 @@ Hosted on Vercel as static assets. No server-side code to deploy.
      ```
 5. **(Optional) Auth settings** — under **Authentication → Providers → Email**, decide whether to require email confirmation. If on, new sign-ups won't have a session until the email link is clicked; `Register.jsx` already handles that path. The seed script uses `email_confirm: true`, so seeded admins can sign in immediately regardless of this setting.
 
+6. **UniWell Student Accounts* so the admin dashboard shows real analytics:
+
+   To sign in as a seeded student: `student1@uniwell.seed.local` (or `student2`, `3`, …) / `Student@UniWell2024`.
+
 ---
 
 ## 3. Local development
