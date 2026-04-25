@@ -5,7 +5,7 @@ import {
   LayoutDashboard, SmilePlus, BookOpen, Users, LogOut,
   ShieldCheck, ClipboardList, GraduationCap, ChevronDown,
   FileBarChart2, Stethoscope, Bell, Settings, HelpCircle,
-  MoreHorizontal,
+  MoreHorizontal, UserCircle,
 } from 'lucide-react'
 
 const studentLinks = [
@@ -24,8 +24,6 @@ const adminPrimary = [
 
 // Overflow menu — everything the old sidebar exposed.
 const adminSecondary = [
-  { to: '/admin/mood-reports',  icon: FileBarChart2, label: 'Mood Reports'   },
-  { to: '/admin/interventions', icon: Stethoscope,   label: 'Interventions'  },
   { to: '/admin/alerts',        icon: Bell,          label: 'Alerts', highlight: true },
   { divider: true },
   { to: '/admin/settings',      icon: Settings,      label: 'Settings'       },
@@ -181,13 +179,26 @@ export default function Navbar() {
                   <p className="text-[11px] font-black font-jakarta text-[#3a2b25] uppercase tracking-wide">{firstName}</p>
                   <p className="text-[9px] text-[#AA8E7E] font-bold mt-0.5 tracking-widest uppercase">{user?.role}</p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-suncast border-2 border-white transform transition-transform hover:scale-105 active:scale-95 cursor-pointer">
-                  <div className="w-full h-full gradient-cta flex items-center justify-center">
-                    <span className="text-sm font-black text-[#3E3006]">
-                      {firstName.charAt(0).toUpperCase()}
-                    </span>
+                {/* Avatar — links to profile for students */}
+                {!isAdmin ? (
+                  <Link to="/profile"
+                    className="w-10 h-10 rounded-2xl overflow-hidden shadow-suncast border-2 border-white transform transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                    title="My Profile">
+                    <div className="w-full h-full gradient-cta flex items-center justify-center">
+                      <span className="text-sm font-black text-[#3E3006]">
+                        {firstName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  </Link>
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-suncast border-2 border-white">
+                    <div className="w-full h-full gradient-cta flex items-center justify-center">
+                      <span className="text-sm font-black text-[#3E3006]">
+                        {firstName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
 

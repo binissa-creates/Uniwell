@@ -5,6 +5,38 @@ import { supabase } from './supabase'
  * returns normalized shapes that pages can consume directly.
  */
 
+// Maps every UI mood key -> the nearest core DB enum value.
+// Extended moods that have been added to the DB enum via the migration
+// will be passed through directly. If the migration hasn't been run yet,
+// these fallbacks prevent enum constraint errors.
+const MOOD_DB_FALLBACK = {
+  // Core moods — pass through
+  rad: 'rad', good: 'good', meh: 'meh', bad: 'bad', awful: 'awful',
+  // Extended positive
+  excited: 'excited', hopeful: 'hopeful', grateful: 'grateful',
+  calm: 'calm', content: 'content', proud: 'proud',
+  // Extended negative/neutral
+  nervous: 'nervous', frustrated: 'frustrated', lonely: 'lonely',
+  angry: 'angry', burned_out: 'burned_out', confused: 'confused',
+}
+
+const CORE_FALLBACK = {
+  // Fallback to core enum if extended not yet in DB
+  excited: 'rad', hopeful: 'good', grateful: 'rad',
+  calm: 'good', content: 'good', proud: 'rad',
+  nervous: 'bad', frustrated: 'bad', lonely: 'bad',
+  angry: 'awful', burned_out: 'awful', confused: 'meh',
+}
+
+/**
+ * Normalise a mood key for the DB. Prefers exact key; falls back to a core
+ * enum value so RPC calls never throw an enum constraint error.
+ */
+export function safeMoodKey(key) {
+  if (!key) return 'meh'
+  return MOOD_DB_FALLBACK[key] ?? CORE_FALLBACK[key] ?? 'meh'
+}
+
 const JOURNAL_PROMPTS = [
   'What made you smile today?',
   'What challenged you today and how did you handle it?',

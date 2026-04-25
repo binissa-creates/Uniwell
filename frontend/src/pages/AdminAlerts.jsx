@@ -69,7 +69,7 @@ export default function AdminAlerts() {
       }
     }
 
-    const out = []
+    const studentAlerts = []
     for (const p of profiles) {
       const stats = byUser[p.id]
       const last = stats?.last ?? null
@@ -87,52 +87,52 @@ export default function AdminAlerts() {
       })()
 
       if (silent === null || silent >= SILENT_THRESHOLD_DAYS) {
-        out.push({
-          kind: 'silent',
-          severity: silent === null ? 'high' : silent >= 14 ? 'high' : 'medium',
-          profile: p,
-          meta: silent === null ? 'No mood log yet' : `${silent} days silent`,
-          sortKey: silent === null ? 999 : silent,
-        })
+        studentAlerts.push({ kind: 'silent', profile: p })
       } else if (critical3InARow) {
-        out.push({
-          kind: 'streak',
-          severity: 'high',
-          profile: p,
-          meta: '3 critical logs in a row',
-          sortKey: 500,
-        })
+        studentAlerts.push({ kind: 'streak', profile: p })
       } else if (avg !== null && avg < CRITICAL_SCORE_THRESHOLD) {
-        out.push({
-          kind: 'low-avg',
-          severity: 'medium',
-          profile: p,
-          meta: `Avg mood ${avg.toFixed(1)} / 5`,
-          sortKey: 100 - avg * 10,
-        })
+        studentAlerts.push({ kind: 'low-avg', profile: p })
       } else if (recentCritical >= 4) {
-        out.push({
-          kind: 'frequent-critical',
-          severity: 'medium',
-          profile: p,
-          meta: `${recentCritical} critical logs in 14d`,
-          sortKey: 50 + recentCritical,
-        })
+        studentAlerts.push({ kind: 'frequent-critical', profile: p })
       }
     }
+
+    const groups = {}
+    for (const a of studentAlerts) {
+      const course = a.profile.course || 'Unknown Course'
+      const year = a.profile.year_level || '?'
+      const key = `${course}|${year}`
+      if (!groups[key]) {
+        groups[key] = {
+          course: course,
+          year_level: year,
+          counts: { silent: 0, streak: 0, 'low-avg': 0, 'frequent-critical': 0 },
+          total: 0
+        }
+      }
+      groups[key].counts[a.kind]++
+      groups[key].total++
+    }
+
+    const out = Object.values(groups).map(g => ({
+      ...g,
+      sortKey: g.total
+    }))
 
     return out.sort((a, b) => b.sortKey - a.sortKey)
   }, [profiles, logs])
 
   const counts = useMemo(() => ({
-    all:                alerts.length,
-    silent:             alerts.filter((a) => a.kind === 'silent').length,
-    streak:             alerts.filter((a) => a.kind === 'streak').length,
-    'low-avg':          alerts.filter((a) => a.kind === 'low-avg').length,
-    'frequent-critical': alerts.filter((a) => a.kind === 'frequent-critical').length,
+    all:                alerts.reduce((sum, g) => sum + g.total, 0),
+    silent:             alerts.reduce((sum, g) => sum + g.counts.silent, 0),
+    streak:             alerts.reduce((sum, g) => sum + g.counts.streak, 0),
+    'low-avg':          alerts.reduce((sum, g) => sum + g.counts['low-avg'], 0),
+    'frequent-critical': alerts.reduce((sum, g) => sum + g.counts['frequent-critical'], 0),
   }), [alerts])
 
-  const filtered = category === 'all' ? alerts : alerts.filter((a) => a.kind === category)
+  const filtered = category === 'all' 
+    ? alerts 
+    : alerts.filter((g) => g.counts[category] > 0)
 
   const CATEGORY_META = {
     silent:             { label: 'Silent', icon: Moon, color: LAVENDER },
@@ -177,7 +177,7 @@ export default function AdminAlerts() {
                   Needs Outreach
                 </p>
                 <p className="text-sm font-black" style={{ color: WARM_DARK }}>
-                  {loading ? '—' : `${alerts.length} student${alerts.length === 1 ? '' : 's'}`}
+                  {loading ? '—' : `${counts.all} student${counts.all === 1 ? '' : 's'}`}
                 </p>
               </div>
             </div>
@@ -226,12 +226,10 @@ export default function AdminAlerts() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {filtered.map((a, idx) => {
-              const meta = CATEGORY_META[a.kind]
-              const Icon = meta.icon
-              const initials = a.profile.name?.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?'
+            {filtered.map((g, idx) => {
+              const initials = g.course?.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?'
               return (
-                <div key={`${a.kind}-${a.profile.id}`}
+                <div key={`${g.course}-${g.year_level}`}
                   className="bg-white rounded-[2rem] p-6 shadow-lift border border-white hover:-translate-y-0.5 hover:shadow-xl transition-all animate-fadeIn"
                   style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}>
 
@@ -243,33 +241,43 @@ export default function AdminAlerts() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-jakarta font-black text-base leading-tight truncate"
                         style={{ color: WARM_DARK }}>
-                        {a.profile.name || 'Unnamed'}
+                        {g.course || 'Unknown Course'}
                       </h3>
                       <p className="text-[10px] font-bold tracking-widest uppercase mt-0.5"
                         style={{ color: WARM_TAN }}>
-                        {a.profile.student_id} · {a.profile.course} · Y{a.profile.year_level}
+                        Year {g.year_level} · {g.total} Student{g.total !== 1 ? 's' : ''} at risk
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-2xl mb-3"
-                    style={{ background: `${meta.color}14`, border: `1px solid ${meta.color}30` }}>
-                    <Icon size={14} style={{ color: meta.color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-widest"
-                        style={{ color: meta.color }}>
-                        {meta.label}
-                      </p>
-                      <p className="text-[11px] font-semibold truncate" style={{ color: WARM_BODY }}>
-                        {a.meta}
-                      </p>
-                    </div>
+                  <div className="space-y-2 mb-4">
+                    {Object.entries(CATEGORY_META).map(([kind, meta]) => {
+                      if (g.counts[kind] > 0) {
+                        const Icon = meta.icon
+                        return (
+                          <div key={kind} className="flex items-center gap-2 px-3 py-2 rounded-2xl"
+                            style={{ background: `${meta.color}14`, border: `1px solid ${meta.color}30` }}>
+                            <Icon size={14} style={{ color: meta.color }} />
+                            <div className="flex-1 min-w-0 flex items-center justify-between">
+                              <p className="text-[10px] font-black uppercase tracking-widest"
+                                style={{ color: meta.color }}>
+                                {meta.label}
+                              </p>
+                              <p className="text-[11px] font-black" style={{ color: WARM_BODY }}>
+                                {g.counts[kind]} student{g.counts[kind] !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return null;
+                    })}
                   </div>
 
                   <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-90"
                     style={{ background: '#FDF9F2', color: WARM_OLIVE }}
-                    title="Reach out to student (email templates coming soon)">
-                    Mark for outreach <ChevronRight size={12} />
+                    title="Monitor this group">
+                    View Course Details <ChevronRight size={12} />
                   </button>
                 </div>
               )

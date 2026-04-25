@@ -16,6 +16,7 @@ export default function Journal() {
   const [content, setContent]   = useState('')
   const [loading, setLoading]   = useState(false)
   const [success, setSuccess]     = useState(false)
+  const [errorMsg, setErrorMsg]   = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [charCount, setCharCount] = useState(0)
 
@@ -45,22 +46,29 @@ export default function Journal() {
     e.preventDefault()
     if (!content.trim()) return
     setLoading(true)
+    setErrorMsg(null)
     try {
       const { data: auth } = await supabase.auth.getUser()
       if (!auth?.user) throw new Error('Not authenticated')
-      const { error } = await supabase.from('journal_entries').insert({
-        user_id: auth.user.id,
-        content: content.trim(),
-        prompt: prompt || null,
-      })
+      const { data: inserted, error } = await supabase
+        .from('journal_entries')
+        .insert({ user_id: auth.user.id, content: content.trim(), prompt: prompt || null })
+        .select('id, content, prompt, created_at')
+        .single()
       if (error) throw error
+
+      // Optimistically prepend to the list immediately
+      if (inserted) setEntries(prev => [inserted, ...prev])
+
       setContent('')
       setCharCount(0)
       setSuccess(true)
+      // Background refresh to confirm server state
       loadData()
       setTimeout(() => setSuccess(false), 4000)
     } catch (err) {
       console.error('[journal submit]', err)
+      setErrorMsg(err.message || 'Failed to save entry')
     } finally {
       setLoading(false)
     }
@@ -146,6 +154,11 @@ export default function Journal() {
                 {success && (
                   <div className="bg-[#EAF2E6] text-[#2D5A29] rounded-2xl p-4 text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 animate-scaleIn">
                     <CheckCircle2 size={16} /> Seed of Reflection Sown
+                  </div>
+                )}
+                {errorMsg && (
+                  <div className="bg-red-50 text-red-600 rounded-2xl p-4 text-xs font-bold flex items-center justify-center animate-scaleIn">
+                    {errorMsg}
                   </div>
                 )}
 

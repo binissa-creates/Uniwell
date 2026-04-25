@@ -10,9 +10,9 @@ import Dashboard   from './pages/Dashboard'
 import MoodTracker from './pages/MoodTracker'
 import Journal     from './pages/Journal'
 import PeerInsights from './pages/PeerInsights'
+import StudentProfile from './pages/StudentProfile'
 import AdminDashboard   from './pages/AdminDashboard'
 import AdminStudents    from './pages/AdminStudents'
-import AdminMoodReports from './pages/AdminMoodReports'
 import AdminAlerts      from './pages/AdminAlerts'
 import AdminModeration  from './pages/AdminModeration'
 import AdminComingSoon  from './pages/AdminComingSoon'
@@ -68,31 +68,14 @@ export default function App() {
           <Route path="/mood"         element={<ProtectedRoute allowedRole="student"><MoodTracker /></ProtectedRoute>} />
           <Route path="/journal"      element={<ProtectedRoute allowedRole="student"><Journal /></ProtectedRoute>} />
           <Route path="/peer-insights" element={<ProtectedRoute allowedRole="student"><PeerInsights /></ProtectedRoute>} />
+          <Route path="/profile"       element={<ProtectedRoute allowedRole="student"><StudentProfile /></ProtectedRoute>} />
 
           {/* Admin */}
           <Route path="/admin"              element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/analytics"    element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/students"     element={<ProtectedRoute allowedRole="admin"><AdminStudents /></ProtectedRoute>} />
-          <Route path="/admin/mood-reports" element={<ProtectedRoute allowedRole="admin"><AdminMoodReports /></ProtectedRoute>} />
           <Route path="/admin/alerts"       element={<ProtectedRoute allowedRole="admin"><AdminAlerts /></ProtectedRoute>} />
           <Route path="/admin/moderation"   element={<ProtectedRoute allowedRole="admin"><AdminModeration /></ProtectedRoute>} />
-          <Route path="/admin/interventions" element={
-            <ProtectedRoute allowedRole="admin">
-              <AdminComingSoon
-                eyebrow="Admin Hub · Case Management"
-                title="Guidance"
-                accent="Interventions"
-                icon={Stethoscope}
-                blurb="Track follow-ups, counseling sessions, and support actions you've taken for individual students — end-to-end."
-                bullets={[
-                  'Log outreach attempts per student (email, phone, in-person) with timestamps and notes.',
-                  'Track status (pending → contacted → in session → resolved) so nothing falls through the cracks.',
-                  'Link each intervention to the mood log or alert that triggered it for accountability.',
-                  'Share redacted summaries with the wellness team without exposing private journal content.',
-                ]}
-              />
-            </ProtectedRoute>
-          } />
           <Route path="/admin/settings" element={
             <ProtectedRoute allowedRole="admin">
               <AdminComingSoon
