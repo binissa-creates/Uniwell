@@ -235,73 +235,95 @@ export default function AdminModeration() {
                 )}
               </div>
             ) : (
-              <div className="space-y-6 grid grid-cols-1">
+              /* ── 3-column masonry grid matching Peer Insights layout ── */
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
                 {(filteredPending || []).map((s, idx) => {
                   const tags = Array.isArray(s?.trigger_tags) ? s.trigger_tags : []
-              const catStyle = CAT_STYLE[s.category] || CAT_STYLE['Other']
-              return (
-                <div key={s.id} className="group bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden animate-fadeSlideUp" style={{ animationDelay: `${idx * 100}ms` }}>
+                  const catStyle = CAT_STYLE[s.category] || CAT_STYLE['Other']
+                  return (
+                    <div
+                      key={s.id}
+                      className="break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden flex flex-col gap-3 animate-fadeSlideUp"
+                      style={{ animationDelay: `${idx * 80}ms` }}
+                    >
+                      {/* Category badge */}
+                      <span
+                        className="self-start text-xs font-bold px-3 py-1 rounded-full"
+                        style={{ background: catStyle.bg, color: catStyle.text }}
+                      >
+                        {s.category}
+                      </span>
 
-                  <div className="flex flex-col md:flex-row gap-8 items-start">
-                    <div className="flex-1 space-y-6">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[9px] font-black text-[#3a2b25] px-3 py-1 rounded-full uppercase tracking-widest bg-[#FDF9F2] border border-[#AA8E7E]/10">
-                          {s.category}
-                        </span>
-                        <div className="h-px w-4 bg-[#AA8E7E]/20"></div>
-                        <h3 className="font-jakarta font-black text-[#3a2b25] text-xl tracking-tight">{s.title}</h3>
-                      </div>
+                      {/* Title */}
+                      <h3 className="font-jakarta font-bold text-[#3a2b25] text-base leading-snug">
+                        {s.title}
+                      </h3>
 
-                      <p className="text-base text-[#3a2b25]/70 leading-relaxed font-medium italic">
+                      {/* Description */}
+                      <p className="text-sm text-[#3a2b25]/65 leading-relaxed italic line-clamp-4">
                         "{s.description}"
                       </p>
 
-                      <div className="flex items-center gap-6 text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest pt-4 border-t border-[#FDF9F2]">
-                        <div className="flex items-center gap-2">
-                          <Clock size={12} />
-                          <span>{s?.created_at && !isNaN(new Date(s.created_at)) ? new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Unknown Date'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck size={12} />
-                          <span>{s?.course || 'Unknown'} · {YEAR_LABELS[s?.year_level] || 'Unknown Year'}</span>
-                        </div>
+                      {/* Metadata row */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest pt-3 border-t border-[#FDF9F2]">
+                        <span className="flex items-center gap-1">
+                          <Clock size={10} />
+                          {s?.created_at && !isNaN(new Date(s.created_at))
+                            ? new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                            : 'Unknown Date'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ShieldCheck size={10} />
+                          {s?.course || 'Unknown'} · {YEAR_LABELS[s?.year_level] || 'Unknown Year'}
+                        </span>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        {Array.isArray(tags) ? tags.map(t => (
-                          <span key={t} className="px-4 py-1.5 rounded-xl bg-[#F6C945]/5 text-[#6B5A10] text-[9px] font-black uppercase tracking-widest border border-[#F6C945]/10">
-                            {t}
-                          </span>
-                        )) : null}
+                      {/* Trigger tags */}
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {tags.map(t => (
+                            <span
+                              key={t}
+                              className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest"
+                              style={{ background: 'rgba(246,201,69,0.08)', color: '#6B5A10', border: '1px solid rgba(246,201,69,0.15)' }}
+                            >
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Action buttons — stacked, full-width, at bottom */}
+                      <div className="mt-auto pt-3 flex gap-2">
+                        <button
+                          onClick={() => handleAction(s.id, 'approved')}
+                          disabled={acting?.id === s.id}
+                          className="flex-1 py-2.5 rounded-2xl bg-[#EAF2E6] text-[#2D5A29] text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-[#c3e0cc] transition-all active:scale-95"
+                        >
+                          {acting?.id === s.id && acting.status === 'approved'
+                            ? <Loader2 size={11} className="animate-spin" />
+                            : <CheckCircle size={12} />}
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAction(s.id, 'rejected')}
+                          disabled={acting?.id === s.id}
+                          className="flex-1 py-2.5 rounded-2xl bg-white text-[#ba1a1a] text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 border border-[#ba1a1a]/10 hover:bg-[#ffdad6] transition-all active:scale-95"
+                        >
+                          {acting?.id === s.id && acting.status === 'rejected'
+                            ? <Loader2 size={11} className="animate-spin" />
+                            : <XCircle size={12} />}
+                          Dismiss
+                        </button>
                       </div>
-                    </div>
 
-                    <div className="flex md:flex-col gap-3 w-full md:w-auto">
-                      <button
-                        onClick={() => handleAction(s.id, 'approved')}
-                        disabled={acting?.id === s.id}
-                        className="flex-1 md:w-32 py-4 rounded-2xl bg-[#EAF2E6] text-[#2D5A29] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#c3e0cc] transition-all transform active:scale-95 shadow-sm"
-                      >
-                        {acting?.id === s.id && acting.status === 'approved' ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={14} />}
-                        Approve
-                      </button>
-                      <button
-                        onClick={() => handleAction(s.id, 'rejected')}
-                        disabled={acting?.id === s.id}
-                        className="flex-1 md:w-32 py-4 rounded-2xl bg-white text-[#ba1a1a] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-[#ba1a1a]/10 hover:bg-[#ffdad6] transition-all transform active:scale-95 shadow-sm"
-                      >
-                        {acting?.id === s.id && acting.status === 'rejected' ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={14} />}
-                        Dismiss
-                      </button>
+                      {/* Subtle glow orb */}
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-[#F6C945]/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                     </div>
-                  </div>
-
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-[#F6C945]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none group-hover:opacity-60 transition-opacity"></div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                  )
+                })}
+              </div>
+            )}
         </div>
       </div>
       </main>
