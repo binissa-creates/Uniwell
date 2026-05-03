@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
-import { journalPromptForToday } from '../lib/data'
-import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock } from 'lucide-react'
+import { journalPromptForToday, JOURNAL_PROMPTS, dailyQuoteForToday } from '../lib/data'
+import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, Quote, ChevronDown, Type } from 'lucide-react'
 
 const ENTRY_THEMES = [
   { bg: '#ffffff', accent: 'var(--color-primary-container)' },
@@ -13,15 +13,20 @@ const ENTRY_THEMES = [
 export default function Journal() {
   const [entries, setEntries] = useState([])
   const [prompt, setPrompt] = useState('')
+  const [entryMode, setEntryMode] = useState('prompt') // 'prompt' or 'custom'
+  const [customTitle, setCustomTitle] = useState('')
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [charCount, setCharCount] = useState(0)
+  const [dailyQuote, setDailyQuote] = useState('')
 
   const loadData = useCallback(async () => {
-    setPrompt(journalPromptForToday())
+    const todayPrompt = journalPromptForToday()
+    setPrompt(todayPrompt)
+    setDailyQuote(dailyQuoteForToday())
     try {
       const { data, error } = await supabase
         .from('journal_entries')
@@ -50,9 +55,14 @@ export default function Journal() {
     try {
       const { data: auth } = await supabase.auth.getUser()
       if (!auth?.user) throw new Error('Not authenticated')
+      const finalPrompt = entryMode === 'prompt' ? prompt : customTitle
       const { data: inserted, error } = await supabase
         .from('journal_entries')
-        .insert({ user_id: auth.user.id, content: content.trim(), prompt: prompt || null })
+        .insert({ 
+          user_id: auth.user.id, 
+          content: content.trim(), 
+          prompt: finalPrompt || null 
+        })
         .select('id, content, prompt, created_at')
         .single()
       if (error) throw error
@@ -61,6 +71,7 @@ export default function Journal() {
       if (inserted) setEntries(prev => [inserted, ...prev])
 
       setContent('')
+      setCustomTitle('')
       setCharCount(0)
       setSuccess(true)
       // Background refresh to confirm server state
@@ -111,32 +122,78 @@ export default function Journal() {
             </p>
           </div>
 
+          {/* Daily Quote Card (Moved to Header Right) */}
           <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-lift max-w-xs animate-slideInRight">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={14} className="text-[#6B5A10]" />
-              <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Growth Prompt</span>
+              <Quote size={14} className="text-[#6B5A10]" />
+              <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Daily Encouragement</span>
             </div>
             <p className="text-[13px] font-bold text-[#3a2b25] leading-relaxed italic">
-              "{prompt}"
+              "{dailyQuote}"
             </p>
           </div>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-8 items-start">
 
-          {/* ── COMPOSE PANEL ── */}
-          <div className="lg:col-span-5 hidden lg:block sticky top-32">
+          {/* ── LEFT SIDE: COMPOSE ── */}
+          <div className="lg:col-span-5 hidden lg:block sticky top-32 space-y-6">
+
             <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-1 shadow-lift border border-white overflow-hidden">
-              <div className="p-8 lg:p-10 space-y-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10] shadow-inner">
-                    <PenLine size={24} />
-                  </div>
-                  <div>
-                    <h2 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase tracking-tight">New Entry</h2>
-                    <p className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest">{new Date().toLocaleDateString(undefined, { weekday: 'long' })}</p>
+              <div className="p-8 lg:p-10 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10] shadow-inner">
+                      <PenLine size={24} />
+                    </div>
+                    <div>
+                      <h2 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase tracking-tight">New Entry</h2>
+                      <p className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest">{new Date().toLocaleDateString(undefined, { weekday: 'long' })}</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Mode Selector */}
+                <div className="flex bg-[#FDF9F2] p-1.5 rounded-2xl border border-[#AA8E7E]/10">
+                  <button
+                    type="button"
+                    onClick={() => setEntryMode('prompt')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryMode === 'prompt' ? 'bg-white text-[#6B5A10] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                  >
+                    <Sparkles size={12} /> Use Prompt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEntryMode('custom')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryMode === 'custom' ? 'bg-white text-[#6B5A10] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                  >
+                    <Type size={12} /> Custom Title
+                  </button>
+                </div>
+
+                {/* Title/Prompt Input */}
+                {entryMode === 'prompt' ? (
+                  <div className="relative">
+                    <select
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      className="w-full appearance-none rounded-2xl bg-[#FDF9F2] px-6 py-4 text-[13px] font-bold text-[#3a2b25] border border-[#F6C945]/20 focus:ring-2 focus:ring-[#6B5A10]/10 outline-none transition-all cursor-pointer"
+                    >
+                      {JOURNAL_PROMPTS.map((p, idx) => (
+                        <option key={idx} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#6B5A10] pointer-events-none" />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    value={customTitle}
+                    onChange={(e) => setCustomTitle(e.target.value)}
+                    placeholder="Enter your entry title..."
+                    className="w-full rounded-2xl bg-[#FDF9F2] px-6 py-4 text-[13px] font-bold text-[#3a2b25] border border-[#F6C945]/20 focus:ring-2 focus:ring-[#6B5A10]/10 outline-none transition-all"
+                  />
+                )}
 
                 <div className="relative group">
                   <textarea
@@ -144,7 +201,7 @@ export default function Journal() {
                     onChange={handleContentChange}
                     placeholder="Begin your reflection..."
                     className="w-full rounded-[2rem] bg-[#FDF9F2] p-8 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.8] font-medium"
-                    style={{ minHeight: '380px' }}
+                    style={{ minHeight: '300px' }}
                   />
                   <div className="absolute bottom-6 right-8 flex items-center gap-2">
                     <span className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest">{charCount} characters</span>

@@ -37,7 +37,7 @@ export function safeMoodKey(key) {
   return MOOD_DB_FALLBACK[key] ?? CORE_FALLBACK[key] ?? 'meh'
 }
 
-const JOURNAL_PROMPTS = [
+export const JOURNAL_PROMPTS = [
   'What made you smile today?',
   'What challenged you today and how did you handle it?',
   'What are three things you are grateful for?',
@@ -47,8 +47,25 @@ const JOURNAL_PROMPTS = [
   'What would you tell your past self from a month ago?',
 ]
 
+export const DAILY_QUOTES = [
+  "Your potential is endless. Go do what you were created to do.",
+  "Small steps every day lead to big results.",
+  "You are capable of amazing things.",
+  "Every day is a fresh start. Take a deep breath and begin again.",
+  "Your only limit is you.",
+  "Believe in yourself and you're halfway there.",
+  "Don't stop until you're proud.",
+  "The best way to predict the future is to create it.",
+  "Focus on the step you're taking, not the whole staircase.",
+  "You don't have to be perfect to be amazing."
+]
+
 export function journalPromptForToday() {
   return JOURNAL_PROMPTS[new Date().getDay() % JOURNAL_PROMPTS.length]
+}
+
+export function dailyQuoteForToday() {
+  return DAILY_QUOTES[new Date().getDate() % DAILY_QUOTES.length]
 }
 
 /**
