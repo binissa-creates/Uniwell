@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
 import {
@@ -29,6 +30,7 @@ export default function AdminAlerts() {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('all')
+  const navigate = useNavigate()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -230,7 +232,10 @@ export default function AdminAlerts() {
               const initials = g.course?.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?'
               return (
                 <div key={`${g.course}-${g.year_level}`}
-                  className="bg-white rounded-[2rem] p-6 shadow-lift border border-white hover:-translate-y-0.5 hover:shadow-xl transition-all animate-fadeIn"
+                  onClick={() => {
+                    navigate(`/admin/students?course=${encodeURIComponent(g.course)}&year=${encodeURIComponent(g.year_level)}`)
+                  }}
+                  className="bg-white rounded-[2rem] p-6 shadow-lift border border-white hover:-translate-y-0.5 hover:shadow-xl transition-all animate-fadeIn cursor-pointer group"
                   style={{ animationDelay: `${Math.min(idx, 8) * 40}ms` }}>
 
                   <div className="flex items-start gap-3 mb-4">
@@ -239,7 +244,7 @@ export default function AdminAlerts() {
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-jakarta font-black text-base leading-tight truncate"
+                      <h3 className="font-jakarta font-black text-base leading-tight truncate group-hover:text-[#6B5A10] transition-colors"
                         style={{ color: WARM_DARK }}>
                         {g.course || 'Unknown Course'}
                       </h3>
@@ -274,11 +279,11 @@ export default function AdminAlerts() {
                     })}
                   </div>
 
-                  <button className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-90"
+                  <div className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all group-hover:opacity-90"
                     style={{ background: '#FDF9F2', color: WARM_OLIVE }}
                     title="Monitor this group">
-                    View Course Details <ChevronRight size={12} />
-                  </button>
+                    View Course Details <ChevronRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               )
             })}
