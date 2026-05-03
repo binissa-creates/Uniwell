@@ -3,19 +3,19 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { getHomeForRole, isPortalValidationActive, roleCanAccess } from './lib/portalAccess'
 
 // Pages
-import Login       from './pages/Login'
-import LoginStaff  from './pages/LoginStaff'
-import Register    from './pages/Register'
-import Dashboard   from './pages/Dashboard'
+import Login from './pages/Login'
+import LoginStaff from './pages/LoginStaff'
+import Register from './pages/Register'
+import Dashboard from './pages/Dashboard'
 import MoodTracker from './pages/MoodTracker'
-import Journal     from './pages/Journal'
+import Journal from './pages/Journal'
 import PeerInsights from './pages/PeerInsights'
 import StudentProfile from './pages/StudentProfile'
-import AdminDashboard   from './pages/AdminDashboard'
-import AdminStudents    from './pages/AdminStudents'
-import AdminAlerts      from './pages/AdminAlerts'
-import AdminModeration  from './pages/AdminModeration'
-import AdminComingSoon  from './pages/AdminComingSoon'
+import AdminDashboard from './pages/AdminDashboard'
+import AdminStudents from './pages/AdminStudents'
+import AdminAlerts from './pages/AdminAlerts'
+import AdminModeration from './pages/AdminModeration'
+import AdminComingSoon from './pages/AdminComingSoon'
 import { Stethoscope, Settings, HelpCircle } from 'lucide-react'
 
 function LoadingScreen() {
@@ -59,23 +59,23 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login"       element={<GuestRoute><Login /></GuestRoute>} />
-          <Route path="/login-staff"  element={<GuestRoute><LoginStaff /></GuestRoute>} />
-          <Route path="/register"     element={<GuestRoute><Register /></GuestRoute>} />
+          <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+          <Route path="/login-staff" element={<GuestRoute><LoginStaff /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
           {/* Student */}
-          <Route path="/dashboard"    element={<ProtectedRoute allowedRole="student"><Dashboard /></ProtectedRoute>} />
-          <Route path="/mood"         element={<ProtectedRoute allowedRole="student"><MoodTracker /></ProtectedRoute>} />
-          <Route path="/journal"      element={<ProtectedRoute allowedRole="student"><Journal /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute allowedRole="student"><Dashboard /></ProtectedRoute>} />
+          <Route path="/mood" element={<ProtectedRoute allowedRole="student"><MoodTracker /></ProtectedRoute>} />
+          <Route path="/journal" element={<ProtectedRoute allowedRole="student"><Journal /></ProtectedRoute>} />
           <Route path="/peer-insights" element={<ProtectedRoute allowedRole="student"><PeerInsights /></ProtectedRoute>} />
-          <Route path="/profile"       element={<ProtectedRoute allowedRole="student"><StudentProfile /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute allowedRole="student"><StudentProfile /></ProtectedRoute>} />
 
           {/* Admin */}
-          <Route path="/admin"              element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/analytics"    element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/students"     element={<ProtectedRoute allowedRole="admin"><AdminStudents /></ProtectedRoute>} />
-          <Route path="/admin/alerts"       element={<ProtectedRoute allowedRole="admin"><AdminAlerts /></ProtectedRoute>} />
-          <Route path="/admin/moderation"   element={<ProtectedRoute allowedRole="admin"><AdminModeration /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/students" element={<ProtectedRoute allowedRole="admin"><AdminStudents /></ProtectedRoute>} />
+          <Route path="/admin/alerts" element={<ProtectedRoute allowedRole="admin"><AdminAlerts /></ProtectedRoute>} />
+          <Route path="/admin/moderation" element={<ProtectedRoute allowedRole="admin"><AdminModeration /></ProtectedRoute>} />
           <Route path="/admin/settings" element={
             <ProtectedRoute allowedRole="admin">
               <AdminComingSoon

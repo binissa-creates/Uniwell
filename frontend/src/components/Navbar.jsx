@@ -9,25 +9,25 @@ import {
 } from 'lucide-react'
 
 const studentLinks = [
-  { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard'    },
-  { to: '/mood',          icon: SmilePlus,       label: 'Mood Tracker' },
-  { to: '/journal',       icon: BookOpen,        label: 'Journal'      },
-  { to: '/peer-insights', icon: Users,           label: 'Peer Insights'},
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/mood', icon: SmilePlus, label: 'Mood Tracker' },
+  { to: '/journal', icon: BookOpen, label: 'Journal' },
+  { to: '/peer-insights', icon: Users, label: 'Peer Insights' },
 ]
 
 // Primary admin tabs — always visible in the top strip.
 const adminPrimary = [
-  { to: '/admin',            icon: ShieldCheck,    label: 'Analytics'  },
-  { to: '/admin/students',   icon: GraduationCap,  label: 'Students'   },
-  { to: '/admin/moderation', icon: ClipboardList,  label: 'Moderation' },
+  { to: '/admin', icon: ShieldCheck, label: 'Analytics' },
+  { to: '/admin/students', icon: GraduationCap, label: 'Students' },
+  { to: '/admin/moderation', icon: ClipboardList, label: 'Moderation' },
 ]
 
 // Overflow menu — everything the old sidebar exposed.
 const adminSecondary = [
-  { to: '/admin/alerts',        icon: Bell,          label: 'Alerts', highlight: true },
+  { to: '/admin/alerts', icon: Bell, label: 'Alerts', highlight: true },
   { divider: true },
-  { to: '/admin/settings',      icon: Settings,      label: 'Settings'       },
-  { to: '/admin/help',          icon: HelpCircle,    label: 'Help'           },
+  { to: '/admin/settings', icon: Settings, label: 'Settings' },
+  { to: '/admin/help', icon: HelpCircle, label: 'Help' },
 ]
 
 function isActivePath(to, pathname) {
@@ -61,7 +61,7 @@ export default function Navbar() {
     const onDown = (e) => {
       const t = e.target
       const inDesktop = desktopMoreRef.current?.contains(t)
-      const inMobile  = mobileMoreRef.current?.contains(t)
+      const inMobile = mobileMoreRef.current?.contains(t)
       if (!inDesktop && !inMobile) setMoreOpen(false)
     }
     const onKey = (e) => e.key === 'Escape' && setMoreOpen(false)
@@ -229,11 +229,10 @@ export default function Navbar() {
             {isAdmin && (
               <button
                 onClick={() => setMoreOpen((v) => !v)}
-                className={`flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300 relative ${
-                  overflowActive || moreOpen
+                className={`flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300 relative ${overflowActive || moreOpen
                     ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm'
                     : 'text-[#AA8E7E] hover:bg-white/40'
-                }`}>
+                  }`}>
                 <MoreHorizontal size={20} />
                 <span className="text-[9px] font-black uppercase tracking-widest">More</span>
               </button>
