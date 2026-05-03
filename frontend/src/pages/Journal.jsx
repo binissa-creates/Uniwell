@@ -108,7 +108,7 @@ export default function Journal() {
       <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── Page Header ── */}
-        <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="mb-14 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="animate-fadeIn">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-px w-8 bg-[#6B5A10]/30"></div>
@@ -122,23 +122,21 @@ export default function Journal() {
             </p>
           </div>
 
-          {/* Daily Quote Card (Radiance Dose Style) */}
-          <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift max-w-xs animate-slideInRight relative overflow-hidden group">
-            <div className="relative z-10 h-full flex flex-col">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles size={16} className="text-[#F6C945] animate-pulse-warm" />
-                <span className="text-[10px] font-black text-[#FDF9F2]/60 uppercase tracking-[0.2em]">Radiance Dose</span>
+          {/* Compact Sunflower Rectangle Quote */}
+          <div className="bg-[#F6C945]/10 backdrop-blur-md rounded-[2rem] p-6 border border-[#F6C945]/20 shadow-suncast max-w-sm animate-slideInRight">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-7 h-7 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#6B5A10]">
+                <Sparkles size={14} />
               </div>
-              <p className="font-playfair text-xl md:text-2xl font-bold leading-tight mb-8 italic">
-                "{dailyQuote}"
-              </p>
-              <div className="mt-auto pt-6 border-t border-white/10">
-                <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] leading-relaxed">
-                  Personalised for your<br />Growth Journey
-                </p>
-              </div>
+              <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Radiance Dose</span>
             </div>
-            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[#6B5A10] rounded-full blur-[60px] opacity-40 group-hover:scale-150 transition-transform duration-700"></div>
+            <p className="font-playfair text-lg font-bold text-[#3a2b25] italic leading-relaxed">
+              "{dailyQuote}"
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <div className="h-px flex-1 bg-[#6B5A10]/10"></div>
+              <span className="text-[8px] font-black text-[#6B5A10]/40 uppercase tracking-widest">Daily Bloom</span>
+            </div>
           </div>
         </div>
 
