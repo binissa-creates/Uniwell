@@ -340,7 +340,7 @@ export default function AdminModeration() {
         return (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(58,43,37,0.45)', backdropFilter: 'blur(20px)' }}
+            style={{ background: 'radial-gradient(circle at center, rgba(246, 201, 69, 0.15), rgba(58, 43, 37, 0.6))', backdropFilter: 'blur(6px)' }}
             onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
           >
             <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]">

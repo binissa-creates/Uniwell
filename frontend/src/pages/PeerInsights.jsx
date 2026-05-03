@@ -463,7 +463,7 @@ export default function PeerInsights() {
       {selectedCard && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(58,43,37,0.45)', backdropFilter: 'blur(20px)' }}
+          style={{ background: 'radial-gradient(circle at center, rgba(246, 201, 69, 0.15), rgba(58, 43, 37, 0.6))', backdropFilter: 'blur(6px)' }}
           onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
         >
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]">
@@ -515,23 +515,46 @@ export default function PeerInsights() {
               <div className="flex items-center gap-3">
                 {/* Bookmark */}
                 <button
-                  onClick={() => handleBookmark(selectedCard.id)}
+                  onClick={() => {
+                    handleBookmark(selectedCard.id)
+                    setSelectedCard(s => ({ ...s, _isFav: !s._isFav }))
+                  }}
+                  disabled={bookmarking === selectedCard.id}
                   title={selectedCard._isFav ? 'Remove from favorites' : 'Save to favorites'}
                   className={`p-2 rounded-full transition-all duration-200 ${
                     selectedCard._isFav ? 'text-[#755b00] bg-[#f6c945]/20' : 'text-warm/30 hover:text-[#755b00] hover:bg-[#f6c945]/10'
                   }`}
                 >
-                  <Bookmark size={15} fill={selectedCard._isFav ? 'currentColor' : 'none'} />
+                  {bookmarking === selectedCard.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <Bookmark size={15} fill={selectedCard._isFav ? 'currentColor' : 'none'} />
+                  )}
                 </button>
                 {/* Like */}
                 {!selectedCard._hideLike && (
                   <button
-                    onClick={() => handleVote(selectedCard.id)}
+                    onClick={() => {
+                      handleVote(selectedCard.id)
+                      setSelectedCard(prev => {
+                        const voting = !prev.i_voted;
+                        return { 
+                          ...prev, 
+                          i_voted: voting ? 1 : 0, 
+                          helpful_count: voting ? prev.helpful_count + 1 : Math.max(0, prev.helpful_count - 1) 
+                        }
+                      })
+                    }}
+                    disabled={voting === selectedCard.id}
                     className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all duration-200 ${
                       selectedCard.i_voted ? 'bg-red-100 text-red-500 shadow-suncast' : 'text-warm/40 hover:bg-red-50 hover:text-red-400'
                     }`}
                   >
-                    <Heart size={13} fill={selectedCard.i_voted ? 'currentColor' : 'none'} />
+                    {voting === selectedCard.id ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Heart size={13} fill={selectedCard.i_voted ? 'currentColor' : 'none'} />
+                    )}
                     <span>{selectedCard.helpful_count}</span>
                   </button>
                 )}
