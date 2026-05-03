@@ -71,21 +71,28 @@ export default function MoodTracker() {
     setLoading(true)
     setErrorMsg(null)
     try {
-      // Combine standard triggers + "Other: <text>" if specified
+      // Combine standard triggers + "Other"
       const allTriggers = [
         ...triggers,
-        ...(otherActive && otherText.trim() ? [`Other: ${otherText.trim()}`] : otherActive ? ['Other'] : []),
+        ...(otherActive ? ['Other'] : []),
       ]
+
+      let finalNote = note;
+      if (otherActive && otherText.trim()) {
+        const customTriggerText = `[Other Trigger: ${otherText.trim()}]`;
+        finalNote = finalNote ? `${customTriggerText}\n\n${finalNote}` : customTriggerText;
+      }
+
       // safeMoodKey ensures we send a valid DB enum value
       const dbMoodKey = safeMoodKey(mood)
-      await logMood({ mood_type: dbMoodKey, intensity, note, triggers: allTriggers })
+      await logMood({ mood_type: dbMoodKey, intensity, note: finalNote, triggers: allTriggers })
 
       // Optimistically add the entry to the top of the archive immediately
       const optimisticEntry = {
         id: `optimistic-${Date.now()}`,
         mood_type: mood,          // keep UI key for display (emoji/label lookup)
         intensity,
-        note: note || null,
+        note: finalNote || null,
         logged_at: new Date().toISOString(),
         triggers: allTriggers,
       }
@@ -248,7 +255,7 @@ export default function MoodTracker() {
                 <button type="submit" disabled={!mood || loading}
                   className="w-full gradient-cta text-[#3E3006] font-black uppercase tracking-[0.2em] rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lift hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs">
                   {loading && <Loader2 size={16} className="animate-spin" />}
-                  {loading ? 'Archiving...' : 'Sow this Entry'}
+                  {loading ? 'Archiving...' : 'Save this Entry'}
                 </button>
               </div>
             </form>
