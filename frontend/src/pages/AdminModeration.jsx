@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
-import { CheckCircle, XCircle, Loader2, Inbox, ShieldCheck, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Inbox, ShieldCheck, Clock, X, Tag } from 'lucide-react'
 
 const CAT_STYLE = {
   'Relaxation': { bg: 'var(--color-tertiary-container)', text: '#2d4550' },
@@ -22,6 +22,7 @@ export default function AdminModeration() {
   const [apiError, setApiError] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [selectedYearLevel, setSelectedYearLevel] = useState(null)
+  const [selectedCard, setSelectedCard] = useState(null)
 
   const handleFilter = (course, yearLevel = null) => {
     setSelectedCourse(course)
@@ -97,6 +98,8 @@ export default function AdminModeration() {
     }
     setPending((prev) => prev.filter((s) => s.id !== id))
     setActing(null)
+    // If card is open in modal, close it too
+    if (selectedCard?.id === id) setSelectedCard(null)
   }
 
 
@@ -243,8 +246,9 @@ export default function AdminModeration() {
                   return (
                     <div
                       key={s.id}
-                      className="break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden flex flex-col gap-3 animate-fadeSlideUp"
+                      className="break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden flex flex-col gap-3 animate-fadeSlideUp cursor-pointer"
                       style={{ animationDelay: `${idx * 80}ms` }}
+                      onClick={() => setSelectedCard(s)}
                     >
                       {/* Category badge */}
                       <span
@@ -260,7 +264,7 @@ export default function AdminModeration() {
                       </h3>
 
                       {/* Description */}
-                      <p className="text-sm text-[#3a2b25]/65 leading-relaxed italic line-clamp-4">
+                      <p className="text-sm text-[#3a2b25]/65 leading-relaxed italic line-clamp-3">
                         "{s.description}"
                       </p>
 
@@ -293,8 +297,8 @@ export default function AdminModeration() {
                         </div>
                       )}
 
-                      {/* Action buttons — stacked, full-width, at bottom */}
-                      <div className="mt-auto pt-3 flex gap-2">
+                      {/* Action buttons — stop propagation so clicking them doesn't open modal */}
+                      <div className="mt-auto pt-3 flex gap-2" onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => handleAction(s.id, 'approved')}
                           disabled={acting?.id === s.id}
@@ -327,6 +331,104 @@ export default function AdminModeration() {
           </div>
         </div>
       </main>
+
+      {/* ── Strategy Detail Modal ── */}
+      {selectedCard && (() => {
+        const s = selectedCard
+        const tags = Array.isArray(s.trigger_tags) ? s.trigger_tags : []
+        const catStyle = CAT_STYLE[s.category] || CAT_STYLE['Other']
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(58,43,37,0.45)', backdropFilter: 'blur(20px)' }}
+            onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
+          >
+            <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Top accent bar */}
+              <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl"
+                style={{ background: 'linear-gradient(90deg, #e8a800, #f6c945)' }} />
+
+              {/* Header */}
+              <div className="flex items-start justify-between gap-4 p-7 pb-4 mt-1">
+                <span className="self-start text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ background: catStyle.bg, color: catStyle.text }}>
+                  {s.category}
+                </span>
+                <button onClick={() => setSelectedCard(null)}
+                  className="text-[#AA8E7E]/50 hover:text-[#3a2b25] transition-colors rounded-xl p-1 hover:bg-[#FDF9F2] flex-shrink-0">
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Body — scrollable */}
+              <div className="overflow-y-auto px-7 pb-5 flex-1">
+                <h2 className="font-jakarta font-extrabold text-[#3a2b25] text-xl leading-snug mb-3">
+                  {s.title}
+                </h2>
+
+                {/* Metadata */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest mb-4">
+                  <span className="flex items-center gap-1">
+                    <Clock size={10} />
+                    {s?.created_at && !isNaN(new Date(s.created_at))
+                      ? new Date(s.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                      : 'Unknown Date'}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <ShieldCheck size={10} />
+                    {s?.course || 'Unknown'} · {YEAR_LABELS[s?.year_level] || 'Unknown Year'}
+                  </span>
+                </div>
+
+                <p className="text-sm text-[#3a2b25]/70 leading-relaxed whitespace-pre-wrap italic">
+                  "{s.description}"
+                </p>
+
+                {tags.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest mb-2 flex items-center gap-1">
+                      <Tag size={10} /> Trigger Tags
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map(t => (
+                        <span key={t} className="px-3 py-1 rounded-full text-xs font-bold"
+                          style={{ background: 'rgba(246,201,69,0.10)', color: '#6B5A10', border: '1px solid rgba(246,201,69,0.2)' }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer — Approve / Dismiss */}
+              <div className="px-7 py-5 border-t flex gap-3"
+                style={{ borderColor: 'rgba(209,197,174,0.2)' }}>
+                <button
+                  onClick={() => handleAction(s.id, 'approved')}
+                  disabled={acting?.id === s.id}
+                  className="flex-1 py-3 rounded-2xl bg-[#EAF2E6] text-[#2D5A29] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#c3e0cc] transition-all active:scale-95"
+                >
+                  {acting?.id === s.id && acting.status === 'approved'
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <CheckCircle size={14} />}
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleAction(s.id, 'rejected')}
+                  disabled={acting?.id === s.id}
+                  className="flex-1 py-3 rounded-2xl bg-white text-[#ba1a1a] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-[#ba1a1a]/10 hover:bg-[#ffdad6] transition-all active:scale-95"
+                >
+                  {acting?.id === s.id && acting.status === 'rejected'
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <XCircle size={14} />}
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

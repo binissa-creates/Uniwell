@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { Search, Heart, Loader2, CheckCircle2, PlusCircle, X, Sparkles, Bookmark, Library, BookOpen } from 'lucide-react'
+import { Search, Heart, Loader2, CheckCircle2, PlusCircle, X, Sparkles, Bookmark, Library, BookOpen, Tag, Calendar } from 'lucide-react'
 
 const CATEGORIES = ['All', 'Relaxation', 'Time Management', 'Social Support', 'Physical Activity', 'Creative Expression', 'Mindfulness', 'Other']
 const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth', 'Other']
@@ -38,6 +38,7 @@ const TABS = [
 export default function PeerInsights() {
   const { user } = useAuth()
   const [tab, setTab] = useState('community')
+  const [selectedCard, setSelectedCard] = useState(null)
 
   // Community
   const [strategies, setStrategies] = useState([])
@@ -280,6 +281,7 @@ export default function PeerInsights() {
                     onBookmark={handleBookmark}
                     voting={voting}
                     bookmarking={bookmarking}
+                    onOpen={setSelectedCard}
                   />
                 ))}
               </div>
@@ -315,6 +317,7 @@ export default function PeerInsights() {
                     voting={null}
                     bookmarking={bookmarking}
                     hideLike
+                    onOpen={setSelectedCard}
                   />
                 ))}
               </div>
@@ -456,17 +459,101 @@ export default function PeerInsights() {
           </div>
         </div>
       )}
+      {/* ── Strategy Detail Modal ── */}
+      {selectedCard && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(58,43,37,0.45)', backdropFilter: 'blur(20px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
+        >
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Top accent bar */}
+            <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #e8a800, #f6c945)' }} />
+
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 p-7 pb-4 mt-1">
+              <CategoryBadge category={selectedCard.category} />
+              <button
+                onClick={() => setSelectedCard(null)}
+                className="text-warm/30 hover:text-warm transition-colors rounded-xl p-1 hover:bg-surface-container flex-shrink-0"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body — scrollable */}
+            <div className="overflow-y-auto px-7 pb-5 flex-1">
+              <h2 className="font-jakarta font-extrabold text-warm text-xl leading-snug mb-4">
+                {selectedCard.title}
+              </h2>
+              <p className="text-sm text-warm/70 leading-relaxed whitespace-pre-wrap">
+                {selectedCard.description}
+              </p>
+
+              {/* Trigger tags */}
+              {Array.isArray(selectedCard.trigger_tags) && selectedCard.trigger_tags.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-[10px] font-black text-warm/40 uppercase tracking-widest mb-2 flex items-center gap-1">
+                    <Tag size={10} /> Helpful for
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedCard.trigger_tags.map(t => (
+                      <span key={t} className="text-xs font-semibold rounded-full px-3 py-1"
+                        style={{ background: 'var(--color-secondary-container)', color: 'var(--color-secondary)' }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer — actions */}
+            <div className="px-7 py-5 border-t flex items-center justify-between gap-4"
+              style={{ borderColor: 'rgba(209,197,174,0.2)' }}>
+              <span className="text-[10px] text-warm/30 font-medium">Shared anonymously</span>
+              <div className="flex items-center gap-3">
+                {/* Bookmark */}
+                <button
+                  onClick={() => handleBookmark(selectedCard.id)}
+                  title={selectedCard._isFav ? 'Remove from favorites' : 'Save to favorites'}
+                  className={`p-2 rounded-full transition-all duration-200 ${
+                    selectedCard._isFav ? 'text-[#755b00] bg-[#f6c945]/20' : 'text-warm/30 hover:text-[#755b00] hover:bg-[#f6c945]/10'
+                  }`}
+                >
+                  <Bookmark size={15} fill={selectedCard._isFav ? 'currentColor' : 'none'} />
+                </button>
+                {/* Like */}
+                {!selectedCard._hideLike && (
+                  <button
+                    onClick={() => handleVote(selectedCard.id)}
+                    className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all duration-200 ${
+                      selectedCard.i_voted ? 'bg-red-100 text-red-500 shadow-suncast' : 'text-warm/40 hover:bg-red-50 hover:text-red-400'
+                    }`}
+                  >
+                    <Heart size={13} fill={selectedCard.i_voted ? 'currentColor' : 'none'} />
+                    <span>{selectedCard.helpful_count}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ── Shared card component ──────────────────────────────────────
-function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hideLike }) {
+function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hideLike, onOpen }) {
   return (
-    <div className={`break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast flex flex-col gap-3 relative overflow-hidden card-hover ${i % 3 === 2 ? 'petal-accent' : ''}`}>
+    <div
+      className={`break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast flex flex-col gap-3 relative overflow-hidden card-hover cursor-pointer ${i % 3 === 2 ? 'petal-accent' : ''}`}
+      onClick={() => onOpen({ ...s, _isFav: isFav, _hideLike: hideLike })}
+    >
       <CategoryBadge category={s.category} />
       <h3 className="font-jakarta font-bold text-warm text-base leading-snug">{s.title}</h3>
-      <p className="text-sm text-warm/65 leading-relaxed line-clamp-4">{s.description}</p>
+      <p className="text-sm text-warm/65 leading-relaxed line-clamp-3">{s.description}</p>
       {(() => {
         const tags = Array.isArray(s.trigger_tags) ? s.trigger_tags : []
         return tags.length > 0 ? (
@@ -482,8 +569,8 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
       })()}
       <div className="mt-auto flex items-center justify-between pt-3"
         style={{ borderTop: '1px solid rgba(209,197,174,0.15)' }}>
-        <span className="text-[10px] text-warm/30 font-medium">Shared anonymously</span>
-        <div className="flex items-center gap-2">
+        <span className="text-[10px] text-warm/30 font-medium">Tap to read more</span>
+        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           {/* Bookmark */}
           <button onClick={() => onBookmark(s.id)} disabled={bookmarking === s.id}
             title={isFav ? 'Remove from favorites' : 'Save to favorites'}
