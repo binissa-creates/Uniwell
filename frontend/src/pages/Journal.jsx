@@ -58,10 +58,10 @@ export default function Journal() {
       const finalPrompt = entryMode === 'prompt' ? prompt : customTitle
       const { data: inserted, error } = await supabase
         .from('journal_entries')
-        .insert({ 
-          user_id: auth.user.id, 
-          content: content.trim(), 
-          prompt: finalPrompt || null 
+        .insert({
+          user_id: auth.user.id,
+          content: content.trim(),
+          prompt: finalPrompt || null
         })
         .select('id, content, prompt, created_at')
         .single()
@@ -122,15 +122,23 @@ export default function Journal() {
             </p>
           </div>
 
-          {/* Daily Quote Card (Moved to Header Right) */}
-          <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-lift max-w-xs animate-slideInRight">
-            <div className="flex items-center gap-2 mb-3">
-              <Quote size={14} className="text-[#6B5A10]" />
-              <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Daily Encouragement</span>
+          {/* Daily Quote Card (Radiance Dose Style) */}
+          <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift max-w-xs animate-slideInRight relative overflow-hidden group">
+            <div className="relative z-10 h-full flex flex-col">
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles size={16} className="text-[#F6C945] animate-pulse-warm" />
+                <span className="text-[10px] font-black text-[#FDF9F2]/60 uppercase tracking-[0.2em]">Radiance Dose</span>
+              </div>
+              <p className="font-playfair text-xl md:text-2xl font-bold leading-tight mb-8 italic">
+                "{dailyQuote}"
+              </p>
+              <div className="mt-auto pt-6 border-t border-white/10">
+                <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] leading-relaxed">
+                  Personalised for your<br />Growth Journey
+                </p>
+              </div>
             </div>
-            <p className="text-[13px] font-bold text-[#3a2b25] leading-relaxed italic">
-              "{dailyQuote}"
-            </p>
+            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[#6B5A10] rounded-full blur-[60px] opacity-40 group-hover:scale-150 transition-transform duration-700"></div>
           </div>
         </div>
 
