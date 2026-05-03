@@ -108,25 +108,25 @@ export default function Dashboard() {
       <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── Hero Personalised Greeting ── */}
-        <div className="mb-14 relative group">
+        <div className="mb-10 relative group">
           <div className="flex items-center gap-3 mb-4 animate-fadeIn">
             <div className="h-px w-10 bg-[#6B5A10]/30 transition-all group-hover:w-16"></div>
             <p className="text-[#6B5A10] text-[10px] font-black uppercase tracking-[0.4em]">{greeting}, {firstName} ✨</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div>
-              <h1 className="font-jakarta text-5xl md:text-7xl font-extrabold text-[#3a2b25] leading-[1.1] mb-6">
+              <h1 className="font-jakarta text-4xl md:text-6xl font-extrabold text-[#3a2b25] leading-[1.1] mb-5">
                 <span className="font-playfair italic text-[#6B5A10] font-bold">How are you blooming</span><br />
                 today? <span className="inline-block animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
               </h1>
-              <p className="text-[#3a2b25]/50 text-base md:text-lg max-w-lg leading-relaxed font-medium">
+              <p className="text-[#3a2b25]/50 text-base max-w-lg leading-relaxed font-medium">
                 Every emotion is data for growth. Take a moment to check in with yourself and see how you're blooming today.
               </p>
             </div>
 
             <div className="flex items-center gap-6 animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
-              <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-lift">
+              <div className="bg-white/60 backdrop-blur-md p-5 rounded-[2.5rem] border border-white shadow-lift">
                 <SunflowerProgress streak={streak} maxStreak={30} />
               </div>
             </div>
@@ -134,16 +134,16 @@ export default function Dashboard() {
         </div>
 
         {/* ── Dashboard Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6">
 
           {/* ── Left Column ── */}
-          <div className="md:col-span-8 space-y-6 lg:space-y-8">
+          <div className="md:col-span-8 space-y-5 lg:space-y-6">
 
             {/* Quick Mood Log */}
-            <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-lift border border-white relative overflow-hidden group">
+            <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-lift border border-white relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-2xl shadow-inner transform -rotate-3 group-hover:rotate-0 transition-transform">
+                  <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-xl shadow-inner transform -rotate-3 group-hover:rotate-0 transition-transform">
                     {logDone ? '✨' : '🎨'}
                   </div>
                   <div>
@@ -165,8 +165,8 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="animate-fadeIn">
-                  <MoodEmojiPicker value={mood} onChange={setMood} size="lg" />
-                  <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <MoodEmojiPicker value={mood} onChange={setMood} size="md" />
+                  <div className="mt-8 flex flex-col sm:flex-row gap-4">
                     <button
                       onClick={handleQuickLog}
                       disabled={!mood || logging}
@@ -186,11 +186,11 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Actions Horizontal */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {QUICK_ACTIONS.map(({ label, to, emoji, desc, color }) => (
                 <Link key={to} to={to}
-                  className="bg-white rounded-[2rem] p-6 shadow-suncast border border-white card-hover group transition-all">
-                  <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center text-2xl mb-5 shadow-inner transition-transform group-hover:scale-110 group-hover:-rotate-3`}>
+                  className="bg-white rounded-[2rem] p-5 shadow-suncast border border-white card-hover group transition-all">
+                  <div className={`w-10 h-10 rounded-2xl ${color} flex items-center justify-center text-xl mb-4 shadow-inner transition-transform group-hover:scale-110 group-hover:-rotate-3`}>
                     {emoji}
                   </div>
                   <h3 className="font-jakarta font-black text-[#3a2b25] text-xs uppercase tracking-widest mb-2">{label}</h3>
@@ -205,8 +205,8 @@ export default function Dashboard() {
 
             {/* Latest Reflections Selection */}
             {recentEntries.length > 0 && (
-              <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative">
-                <div className="flex items-center justify-between mb-8">
+              <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-suncast border border-white overflow-hidden relative">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-2xl bg-[#A8C5A0]/10 flex items-center justify-center text-[#2D5A29]">
                       <BookOpen size={18} />
@@ -235,20 +235,20 @@ export default function Dashboard() {
           </div>
 
           {/* ── Right Column ── */}
-          <div className="md:col-span-4 space-y-6 lg:space-y-8">
+          <div className="md:col-span-4 space-y-5 lg:space-y-6">
 
             {/* Emotional Summary Card */}
             {dominantMood && (
-              <div className="bg-[#FEFCE8] rounded-[2.5rem] p-8 shadow-suncast border border-[#F6C945]/20">
+              <div className="bg-[#FEFCE8] rounded-[2.5rem] p-6 lg:p-8 shadow-suncast border border-[#F6C945]/20">
                 <div className="flex items-center gap-3 mb-6">
                   <Heart size={16} className="text-[#6B5A10]" />
                   <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Growth Trend</span>
                 </div>
                 <div className="flex items-center gap-4 mb-4">
-                  <span className="text-5xl">{moodEmoji[dominantMood]}</span>
+                  <span className="text-4xl">{moodEmoji[dominantMood]}</span>
                   <div>
                     <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">Main Frequency</p>
-                    <h4 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase">{moodLabel[dominantMood]}</h4>
+                    <h4 className="font-jakarta font-black text-[#3a2b25] text-base uppercase">{moodLabel[dominantMood]}</h4>
                   </div>
                 </div>
                 <p className="text-[11px] text-[#3a2b25]/50 leading-relaxed font-medium">
@@ -259,13 +259,13 @@ export default function Dashboard() {
             )}
 
             {/* Daily Affirmation Floating Card */}
-            <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift relative overflow-hidden group">
+            <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-6 lg:p-8 shadow-lift relative overflow-hidden group">
               <div className="relative z-10 h-full flex flex-col">
-                <div className="flex items-center gap-2 mb-8">
+                <div className="flex items-center gap-2 mb-6">
                   <Sparkles size={16} className="text-[#F6C945] animate-pulse-warm" />
                   <span className="text-[10px] font-black text-[#FDF9F2]/60 uppercase tracking-[0.2em]">Radiance Dose</span>
                 </div>
-                <p className="font-jakarta text-2xl font-bold leading-tight mb-8 italic">
+                <p className="font-jakarta text-xl font-bold leading-tight mb-8 italic">
                   "{todayAffirmation}"
                 </p>
                 <div className="mt-auto pt-6 border-t border-white/10">
@@ -278,8 +278,8 @@ export default function Dashboard() {
             </div>
 
             {/* Recent History Preview */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-suncast border border-white">
-              <div className="flex items-center justify-between mb-8">
+            <div className="bg-white rounded-[2.5rem] p-6 lg:p-8 shadow-suncast border border-white">
+              <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Archive</h3>
                   <p className="text-[10px] font-bold text-[#AA8E7E] mt-0.5 tracking-tighterUppercase">Logs</p>
