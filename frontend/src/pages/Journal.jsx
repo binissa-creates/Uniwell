@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS, dailyQuoteForToday } from '../lib/data'
-import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, Quote, ChevronDown, Type } from 'lucide-react'
+import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, Quote, ChevronDown, Type, ArrowRight, Book, X } from 'lucide-react'
 
 const ENTRY_THEMES = [
   { bg: '#ffffff', accent: 'var(--color-primary-container)' },
@@ -20,6 +20,7 @@ export default function Journal() {
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [selectedEntry, setSelectedEntry] = useState(null)
   const [charCount, setCharCount] = useState(0)
   const [dailyQuote, setDailyQuote] = useState('')
 
@@ -246,12 +247,14 @@ export default function Journal() {
           <div className="lg:col-span-7 space-y-6">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <BookOpen size={18} className="text-[#6B5A10]" />
+                <Book size={18} className="text-[#6B5A10]" />
                 <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Timeline</h3>
               </div>
-              <span className="px-4 py-1.5 rounded-full bg-white border border-[#AA8E7E]/10 text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest shadow-sm">
-                {entries.length} Reflections logged
-              </span>
+              <div className="bg-[#F6C945]/10 px-4 py-1.5 rounded-full border border-[#F6C945]/20">
+                <p className="text-[9px] font-black text-[#6B5A10] uppercase tracking-widest">
+                  {entries.length} Reflections logged
+                </p>
+              </div>
             </div>
 
             {entries.length === 0 ? (
@@ -261,36 +264,42 @@ export default function Journal() {
                 <p className="text-[#3a2b25]/50 text-sm max-w-xs leading-relaxed font-medium">Every journey begins with a single reflection. Start your first entry today.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {entries.map((e, i) => (
-                  <div key={e.id} className="group bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden animate-fadeSlideUp" style={{ animationDelay: `${i * 100}ms` }}>
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-3 text-[#AA8E7E]">
+                  <div 
+                    key={e.id} 
+                    onClick={() => setSelectedEntry(e)}
+                    className="group bg-white rounded-3xl p-6 shadow-suncast border border-transparent hover:border-[#F6C945]/20 transition-all cursor-pointer relative overflow-hidden flex flex-col h-full card-hover animate-fadeSlideUp" 
+                    style={{ animationDelay: `${i * 50}ms` }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2 text-[#AA8E7E]">
                         <Clock size={12} />
                         <span className="text-[10px] font-black uppercase tracking-widest">
-                          {new Date(e.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          {new Date(e.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </span>
                       </div>
                       <button
-                        onClick={() => handleDelete(e.id)}
+                        onClick={(ev) => { ev.stopPropagation(); handleDelete(e.id); }}
                         disabled={deleting === e.id}
-                        className="opacity-0 group-hover:opacity-100 p-2.5 rounded-xl bg-[#FDF9F2] text-[#6B5A10] hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-110 active:scale-90"
+                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg bg-red-50 text-red-400 hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-110"
                       >
-                        {deleting === e.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={14} />}
+                        {deleting === e.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={12} />}
                       </button>
                     </div>
 
-                    {e.prompt && (
-                      <div className="mb-6 px-5 py-3 rounded-2xl bg-[#FDF9F2] border border-[#F6C945]/10 inline-block">
-                        <p className="text-[11px] font-bold text-[#6B5A10] leading-relaxed italic">"{e.prompt}"</p>
-                      </div>
-                    )}
+                    <h4 className="font-jakarta font-bold text-[#3a2b25] text-sm leading-snug mb-3 line-clamp-2">
+                      {e.prompt ? e.prompt : 'Personal Reflection'}
+                    </h4>
 
-                    <p className="text-base text-[#3a2b25]/80 leading-[1.8] font-medium whitespace-pre-wrap">
+                    <p className="text-xs text-[#3a2b25]/60 leading-relaxed line-clamp-3 mb-6 flex-1">
                       {e.content}
                     </p>
 
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#F6C945]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none transition-all group-hover:opacity-40"></div>
+                    <div className="mt-auto pt-4 border-t border-[#FDF9F2] flex items-center justify-between">
+                      <span className="text-[9px] font-black text-[#6B5A10]/40 uppercase tracking-widest">Tap to read more</span>
+                      <ArrowRight size={12} className="text-[#6B5A10]/20 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -299,6 +308,68 @@ export default function Journal() {
 
         </div>
       </main>
+
+      {/* ── Entry Detail Modal ── */}
+      {selectedEntry && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3a2b25]/60 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedEntry(null)}
+        >
+          <div 
+            className="bg-[#FDF9F2] rounded-[3rem] w-full max-w-2xl shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-8 pt-8 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center text-[#6B5A10]">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-[#6B5A10] uppercase tracking-[0.3em]">Journal Archive</p>
+                  <p className="text-xs text-[#3a2b25]/40 font-bold uppercase tracking-widest mt-0.5">
+                    {new Date(selectedEntry.created_at).toLocaleString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSelectedEntry(null)}
+                className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="px-10 pb-10 pt-4 overflow-y-auto custom-scrollbar flex-1">
+              {selectedEntry.prompt && (
+                <div className="mb-8 px-6 py-4 rounded-3xl bg-white border border-[#F6C945]/20 inline-block shadow-sm">
+                  <p className="font-playfair text-lg md:text-xl font-bold text-[#6B5A10] italic leading-snug">
+                    "{selectedEntry.prompt}"
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <p className="text-lg md:text-xl text-[#3a2b25] leading-relaxed whitespace-pre-wrap font-medium">
+                  {selectedEntry.content}
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-10 py-6 bg-white border-t border-[#FDF9F2] flex items-center justify-between">
+              <span className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">End of Reflection</span>
+              <button
+                onClick={() => { handleDelete(selectedEntry.id); setSelectedEntry(null); }}
+                className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors"
+              >
+                <Trash2 size={14} /> Delete Entry
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

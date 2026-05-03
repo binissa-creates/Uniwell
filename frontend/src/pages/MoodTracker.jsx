@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
 import MoodEmojiPicker, { ALL_MOODS } from '../components/MoodEmojiPicker'
 import { fetchMoodHistory, logMood, safeMoodKey } from '../lib/data'
-import { Loader2, CheckCircle2, History, PenLine } from 'lucide-react'
+import { Loader2, CheckCircle2, History, PenLine, ArrowRight, X } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts'
@@ -47,6 +47,7 @@ export default function MoodTracker() {
   const [period, setPeriod] = useState('week')
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
+  const [selectedEntry, setSelectedEntry] = useState(null)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
 
@@ -306,7 +307,7 @@ export default function MoodTracker() {
               </div>
             </div>
 
-            {/* Log list */}
+            {/* Log list (Grid Archive Style) */}
             <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-10 h-10 rounded-2xl bg-[#EEDDCB] flex items-center justify-center text-[#6B5A10] shadow-sm">
@@ -314,16 +315,27 @@ export default function MoodTracker() {
                 </div>
                 <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Archive</h3>
               </div>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              
+              <div className="custom-scrollbar">
                 {history.length === 0 ? (
                   <p className="text-center py-10 text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">No history detected yet</p>
-                ) : history.map(h => (
-                  <div key={h.id} className="p-5 rounded-[1.5rem] bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all flex items-start gap-4">
-                    <span className="text-3xl mt-1 transform hover:scale-125 transition-transform cursor-default">
-                      {getMoodEmoji(h.mood_type)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-2">
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {history.map(h => (
+                      <div 
+                        key={h.id} 
+                        onClick={() => setSelectedEntry(h)}
+                        className="p-5 rounded-[2rem] bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all flex flex-col gap-3 group cursor-pointer card-hover"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-3xl transform group-hover:scale-110 transition-transform cursor-default">
+                            {getMoodEmoji(h.mood_type)}
+                          </span>
+                          <p className="text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">
+                            {new Date(h.logged_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                          </p>
+                        </div>
+                        
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[11px] font-black text-[#3a2b25] uppercase tracking-wide">
                             {getMoodLabel(h.mood_type)}
@@ -333,27 +345,108 @@ export default function MoodTracker() {
                             LVL {h.intensity}
                           </span>
                         </div>
-                        <p className="text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">
-                          {new Date(h.logged_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </p>
+
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {h.triggers?.slice(0, 2).map(t => (
+                            <span key={t} className="text-[7px] font-black uppercase tracking-widest text-[#6B5A10] border border-[#6B5A10]/10 px-2 py-0.5 rounded bg-white">
+                              {t}
+                            </span>
+                          ))}
+                          {h.triggers?.length > 2 && <span className="text-[7px] font-black text-[#AA8E7E]">+ {h.triggers.length - 2} more</span>}
+                        </div>
+
+                        <div className="mt-2 pt-3 border-t border-[#AA8E7E]/5 flex items-center justify-between">
+                          <span className="text-[8px] font-black text-[#AA8E7E]/40 uppercase tracking-widest">Tap to view</span>
+                          <ArrowRight size={10} className="text-[#AA8E7E]/20 group-hover:translate-x-1 transition-transform" />
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {h.triggers?.map(t => (
-                          <span key={t} className="text-[8px] font-black uppercase tracking-widest text-[#6B5A10] border border-[#6B5A10]/10 px-2 py-0.5 rounded-md bg-white">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                      {h.note && <p className="text-[11px] text-[#3a2b25]/60 italic leading-relaxed mt-1 line-clamp-2">"{h.note}"</p>}
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
           </div>
         </div>
       </main>
+
+      {/* ── Mood Detail Modal ── */}
+      {selectedEntry && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3a2b25]/60 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedEntry(null)}
+        >
+          <div 
+            className="bg-white rounded-[3rem] w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="absolute top-0 inset-x-0 h-1.5" style={{ backgroundColor: INTENSITY_COLORS[selectedEntry.intensity] }} />
+            
+            <div className="p-8">
+              <div className="flex items-start justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl">{getMoodEmoji(selectedEntry.mood_type)}</div>
+                  <div>
+                    <h2 className="font-jakarta font-extrabold text-[#3a2b25] text-2xl uppercase tracking-tight">
+                      {getMoodLabel(selectedEntry.mood_type)}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-black text-white px-2.5 py-1 rounded-lg uppercase tracking-widest"
+                        style={{ backgroundColor: INTENSITY_COLORS[selectedEntry.intensity] }}>
+                        Level {selectedEntry.intensity}
+                      </span>
+                      <span className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-[0.2em]">
+                        Intensity
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedEntry(null)} className="p-2 rounded-2xl bg-[#FDF9F2] text-[#AA8E7E] hover:text-[#3a2b25] transition-colors shadow-sm">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-[0.3em] mb-3">Time Captured</p>
+                  <p className="text-xs font-bold text-[#3a2b25] bg-[#FDF9F2] inline-block px-4 py-2 rounded-xl">
+                    {new Date(selectedEntry.logged_at).toLocaleString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                  </p>
+                </div>
+
+                {selectedEntry.triggers?.length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-[0.3em] mb-3">Context & Triggers</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEntry.triggers.map(t => (
+                        <span key={t} className="text-[10px] font-black text-[#6B5A10] border border-[#6B5A10]/10 px-3 py-1.5 rounded-xl bg-[#FDF9F2]">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedEntry.note && (
+                  <div>
+                    <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-[0.3em] mb-3">Personal Note</p>
+                    <div className="p-6 rounded-[1.5rem] bg-[#FDF9F2] border border-[#AA8E7E]/5">
+                      <p className="text-sm text-[#3a2b25] leading-relaxed italic">"{selectedEntry.note}"</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button 
+                onClick={() => setSelectedEntry(null)}
+                className="w-full mt-10 py-4 bg-[#3a2b25] text-white font-black uppercase tracking-[0.2em] rounded-2xl hover:opacity-90 transition-all active:scale-95 text-[10px]"
+              >
+                Close Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
