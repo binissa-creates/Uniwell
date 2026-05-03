@@ -325,20 +325,14 @@ export default function PeerInsights() {
         {/* ── MY STRATEGIES TAB ── */}
         {tab === 'mine' && (
           <>
-            <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#f6c945]/15 flex items-center justify-center">
-                  <Library size={18} className="text-[#755b00]" />
-                </div>
-                <div>
-                  <h2 className="font-jakarta font-bold text-warm">My Strategy Library</h2>
-                  <p className="text-xs text-warm/45">All coping strategies you've submitted</p>
-                </div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-[#f6c945]/15 flex items-center justify-center">
+                <Library size={18} className="text-[#755b00]" />
               </div>
-              <button onClick={() => setShowSubmit(true)}
-                className="flex items-center gap-2 gradient-cta text-[#3E3006] font-semibold text-xs px-4 py-2.5 rounded-full shadow-suncast hover:shadow-glow active:scale-[0.98] transition-all duration-200">
-                <PlusCircle size={13} /> Add new
-              </button>
+              <div>
+                <h2 className="font-jakarta font-bold text-warm">My Strategy Library</h2>
+                <p className="text-xs text-warm/45">All coping strategies you've submitted</p>
+              </div>
             </div>
 
             {mineLoading ? (
