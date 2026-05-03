@@ -128,10 +128,28 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="flex items-center gap-6 animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
-              <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-lift">
+            <div className="flex flex-col sm:flex-row items-center gap-6 animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
+              {/* Streak Plant */}
+              <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-lift h-full flex flex-col justify-center">
                 <SunflowerProgress streak={streak} maxStreak={30} />
               </div>
+
+              {/* Growth Trend (Moved from Sidebar) */}
+              {dominantMood && (
+                <div className="bg-[#FEFCE8] rounded-[2.5rem] p-6 shadow-suncast border border-[#F6C945]/20 h-full flex flex-col justify-center min-w-[240px]">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Heart size={14} className="text-[#6B5A10]" />
+                    <span className="text-[9px] font-black text-[#6B5A10] uppercase tracking-widest">Growth Trend</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl">{moodEmoji[dominantMood]}</span>
+                    <div>
+                      <p className="text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">Main Frequency</p>
+                      <h4 className="font-jakarta font-black text-[#3a2b25] text-base uppercase">{moodLabel[dominantMood]}</h4>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -188,84 +206,83 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Quick Actions Horizontal */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {QUICK_ACTIONS.map(({ label, to, emoji, desc, color }) => (
-                <Link key={to} to={to}
-                  className="bg-white rounded-[2rem] p-6 shadow-suncast border border-white card-hover group transition-all">
-                  <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center text-2xl mb-5 shadow-inner transition-transform group-hover:scale-110 group-hover:-rotate-3`}>
-                    {emoji}
-                  </div>
-                  <h3 className="font-jakarta font-black text-[#3a2b25] text-xs uppercase tracking-widest mb-2">{label}</h3>
-                  <p className="text-[11px] text-[#3a2b25]/50 leading-relaxed font-medium mb-4">{desc}</p>
-                  <div className="flex items-center gap-2 text-[#6B5A10] group-hover:translate-x-1 transition-transform">
-                    <span className="text-[10px] font-black uppercase tracking-widest">Enter</span>
-                    <ArrowRight size={12} />
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Latest Reflections Selection */}
-            {recentEntries.length > 0 && (
-              <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative">
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-[#A8C5A0]/10 flex items-center justify-center text-[#2D5A29]">
-                      <BookOpen size={18} />
-                    </div>
-                    <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Latest Reflections</h3>
-                  </div>
-                  <Link to="/journal" className="text-[10px] font-black uppercase tracking-widest text-[#6B5A10] hover:underline">View All</Link>
-                </div>
-
-                <div className="space-y-4">
-                  {recentEntries.map(e => (
-                    <div key={e.id} className="p-6 rounded-3xl bg-[#FDF9F2]/60 border border-transparent hover:border-[#F6C945]/20 transition-all">
-                      <div className="flex items-center gap-2 mb-3 text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">
-                        <Clock size={10} />
-                        {new Date(e.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+            {/* ── Secondary Grid: Reflections & Archive ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+              
+              {/* Latest Reflections */}
+              <div className="lg:col-span-7">
+                <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative h-full">
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-[#A8C5A0]/10 flex items-center justify-center text-[#2D5A29]">
+                        <BookOpen size={18} />
                       </div>
-                      <p className="text-sm text-[#3a2b25]/80 font-medium line-clamp-2 leading-relaxed">
-                        {e.content}
-                      </p>
+                      <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Latest Reflections</h3>
                     </div>
-                  ))}
+                    <Link to="/journal" className="text-[10px] font-black uppercase tracking-widest text-[#6B5A10] hover:underline">View All</Link>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recentEntries.length > 0 ? recentEntries.map(e => (
+                      <div key={e.id} className="p-6 rounded-3xl bg-[#FDF9F2]/60 border border-transparent hover:border-[#F6C945]/20 transition-all">
+                        <div className="flex items-center gap-2 mb-3 text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">
+                          <Clock size={10} />
+                          {new Date(e.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </div>
+                        <p className="text-sm text-[#3a2b25]/80 font-medium line-clamp-2 leading-relaxed">
+                          {e.content}
+                        </p>
+                      </div>
+                    )) : (
+                      <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest text-center py-10">No reflections yet</p>
+                    )}
+                  </div>
                 </div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#A8C5A0]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
               </div>
-            )}
+
+              {/* Mood Archive Preview */}
+              <div className="lg:col-span-5">
+                <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white h-full">
+                  <div className="flex items-center justify-between mb-8">
+                    <div>
+                      <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Archive</h3>
+                      <p className="text-[10px] font-bold text-[#AA8E7E] mt-0.5 uppercase tracking-widest">Logs</p>
+                    </div>
+                    <Link to="/mood" className="p-2.5 rounded-xl bg-[#FDF9F2] text-[#6B5A10] hover:bg-[#F6C945] hover:text-[#3E3006] transition-all">
+                      <TrendingUp size={14} />
+                    </Link>
+                  </div>
+
+                  <div className="space-y-4">
+                    {recentMoods.map(m => (
+                      <div key={m.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl transform hover:scale-125 transition-transform cursor-default">{moodEmoji[m.mood_type]}</span>
+                          <div>
+                            <p className="text-[11px] font-black text-[#3a2b25] uppercase tracking-wide">{moodLabel[m.mood_type] || m.mood_type}</p>
+                            <p className="text-[9px] font-bold text-[#AA8E7E] uppercase mt-0.5">
+                              {new Date(m.logged_at).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {recentMoods.length === 0 && (
+                      <div className="py-8 text-center bg-[#FDF9F2]/50 rounded-2xl border border-dashed border-[#AA8E7E]/30">
+                        <p className="text-[9px] font-black text-[#AA8E7E] uppercase px-4">Log your mood to see trends</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* ── Right Column ── */}
           <div className="md:col-span-4 space-y-6 lg:space-y-8">
 
-            {/* Emotional Summary Card */}
-            {dominantMood && (
-              <div className="bg-[#FEFCE8] rounded-[2.5rem] p-8 shadow-suncast border border-[#F6C945]/20 animate-fadeIn">
-                <div className="flex items-center gap-3 mb-6">
-                  <Heart size={16} className="text-[#6B5A10]" />
-                  <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Growth Trend</span>
-                </div>
-                <div className="flex items-center gap-4 mb-4">
-                  <span className="text-5xl">{moodEmoji[dominantMood]}</span>
-                  <div>
-                    <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">Main Frequency</p>
-                    <h4 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase">{moodLabel[dominantMood]}</h4>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#3a2b25]/50 leading-relaxed font-medium">
-                  Your most frequent mood this week is <span className="text-[#3a2b25] font-bold">{moodLabel[dominantMood]}</span>.
-                  {dominantMood === 'rad' || dominantMood === 'good' ? ' You are thriving beautifully!' : ' Remember to be gentle with yourself.'}
-                </p>
-              </div>
-            )}
-
-            {/* Campus Support Card */}
-            <SupportCard onOpenModal={() => setIsSupportOpen(true)} />
-
-            {/* Daily Affirmation Floating Card */}
-            <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift relative overflow-hidden group">
+            {/* Radiance Dose (Moved up to top of sidebar) */}
+            <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift relative overflow-hidden group animate-fadeIn">
               <div className="relative z-10 h-full flex flex-col">
                 <div className="flex items-center gap-2 mb-8">
                   <Sparkles size={16} className="text-[#F6C945] animate-pulse-warm" />
@@ -283,40 +300,9 @@ export default function Dashboard() {
               <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[#6B5A10] rounded-full blur-[60px] opacity-40 group-hover:scale-150 transition-transform duration-700"></div>
             </div>
 
-            {/* Recent History Preview */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-suncast border border-white">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Archive</h3>
-                  <p className="text-[10px] font-bold text-[#AA8E7E] mt-0.5 tracking-tighterUppercase">Logs</p>
-                </div>
-                <Link to="/mood" className="p-2.5 rounded-xl bg-[#FDF9F2] text-[#6B5A10] hover:bg-[#F6C945] hover:text-[#3E3006] transition-all">
-                  <TrendingUp size={14} />
-                </Link>
-              </div>
-
-              <div className="space-y-4">
-                {recentMoods.map(m => (
-                  <div key={m.id} className="flex items-center justify-between p-4 rounded-2xl bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl transform hover:scale-125 transition-transform cursor-default">{moodEmoji[m.mood_type]}</span>
-                      <div>
-                        <p className="text-[11px] font-black text-[#3a2b25] uppercase tracking-wide">{moodLabel[m.mood_type] || m.mood_type}</p>
-                        <p className="text-[9px] font-bold text-[#AA8E7E] uppercase mt-0.5">
-                          {new Date(m.logged_at).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric' })}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {recentMoods.length === 0 && (
-                  <div className="py-8 text-center bg-[#FDF9F2]/50 rounded-2xl border border-dashed border-[#AA8E7E]/30">
-                    <p className="text-[9px] font-black text-[#AA8E7E] uppercase px-4">Keep logging to see trends</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            {/* Campus Support Card */}
+            <SupportCard onOpenModal={() => setIsSupportOpen(true)} />
+          </div>
 
           </div>
 
@@ -331,9 +317,7 @@ export default function Dashboard() {
               <p className="text-[9px] font-bold text-[#AA8E7E]/30 uppercase tracking-[0.5em]">UniWell Campus Sanctuary © 2024</p>
             </div>
           </div>
-
-        </div>
-      </main>
+        </main>
 
       <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
     </div>
