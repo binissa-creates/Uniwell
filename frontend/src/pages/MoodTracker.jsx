@@ -38,17 +38,17 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function MoodTracker() {
-  const [mood, setMood]           = useState('')
+  const [mood, setMood] = useState('')
   const [intensity, setIntensity] = useState(3)
-  const [triggers, setTriggers]   = useState([])
+  const [triggers, setTriggers] = useState([])
   const [otherActive, setOtherActive] = useState(false)
   const [otherText, setOtherText] = useState('')
-  const [note, setNote]           = useState('')
-  const [period, setPeriod]       = useState('week')
-  const [history, setHistory]     = useState([])
-  const [loading, setLoading]     = useState(false)
-  const [success, setSuccess]     = useState(false)
-  const [errorMsg, setErrorMsg]   = useState(null)
+  const [note, setNote] = useState('')
+  const [period, setPeriod] = useState('week')
+  const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [errorMsg, setErrorMsg] = useState(null)
 
   const fetchHistory = useCallback(async () => {
     try {

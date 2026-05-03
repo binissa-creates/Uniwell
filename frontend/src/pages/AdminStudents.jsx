@@ -7,11 +7,11 @@ import {
 } from 'lucide-react'
 
 // ── Palette (shared with AdminDashboard / AdminModeration) ────────────
-const WARM_DARK  = '#3a2b25'
-const WARM_BODY  = '#5D4037'
+const WARM_DARK = '#3a2b25'
+const WARM_BODY = '#5D4037'
 const WARM_OLIVE = '#6B5A10'
-const WARM_TAN   = '#AA8E7E'
-const WARM_GOLD  = '#F6C945'
+const WARM_TAN = '#AA8E7E'
+const WARM_GOLD = '#F6C945'
 
 const YEAR_LABEL = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' }
 const MOOD_SCORE = { rad: 5, good: 4, meh: 3, bad: 2, awful: 1 }

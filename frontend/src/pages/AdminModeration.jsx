@@ -31,14 +31,14 @@ export default function AdminModeration() {
   // Derive grouped data for the sidebar
   const groupedData = React.useMemo(() => {
     const groups = {}
-    ;(pending || []).forEach(entry => {
-      const c = entry.course || 'Unknown'
-      const y = entry.year_level || 0
-      if (!groups[c]) groups[c] = { total: 0, years: {} }
-      if (!groups[c].years[y]) groups[c].years[y] = 0
-      groups[c].total += 1
-      groups[c].years[y] += 1
-    })
+      ; (pending || []).forEach(entry => {
+        const c = entry.course || 'Unknown'
+        const y = entry.year_level || 0
+        if (!groups[c]) groups[c] = { total: 0, years: {} }
+        if (!groups[c].years[y]) groups[c].years[y] = 0
+        groups[c].total += 1
+        groups[c].years[y] += 1
+      })
     return groups
   }, [pending])
 
@@ -157,59 +157,59 @@ export default function AdminModeration() {
 
         {/* ── QUEUE CONTENT ── */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           {/* ── SIDEBAR FILTERING ── */}
           <aside className="lg:col-span-1 space-y-4">
-             <div className="sticky top-28 bg-[#FDF9F2]/80 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/50 shadow-sm animate-fadeIn">
-               <h2 className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest mb-6 px-2 flex items-center gap-2">
-                 <Inbox size={14} />
-                 Filter Queue
-               </h2>
-               
-               <div className="space-y-2">
-                 <button 
-                   onClick={() => handleFilter(null)}
-                   className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold transition-all flex justify-between items-center ${!selectedCourse ? 'bg-white shadow-lift border border-[#AA8E7E]/10 text-[#3a2b25]' : 'text-[#AA8E7E] hover:bg-white/50'}`}
-                 >
-                   <span>All Submissions</span>
-                   {!loading && <span className="bg-[#EEDDCB] text-[#5D4037] px-2 py-0.5 rounded-full text-[10px] font-black">{(pending || []).length}</span>}
-                 </button>
+            <div className="sticky top-28 bg-[#FDF9F2]/80 backdrop-blur-xl rounded-[2.5rem] p-6 border border-white/50 shadow-sm animate-fadeIn">
+              <h2 className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest mb-6 px-2 flex items-center gap-2">
+                <Inbox size={14} />
+                Filter Queue
+              </h2>
 
-                 {!loading && Object.entries(groupedData).map(([course, data]) => {
-                   const isCourseSelected = selectedCourse === course
-                   return (
-                     <div key={course} className={`rounded-2xl transition-all overflow-hidden ${isCourseSelected ? 'bg-white shadow-lift border border-[#AA8E7E]/10' : 'hover:bg-white/40'}`}>
-                       <button 
-                         onClick={() => handleFilter(isCourseSelected ? null : course)}
-                         className={`w-full text-left px-5 py-3.5 text-xs font-bold flex justify-between items-center transition-colors ${isCourseSelected ? 'text-[#3E3006]' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
-                       >
-                         <span className="truncate pr-2">{course}</span>
-                         <span className={`${isCourseSelected ? 'bg-[#F6C945]/20 text-[#6B5A10]' : 'bg-[#EEDDCB] text-[#5D4037]'} px-2 py-0.5 rounded-full text-[10px] font-black`}>{data.total}</span>
-                       </button>
-                       
-                       <div className={`transition-all duration-300 ease-in-out ${isCourseSelected ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
-                         <div className="px-4 pb-4 pt-1 space-y-1">
-                           {Object.entries(data.years).map(([year, count]) => {
-                             const yData = parseInt(year)
-                             const isYearSelected = selectedYearLevel === yData
-                             return (
-                               <button
-                                 key={year}
-                                 onClick={(e) => { e.stopPropagation(); handleFilter(course, isYearSelected ? null : yData) }}
-                                 className={`w-full text-left px-4 py-2 rounded-xl text-[10px] font-bold flex justify-between items-center transition-all ${isYearSelected ? 'bg-[#F6C945] text-[#3E3006] shadow-sm' : 'text-[#AA8E7E] hover:bg-[#FDF9F2] hover:text-[#3a2b25]'}`}
-                               >
-                                 <span className="uppercase tracking-wide">{YEAR_LABELS[yData] || 'Unknown Year'}</span>
-                                 <span className={`${isYearSelected ? 'text-[#3E3006]/70' : ''}`}>{count}</span>
-                               </button>
-                             )
-                           })}
-                         </div>
-                       </div>
-                     </div>
-                   )
-                 })}
-               </div>
-             </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => handleFilter(null)}
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl text-xs font-bold transition-all flex justify-between items-center ${!selectedCourse ? 'bg-white shadow-lift border border-[#AA8E7E]/10 text-[#3a2b25]' : 'text-[#AA8E7E] hover:bg-white/50'}`}
+                >
+                  <span>All Submissions</span>
+                  {!loading && <span className="bg-[#EEDDCB] text-[#5D4037] px-2 py-0.5 rounded-full text-[10px] font-black">{(pending || []).length}</span>}
+                </button>
+
+                {!loading && Object.entries(groupedData).map(([course, data]) => {
+                  const isCourseSelected = selectedCourse === course
+                  return (
+                    <div key={course} className={`rounded-2xl transition-all overflow-hidden ${isCourseSelected ? 'bg-white shadow-lift border border-[#AA8E7E]/10' : 'hover:bg-white/40'}`}>
+                      <button
+                        onClick={() => handleFilter(isCourseSelected ? null : course)}
+                        className={`w-full text-left px-5 py-3.5 text-xs font-bold flex justify-between items-center transition-colors ${isCourseSelected ? 'text-[#3E3006]' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                      >
+                        <span className="truncate pr-2">{course}</span>
+                        <span className={`${isCourseSelected ? 'bg-[#F6C945]/20 text-[#6B5A10]' : 'bg-[#EEDDCB] text-[#5D4037]'} px-2 py-0.5 rounded-full text-[10px] font-black`}>{data.total}</span>
+                      </button>
+
+                      <div className={`transition-all duration-300 ease-in-out ${isCourseSelected ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="px-4 pb-4 pt-1 space-y-1">
+                          {Object.entries(data.years).map(([year, count]) => {
+                            const yData = parseInt(year)
+                            const isYearSelected = selectedYearLevel === yData
+                            return (
+                              <button
+                                key={year}
+                                onClick={(e) => { e.stopPropagation(); handleFilter(course, isYearSelected ? null : yData) }}
+                                className={`w-full text-left px-4 py-2 rounded-xl text-[10px] font-bold flex justify-between items-center transition-all ${isYearSelected ? 'bg-[#F6C945] text-[#3E3006] shadow-sm' : 'text-[#AA8E7E] hover:bg-[#FDF9F2] hover:text-[#3a2b25]'}`}
+                              >
+                                <span className="uppercase tracking-wide">{YEAR_LABELS[yData] || 'Unknown Year'}</span>
+                                <span className={`${isYearSelected ? 'text-[#3E3006]/70' : ''}`}>{count}</span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </aside>
 
           {/* ── QUEUE LISTING ── */}
@@ -324,8 +324,8 @@ export default function AdminModeration() {
                 })}
               </div>
             )}
+          </div>
         </div>
-      </div>
       </main>
     </div>
   )

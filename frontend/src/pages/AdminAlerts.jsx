@@ -5,14 +5,14 @@ import {
   Loader2, Bell, AlertTriangle, Moon, Activity, CloudRain, ChevronRight,
 } from 'lucide-react'
 
-const WARM_DARK  = '#3a2b25'
-const WARM_BODY  = '#5D4037'
+const WARM_DARK = '#3a2b25'
+const WARM_BODY = '#5D4037'
 const WARM_OLIVE = '#6B5A10'
-const WARM_TAN   = '#AA8E7E'
-const WARM_GOLD  = '#F6C945'
-const CORAL      = '#EF7B6C'
-const GOLD       = '#E6B86A'
-const LAVENDER   = '#9C8EC1'
+const WARM_TAN = '#AA8E7E'
+const WARM_GOLD = '#F6C945'
+const CORAL = '#EF7B6C'
+const GOLD = '#E6B86A'
+const LAVENDER = '#9C8EC1'
 
 const MOOD_SCORE = { rad: 5, good: 4, meh: 3, bad: 2, awful: 1 }
 const SILENT_THRESHOLD_DAYS = 7
@@ -123,21 +123,21 @@ export default function AdminAlerts() {
   }, [profiles, logs])
 
   const counts = useMemo(() => ({
-    all:                alerts.reduce((sum, g) => sum + g.total, 0),
-    silent:             alerts.reduce((sum, g) => sum + g.counts.silent, 0),
-    streak:             alerts.reduce((sum, g) => sum + g.counts.streak, 0),
-    'low-avg':          alerts.reduce((sum, g) => sum + g.counts['low-avg'], 0),
+    all: alerts.reduce((sum, g) => sum + g.total, 0),
+    silent: alerts.reduce((sum, g) => sum + g.counts.silent, 0),
+    streak: alerts.reduce((sum, g) => sum + g.counts.streak, 0),
+    'low-avg': alerts.reduce((sum, g) => sum + g.counts['low-avg'], 0),
     'frequent-critical': alerts.reduce((sum, g) => sum + g.counts['frequent-critical'], 0),
   }), [alerts])
 
-  const filtered = category === 'all' 
-    ? alerts 
+  const filtered = category === 'all'
+    ? alerts
     : alerts.filter((g) => g.counts[category] > 0)
 
   const CATEGORY_META = {
-    silent:             { label: 'Silent', icon: Moon, color: LAVENDER },
-    streak:             { label: 'Critical streak', icon: AlertTriangle, color: CORAL },
-    'low-avg':          { label: 'Low average', icon: CloudRain, color: GOLD },
+    silent: { label: 'Silent', icon: Moon, color: LAVENDER },
+    streak: { label: 'Critical streak', icon: AlertTriangle, color: CORAL },
+    'low-avg': { label: 'Low average', icon: CloudRain, color: GOLD },
     'frequent-critical': { label: 'Frequent low', icon: Activity, color: CORAL },
   }
 

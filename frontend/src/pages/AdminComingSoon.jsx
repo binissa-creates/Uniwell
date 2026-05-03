@@ -1,9 +1,9 @@
 import Navbar from '../components/Navbar'
 import { Sparkles } from 'lucide-react'
 
-const WARM_DARK  = '#3a2b25'
+const WARM_DARK = '#3a2b25'
 const WARM_OLIVE = '#6B5A10'
-const WARM_TAN   = '#AA8E7E'
+const WARM_TAN = '#AA8E7E'
 
 /**
  * Honest placeholder for admin sections that don't have a backing data model yet.

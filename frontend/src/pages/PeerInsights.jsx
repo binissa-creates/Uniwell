@@ -5,21 +5,21 @@ import { supabase } from '../lib/supabase'
 import { Search, Heart, Loader2, CheckCircle2, PlusCircle, X, Sparkles, Bookmark, Library, BookOpen } from 'lucide-react'
 
 const CATEGORIES = ['All', 'Relaxation', 'Time Management', 'Social Support', 'Physical Activity', 'Creative Expression', 'Mindfulness', 'Other']
-const TRIGGERS   = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth', 'Other']
+const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth', 'Other']
 
 const CAT_STYLE = {
-  'Relaxation':          { bg: '#c1d0db', text: '#2d4550' },
-  'Time Management':     { bg: '#f6c945', text: '#6d5400' },
-  'Social Support':      { bg: '#ccebc7', text: '#2d5a29' },
-  'Physical Activity':   { bg: '#ffdbd0', text: '#7a2d1a' },
+  'Relaxation': { bg: '#c1d0db', text: '#2d4550' },
+  'Time Management': { bg: '#f6c945', text: '#6d5400' },
+  'Social Support': { bg: '#ccebc7', text: '#2d5a29' },
+  'Physical Activity': { bg: '#ffdbd0', text: '#7a2d1a' },
   'Creative Expression': { bg: '#e8dcf0', text: '#4a3060' },
-  'Mindfulness':         { bg: '#c1d0db', text: '#526069' },
-  'Other':               { bg: '#ffe9e3', text: '#9e7060' },
+  'Mindfulness': { bg: '#c1d0db', text: '#526069' },
+  'Other': { bg: '#ffe9e3', text: '#9e7060' },
 }
 
 const STATUS_STYLE = {
   approved: { bg: '#ccebc7', text: '#2d5a29', label: 'Approved' },
-  pending:  { bg: '#fff3cd', text: '#856404', label: 'Pending review' },
+  pending: { bg: '#fff3cd', text: '#856404', label: 'Pending review' },
   rejected: { bg: '#ffdad6', text: '#93000a', label: 'Rejected' },
 }
 
@@ -30,9 +30,9 @@ function CategoryBadge({ category }) {
 
 // ── Tabs ─────────────────────────────────────────────────────
 const TABS = [
-  { key: 'community', icon: BookOpen,  label: 'Community' },
-  { key: 'favorites', icon: Bookmark,  label: 'Favorites'  },
-  { key: 'mine',      icon: Library,   label: 'My Strategies' },
+  { key: 'community', icon: BookOpen, label: 'Community' },
+  { key: 'favorites', icon: Bookmark, label: 'Favorites' },
+  { key: 'mine', icon: Library, label: 'My Strategies' },
 ]
 
 export default function PeerInsights() {
@@ -41,18 +41,18 @@ export default function PeerInsights() {
 
   // Community
   const [strategies, setStrategies] = useState([])
-  const [search, setSearch]         = useState('')
-  const [category, setCategory]     = useState('All')
-  const [voting, setVoting]         = useState(null)
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('All')
+  const [voting, setVoting] = useState(null)
 
   // Favorites
-  const [favIds, setFavIds]         = useState(new Set())
+  const [favIds, setFavIds] = useState(new Set())
   const [favStrategies, setFavStrategies] = useState([])
   const [favLoading, setFavLoading] = useState(false)
   const [bookmarking, setBookmarking] = useState(null)
 
   // My strategies
-  const [mine, setMine]             = useState([])
+  const [mine, setMine] = useState([])
   const [mineLoading, setMineLoading] = useState(false)
 
   // Submit modal
@@ -310,7 +310,7 @@ export default function PeerInsights() {
                 {favStrategies.map((s, i) => (
                   <StrategyCard key={s.id} s={s} i={i}
                     isFav={true}
-                    onVote={() => {}}
+                    onVote={() => { }}
                     onBookmark={handleBookmark}
                     voting={null}
                     bookmarking={bookmarking}

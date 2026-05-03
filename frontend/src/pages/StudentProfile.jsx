@@ -17,13 +17,13 @@ export default function StudentProfile() {
 
   // ── Password tab ───────────────────────────────────────────
   const [currentPw, setCurrentPw] = useState('')
-  const [newPw, setNewPw]         = useState('')
+  const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [showCurrent, setShowCurrent] = useState(false)
-  const [showNew, setShowNew]         = useState(false)
+  const [showNew, setShowNew] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
-  const [pwMsg, setPwMsg]         = useState(null)
-  const [pwBusy, setPwBusy]       = useState(false)
+  const [pwMsg, setPwMsg] = useState(null)
+  const [pwBusy, setPwBusy] = useState(false)
 
   const [tab, setTab] = useState('email') // 'email' | 'password'
 
@@ -76,7 +76,7 @@ export default function StudentProfile() {
   }
 
   const firstName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'You'
-  const initials  = profile?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
+  const initials = profile?.name?.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?'
 
   return (
     <div className="min-h-screen bg-surface">
@@ -129,7 +129,7 @@ export default function StudentProfile() {
         {/* ── Tabs ── */}
         <div className="flex gap-2 mb-6">
           {[
-            { key: 'email',    icon: Mail, label: 'Change Email' },
+            { key: 'email', icon: Mail, label: 'Change Email' },
             { key: 'password', icon: Lock, label: 'Change Password' },
           ].map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
@@ -167,7 +167,7 @@ export default function StudentProfile() {
                   className="w-full rounded-2xl px-4 py-3 text-sm text-warm placeholder-warm/30 outline-none transition-all duration-200"
                   style={{ background: 'var(--color-surface-container-highest)' }}
                   onFocus={e => e.target.style.background = 'var(--color-primary-fixed)'}
-                  onBlur={e  => e.target.style.background = 'var(--color-surface-container-highest)'}
+                  onBlur={e => e.target.style.background = 'var(--color-surface-container-highest)'}
                 />
               </div>
 
@@ -246,7 +246,7 @@ function PasswordField({ label, value, show, onChange, onToggle }) {
           className="w-full rounded-2xl px-4 pr-12 py-3 text-sm text-warm placeholder-warm/30 outline-none transition-all duration-200"
           style={{ background: 'var(--color-surface-container-highest)' }}
           onFocus={e => e.target.style.background = 'var(--color-primary-fixed)'}
-          onBlur={e  => e.target.style.background = 'var(--color-surface-container-highest)'}
+          onBlur={e => e.target.style.background = 'var(--color-surface-container-highest)'}
         />
         <button type="button" onClick={onToggle}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-warm/35 hover:text-warm transition-colors p-1">
@@ -271,7 +271,7 @@ function StrengthBar({ password }) {
   return (
     <div>
       <div className="flex gap-1.5 mb-1">
-        {[0,1,2,3].map(i => (
+        {[0, 1, 2, 3].map(i => (
           <div key={i} className="h-1.5 flex-1 rounded-full transition-all duration-300"
             style={{ background: i < score ? colors[score - 1] : '#ffe9e3' }} />
         ))}

@@ -11,12 +11,12 @@ const ENTRY_THEMES = [
 ]
 
 export default function Journal() {
-  const [entries, setEntries]   = useState([])
-  const [prompt, setPrompt]     = useState('')
-  const [content, setContent]   = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [success, setSuccess]     = useState(false)
-  const [errorMsg, setErrorMsg]   = useState(null)
+  const [entries, setEntries] = useState([])
+  const [prompt, setPrompt] = useState('')
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [errorMsg, setErrorMsg] = useState(null)
   const [deleting, setDeleting] = useState(null)
   const [charCount, setCharCount] = useState(0)
 
@@ -91,9 +91,9 @@ export default function Journal() {
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       {/* Background Orbs */}
       <div className="fixed top-0 left-0 w-[40rem] h-[40rem] rounded-full bg-[#A8C5A0]/5 blur-[120px] -translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
-      
+
       <Navbar />
-      
+
       <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── Page Header ── */}
@@ -110,7 +110,7 @@ export default function Journal() {
               Transform your thoughts into growth. This is a private, encrypted space for your inner dialogue.
             </p>
           </div>
-          
+
           <div className="bg-white/60 backdrop-blur-md rounded-[2rem] p-6 border border-white shadow-lift max-w-xs animate-slideInRight">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles size={14} className="text-[#6B5A10]" />
@@ -139,8 +139,8 @@ export default function Journal() {
                 </div>
 
                 <div className="relative group">
-                  <textarea 
-                    value={content} 
+                  <textarea
+                    value={content}
                     onChange={handleContentChange}
                     placeholder="Begin your reflection..."
                     className="w-full rounded-[2rem] bg-[#FDF9F2] p-8 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.8] font-medium"
@@ -162,8 +162,8 @@ export default function Journal() {
                   </div>
                 )}
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={!content.trim() || loading}
                   className="w-full gradient-cta text-[#3E3006] font-black uppercase tracking-[0.2em] rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lift hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
                 >
@@ -192,7 +192,7 @@ export default function Journal() {
             </div>
 
             {entries.length === 0 ? (
-               <div className="bg-white rounded-[2.5rem] p-20 shadow-suncast border border-white flex flex-col items-center text-center">
+              <div className="bg-white rounded-[2.5rem] p-20 shadow-suncast border border-white flex flex-col items-center text-center">
                 <div className="w-24 h-24 rounded-full bg-[#FDF9F2] flex items-center justify-center text-5xl mb-8 shadow-inner animate-breathe">📖</div>
                 <h3 className="font-jakarta font-black text-[#3a2b25] text-xl mb-4">Your Garden is Empty</h3>
                 <p className="text-[#3a2b25]/50 text-sm max-w-xs leading-relaxed font-medium">Every journey begins with a single reflection. Start your first entry today.</p>
@@ -208,7 +208,7 @@ export default function Journal() {
                           {new Date(e.created_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <button 
+                      <button
                         onClick={() => handleDelete(e.id)}
                         disabled={deleting === e.id}
                         className="opacity-0 group-hover:opacity-100 p-2.5 rounded-xl bg-[#FDF9F2] text-[#6B5A10] hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-110 active:scale-90"
@@ -226,7 +226,7 @@ export default function Journal() {
                     <p className="text-base text-[#3a2b25]/80 leading-[1.8] font-medium whitespace-pre-wrap">
                       {e.content}
                     </p>
-                    
+
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[#F6C945]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none transition-all group-hover:opacity-40"></div>
                   </div>
                 ))}

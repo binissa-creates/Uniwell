@@ -124,11 +124,11 @@ export default function Dashboard() {
                 Every emotion is data for growth. Take a moment to check in with yourself and see how you're blooming today.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-6 animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
-               <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-lift">
-                 <SunflowerProgress streak={streak} maxStreak={30} />
-               </div>
+              <div className="bg-white/60 backdrop-blur-md p-6 rounded-[2.5rem] border border-white shadow-lift">
+                <SunflowerProgress streak={streak} maxStreak={30} />
+              </div>
             </div>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function Dashboard() {
                   </div>
                   <Link to="/journal" className="text-[10px] font-black uppercase tracking-widest text-[#6B5A10] hover:underline">View All</Link>
                 </div>
-                
+
                 <div className="space-y-4">
                   {recentEntries.map(e => (
                     <div key={e.id} className="p-6 rounded-3xl bg-[#FDF9F2]/60 border border-transparent hover:border-[#F6C945]/20 transition-all">
@@ -252,7 +252,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-[11px] text-[#3a2b25]/50 leading-relaxed font-medium">
-                  Your most frequent mood this week is <span className="text-[#3a2b25] font-bold">{moodLabel[dominantMood]}</span>. 
+                  Your most frequent mood this week is <span className="text-[#3a2b25] font-bold">{moodLabel[dominantMood]}</span>.
                   {dominantMood === 'rad' || dominantMood === 'good' ? ' You are thriving beautifully!' : ' Remember to be gentle with yourself.'}
                 </p>
               </div>
