@@ -7,6 +7,8 @@ import SunflowerProgress from '../components/SunflowerProgress'
 import { supabase } from '../lib/supabase'
 import { fetchMoodHistory, computeStreak, logMood } from '../lib/data'
 import { ArrowRight, Loader2, Sparkles, TrendingUp, BookOpen, Clock, Heart } from 'lucide-react'
+import SupportCard from '../components/SupportCard'
+import SupportModal from '../components/SupportModal'
 
 const AFFIRMATIONS = [
   "You are doing better than you think. 🌻",
@@ -36,6 +38,7 @@ export default function Dashboard() {
   const [recentMoods, setRecentMoods] = useState([])
   const [recentEntries, setRecentEntries] = useState([])
   const [dominantMood, setDominantMood] = useState('')
+  const [isSupportOpen, setIsSupportOpen] = useState(false)
 
   const todayAffirmation = AFFIRMATIONS[new Date().getDay() % AFFIRMATIONS.length]
   const firstName = user?.name?.split(' ')[0] || 'Blooming'
@@ -239,7 +242,7 @@ export default function Dashboard() {
 
             {/* Emotional Summary Card */}
             {dominantMood && (
-              <div className="bg-[#FEFCE8] rounded-[2.5rem] p-8 shadow-suncast border border-[#F6C945]/20">
+              <div className="bg-[#FEFCE8] rounded-[2.5rem] p-8 shadow-suncast border border-[#F6C945]/20 animate-fadeIn">
                 <div className="flex items-center gap-3 mb-6">
                   <Heart size={16} className="text-[#6B5A10]" />
                   <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Growth Trend</span>
@@ -257,6 +260,9 @@ export default function Dashboard() {
                 </p>
               </div>
             )}
+
+            {/* Campus Support Card */}
+            <SupportCard onOpenModal={() => setIsSupportOpen(true)} />
 
             {/* Daily Affirmation Floating Card */}
             <div className="bg-[#3a2b25] text-white rounded-[2.5rem] p-8 shadow-lift relative overflow-hidden group">
@@ -328,6 +334,8 @@ export default function Dashboard() {
 
         </div>
       </main>
+
+      <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
     </div>
   )
 }

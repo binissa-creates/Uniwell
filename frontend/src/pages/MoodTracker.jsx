@@ -6,6 +6,8 @@ import { Loader2, CheckCircle2, History, PenLine, ArrowRight, X } from 'lucide-r
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts'
+import SupportModal from '../components/SupportModal'
+import SupportPrompt from '../components/SupportPrompt'
 
 const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth']
 const INTENSITY_LABELS = { 1: 'Very Mild', 2: 'Mild', 3: 'Moderate', 4: 'Strong', 5: 'Intense' }
@@ -50,6 +52,8 @@ export default function MoodTracker() {
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState(null)
+  const [showSupportPrompt, setShowSupportPrompt] = useState(false)
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -102,6 +106,12 @@ export default function MoodTracker() {
       setSuccess(true)
       setMood(''); setIntensity(3); setTriggers([]); setNote('')
       setOtherActive(false); setOtherText('')
+
+      // Trigger Support Prompt if mood is low
+      if (mood === 'bad' || mood === 'awful') {
+        setTimeout(() => setShowSupportPrompt(true), 1000)
+      }
+
       setTimeout(() => setSuccess(false), 4000)
       // Refresh in background to get the real DB id
       fetchHistory()
@@ -447,6 +457,20 @@ export default function MoodTracker() {
           </div>
         </div>
       )}
+
+      {/* Campus Support Components */}
+      <SupportPrompt 
+        isOpen={showSupportPrompt} 
+        onClose={() => setShowSupportPrompt(false)}
+        onViewSupport={() => {
+          setShowSupportPrompt(false);
+          setIsSupportModalOpen(true);
+        }}
+      />
+      <SupportModal 
+        isOpen={isSupportModalOpen} 
+        onClose={() => setIsSupportModalOpen(false)} 
+      />
     </div>
   )
 }

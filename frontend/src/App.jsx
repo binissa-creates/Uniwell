@@ -16,6 +16,7 @@ import AdminStudents from './pages/AdminStudents'
 import AdminAlerts from './pages/AdminAlerts'
 import AdminModeration from './pages/AdminModeration'
 import AdminComingSoon from './pages/AdminComingSoon'
+import FloatingSupportButton from './components/FloatingSupportButton'
 import { Stethoscope, Settings, HelpCircle } from 'lucide-react'
 
 function LoadingScreen() {
@@ -52,10 +53,17 @@ function GuestRoute({ children }) {
   return children
 }
 
+function StudentSupportWrapper() {
+  const { profile } = useAuth()
+  if (profile?.role === 'student') return <FloatingSupportButton />
+  return null
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <StudentSupportWrapper />
         <Routes>
           {/* Public */}
           <Route path="/" element={<Navigate to="/login" replace />} />
