@@ -18,14 +18,12 @@ const studentLinks = [
 // Primary admin tabs — always visible in the top strip.
 const adminPrimary = [
   { to: '/admin', icon: ShieldCheck, label: 'Analytics' },
-  { to: '/admin/students', icon: GraduationCap, label: 'Students' },
+  { to: '/admin/students', icon: GraduationCap, label: 'Monitor' },
   { to: '/admin/moderation', icon: ClipboardList, label: 'Moderation' },
 ]
 
 // Overflow menu — everything the old sidebar exposed.
 const adminSecondary = [
-  { to: '/admin/alerts', icon: Bell, label: 'Alerts', highlight: true },
-  { divider: true },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
   { to: '/admin/help', icon: HelpCircle, label: 'Help' },
 ]

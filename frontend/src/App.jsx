@@ -12,8 +12,7 @@ import Journal from './pages/Journal'
 import PeerInsights from './pages/PeerInsights'
 import StudentProfile from './pages/StudentProfile'
 import AdminDashboard from './pages/AdminDashboard'
-import AdminStudents from './pages/AdminStudents'
-import AdminAlerts from './pages/AdminAlerts'
+import StudentWellnessOverview from './pages/StudentWellnessOverview'
 import AdminModeration from './pages/AdminModeration'
 import AdminComingSoon from './pages/AdminComingSoon'
 import FloatingSupportButton from './components/FloatingSupportButton'
@@ -81,8 +80,8 @@ export default function App() {
           {/* Admin */}
           <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/students" element={<ProtectedRoute allowedRole="admin"><AdminStudents /></ProtectedRoute>} />
-          <Route path="/admin/alerts" element={<ProtectedRoute allowedRole="admin"><AdminAlerts /></ProtectedRoute>} />
+          <Route path="/admin/students" element={<ProtectedRoute allowedRole="admin"><StudentWellnessOverview /></ProtectedRoute>} />
+          <Route path="/admin/alerts" element={<ProtectedRoute allowedRole="admin"><StudentWellnessOverview /></ProtectedRoute>} />
           <Route path="/admin/moderation" element={<ProtectedRoute allowedRole="admin"><AdminModeration /></ProtectedRoute>} />
           <Route path="/admin/settings" element={
             <ProtectedRoute allowedRole="admin">
