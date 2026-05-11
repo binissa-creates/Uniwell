@@ -198,11 +198,12 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics]   = useState(null)
   const [pendingItems, setPending]  = useState([])
   const [acting, setActing]         = useState(null)
+  const [totalProfiles, setTotalProfiles] = useState(0)
 
   const fetchAnalytics = useCallback(async () => {
     setRefresh(true)
     try {
-      const [aRes, pRes] = await Promise.all([
+      const [aRes, pRes, profileRes] = await Promise.all([
         supabase.rpc('admin_analytics', { p_days: parseInt(period, 10) || 30 }),
         supabase
           .from('coping_strategies')
@@ -210,11 +211,16 @@ export default function AdminDashboard() {
           .eq('status', 'pending')
           .order('created_at', { ascending: true })
           .limit(5),
+        supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'student'),
       ])
       if (aRes.error) throw aRes.error
       if (pRes.error) throw pRes.error
       setAnalytics(aRes.data)
       setPending(pRes.data || [])
+      setTotalProfiles(profileRes.count || 0)
     } catch (err) {
       console.error('Failed to fetch admin data', err)
     } finally {
@@ -289,7 +295,36 @@ export default function AdminDashboard() {
       })()
     : '4.0'
 
-  const totalStudents = analytics?.totalStudents || 241
+  // ── Real mood funnel from moodDistribution ──────────────
+  const realFunnel = analytics?.moodDistribution?.length
+    ? (() => {
+        let good = 0, caution = 0, critical = 0
+        analytics.moodDistribution.forEach((m) => {
+          const s = MOOD_SCORE[m.mood_type] || 3
+          if (s >= 4) good += m.count
+          else if (s === 3) caution += m.count
+          else critical += m.count
+        })
+        const total = good + caution + critical || 1
+        return [
+          { label: 'Good',     count: good,     pct: Math.round((good / total) * 100),     color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
+          { label: 'Caution',  count: caution,  pct: Math.round((caution / total) * 100),  color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
+          { label: 'Critical', count: critical, pct: Math.round((critical / total) * 100), color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
+        ]
+      })()
+    : MOCK_FUNNEL
+
+  const funnelData = realFunnel
+  const criticalPct = funnelData.find(f => f.label === 'Critical')?.pct ?? 32
+  const isUnstable  = criticalPct >= 25 || (parseFloat(avgStability) < 2.8)
+
+  // Days in critical zone: count days in trend where avg score < 2.5
+  const daysInCritical = wellnessTrend.filter(d => d.score < 2.5).length
+
+  // Non-responding: total profiles minus those who logged recently
+  const nonResponding = Math.max(0, totalProfiles - (analytics?.totalStudents || 0))
+
+  const totalStudents = analytics?.totalStudents || totalProfiles || 0
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
 
   return (
@@ -354,44 +389,76 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── CAMPUS ALERT BANNER ──────────────────────────────── */}
-        <div
-          className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
-          style={{ background: '#FDECEA', border: `1px solid ${CORAL}40` }}
-        >
-          <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{ background: '#FEE2E2' }}>
-            <ShieldAlert size={18} style={{ color: CORAL }} />
+        {/* ── CAMPUS ALERT BANNER (dynamic) ─────────────────── */}
+        {isUnstable ? (
+          <div
+            className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
+            style={{ background: '#FDECEA', border: `1px solid ${CORAL}40` }}
+          >
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: '#FEE2E2' }}>
+              <ShieldAlert size={18} style={{ color: CORAL }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#991B1B' }}>
+                Campus Alert
+              </p>
+              <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#B91C1C' }}>
+                Wellness scores are under pressure. {criticalPct}% of reported moods are in the critical zone.
+                Immediate guidance intervention is recommended.
+              </p>
+            </div>
+            <div className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: CORAL }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#991B1B' }}>
-              Campus Alert
-            </p>
-            <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#B91C1C' }}>
-              Wellness scores remain critically low. 32% of students are in the critical zone.
-              Immediate guidance intervention is recommended.
-            </p>
+        ) : (
+          <div
+            className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
+            style={{ background: '#EAFAF1', border: `1px solid ${SAGE}40` }}
+          >
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `${SAGE}22` }}>
+              <CheckCircle size={18} style={{ color: SAGE }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#1B5E20' }}>
+                Campus Status: Stable
+              </p>
+              <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#2E7D32' }}>
+                Overall campus wellness is within healthy range. {criticalPct}% critical mood reports — continue monitoring.
+              </p>
+            </div>
+            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: SAGE }} />
           </div>
-          <div className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: CORAL }} />
-        </div>
+        )}
 
         {/* ── STAT CARDS ───────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
-            label="Total Respondents" value={totalStudents} sub="Active participants"
-            icon={Users} color={TEAL} trend="↑ 12 new this week"
+            label="Total Respondents" value={totalStudents || '—'} sub="Active participants"
+            icon={Users} color={TEAL}
+            trend={totalProfiles > 0 ? `${totalProfiles} enrolled students` : undefined}
           />
           <StatCard
-            label="Average Mood Score" value={avgStability} sub="Out of 5.0 · Volatile"
-            icon={TrendingUp} color={GOLD} trend="↓ 0.4 vs last period" alert
+            label="Average Mood Score"
+            value={analytics?.moodDistribution?.length ? avgStability : '—'}
+            sub={`Out of 5.0 · ${parseFloat(avgStability) >= 3.8 ? 'Healthy' : parseFloat(avgStability) >= 2.5 ? 'Watch' : 'Critical'}`}
+            icon={TrendingUp} color={GOLD}
+            trend={isUnstable ? '⚠ Below healthy threshold' : '✓ Within range'}
+            alert={parseFloat(avgStability) < 2.5}
           />
           <StatCard
-            label="Days in Critical Zone" value="8" sub="Of last 30 days"
-            icon={AlertTriangle} color={CORAL} trend="↑ 3 days vs prior" alert
+            label="Days in Critical Zone" value={daysInCritical}
+            sub={`Of last ${wellnessTrend.length} tracked days`}
+            icon={AlertTriangle} color={CORAL}
+            trend={daysInCritical > 3 ? '↑ Elevated — review needed' : 'Within acceptable range'}
+            alert={daysInCritical > 3}
           />
           <StatCard
-            label="Non-Responding Students" value="31" sub="Need follow-up"
-            icon={Bell} color={LAVENDER} trend="Silent for 7+ days"
+            label="Non-Responding Students" value={nonResponding}
+            sub="No logs this period"
+            icon={Bell} color={LAVENDER}
+            trend={nonResponding > 0 ? 'Silent — needs follow-up' : '✓ All students active'}
+            alert={nonResponding > 5}
           />
         </div>
 
@@ -400,14 +467,14 @@ export default function AdminDashboard() {
           <Card className="lg:col-span-3">
             <SectionTitle eyebrow="Distribution" title="Mood Funnel Count">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black self-start"
-                style={{ background: '#FEE2E2', color: CORAL }}>
-                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: CORAL }} />
-                UNSTABLE
+                style={{ background: isUnstable ? '#FEE2E2' : `${SAGE}20`, color: isUnstable ? CORAL : SAGE }}>
+                <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: isUnstable ? CORAL : SAGE }} />
+                {isUnstable ? 'UNSTABLE' : 'STABLE'}
               </div>
             </SectionTitle>
 
             <div className="space-y-5">
-              {MOCK_FUNNEL.map((f, i) => (
+              {funnelData.map((f, i) => (
                 <div key={f.label}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2.5">
@@ -435,10 +502,10 @@ export default function AdminDashboard() {
             <div className="mt-6 pt-5 border-t flex items-center justify-between"
               style={{ borderColor: '#F3EEE4' }}>
               <span className="text-xs font-semibold" style={{ color: WARM_TAN }}>
-                Total assessed students
+                Total mood entries analyzed
               </span>
               <span className="font-black text-base" style={{ color: WARM_DARK }}>
-                {MOCK_FUNNEL.reduce((s, f) => s + f.count, 0)}
+                {funnelData.reduce((s, f) => s + f.count, 0)}
               </span>
             </div>
           </Card>
@@ -675,19 +742,30 @@ export default function AdminDashboard() {
             </p>
             <p className="text-sm md:text-base font-medium leading-relaxed mb-5"
               style={{ color: 'rgba(255,255,255,0.82)' }}>
-              <span style={{ color: CORAL, fontWeight: 900 }}>⚠ Alert: </span>
-              Campus wellness is{' '}
-              <span style={{ color: CORAL, fontWeight: 900 }}>critically unstable</span>.
-              Year 1 and Year 4 students show distress scores below 2.5. Academic stress and mental
-              health pressures are surging. Immediate outreach programs and scheduled counseling
-              sessions are strongly advised.
+              {isUnstable ? (
+                <><span style={{ color: CORAL, fontWeight: 900 }}>⚠ Alert: </span>
+                Campus wellness is{' '}
+                <span style={{ color: CORAL, fontWeight: 900 }}>under pressure</span>.
+                {criticalPct}% of mood entries are in the critical range and {nonResponding} student{nonResponding !== 1 ? 's' : ''} have not
+                logged recently. Immediate outreach and counseling sessions are strongly recommended.</>
+              ) : (
+                <><span style={{ color: SAGE, fontWeight: 900 }}>✓ Good standing: </span>
+                Campus wellness is{' '}
+                <span style={{ color: SAGE, fontWeight: 900 }}>within healthy range</span>.
+                Keep monitoring trends and ensure non-responding students are followed up
+                by guidance staff.</>
+              )}
             </p>
             <div className="grid sm:grid-cols-3 gap-3">
-              {[
-                'Schedule drop-in counseling for Year 1 & 4',
+              {(isUnstable ? [
+                nonResponding > 0 ? `Follow up with ${nonResponding} non-responding student${nonResponding !== 1 ? 's' : ''}` : 'Schedule drop-in counseling sessions',
                 'Run academic stress relief workshop',
                 'Boost Peer Insights section visibility',
-              ].map((action, i) => (
+              ] : [
+                'Continue regular wellness check-ins',
+                'Promote peer support and coping strategies',
+                'Monitor at-risk programs weekly',
+              ]).map((action, i) => (
                 <div key={i} className="flex items-start gap-2.5 p-4 rounded-2xl"
                   style={{
                     background: 'rgba(255,255,255,0.06)',
@@ -695,7 +773,7 @@ export default function AdminDashboard() {
                   }}>
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5"
-                    style={{ background: CORAL, color: 'white' }}>
+                    style={{ background: isUnstable ? CORAL : SAGE, color: 'white' }}>
                     {i + 1}
                   </div>
                   <p className="text-[11px] font-semibold leading-relaxed"
