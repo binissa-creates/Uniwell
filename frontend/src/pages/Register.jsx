@@ -3,25 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle, GraduationCap } from 'lucide-react'
 
-const COURSES = [
-  'Computer Studies',
-  'Business Administration',
-  'AB Music',
-  'Political Science',
-  'Tourism',
-  'Nursing',
-  'Education',
-  'Engineering',
-  'Architecture',
-  'Communication',
-  'Psychology',
-  'Other',
-]
+const COURSES = ['Computer Studies', 'AB Music', 'Political Science', 'Tourism', 'Psychology', 'Nursing', 'Education', 'Business Administration', 'Engineering', 'Architecture', 'Communication', 'Other']
 const YEARS = ['1st', '2nd', '3rd', '4th']
 
 export default function Register() {
   const navigate = useNavigate()
-  const [form, setForm] = useState({ name: '', email: '', student_id: '', course: '', year_level: 0, password: '' })
+  const [form, setForm] = useState({ name: '', email: '', student_id: '', course: '', year_level: 0, password: '', admin_code: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -48,11 +35,17 @@ export default function Register() {
             student_id: form.student_id,
             course: form.course,
             year_level: Number(form.year_level),
-            role: 'student',
+            role: form.admin_code === 'UNIWELL_ADMIN_2024' ? 'admin' : 'student',
           },
         },
       })
       if (signUpError) throw signUpError
+
+      // If they are an admin, redirect to admin dashboard instead
+      if (form.admin_code === 'UNIWELL_ADMIN_2024') {
+        navigate('/admin/analytics')
+        return
+      }
 
       // If email confirmations are enabled, there is no session yet — prompt the user.
       if (!data.session) {
@@ -152,7 +145,7 @@ export default function Register() {
                 </div>
                 <div className="flex-1">
                   <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block">Student ID</label>
-                  <input name="student_id" value={form.student_id} onChange={handleChange} required placeholder="2024-XXXXX"
+                  <input name="student_id" value={form.student_id} onChange={handleChange} required placeholder="202301684"
                     className="w-full bg-[#FCF8F4] text-[#3a2b25] text-sm px-4 py-3.5 rounded-2xl outline-none placeholder-[#B09C8E]/40 focus:ring-2 focus:ring-[#F8D272] border border-transparent focus:border-[#F8D272] transition-all" />
                 </div>
               </div>
@@ -202,6 +195,12 @@ export default function Register() {
                     );
                   })}
                 </div>
+              </div>
+
+              <div>
+                <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block italic">Admin Bypass Code (Demo Only)</label>
+                <input name="admin_code" value={form.admin_code} onChange={handleChange} placeholder="Enter 'UNIWELL_ADMIN_2024' for admin role"
+                  className="w-full bg-[#FCF8F4] text-[#3a2b25] text-xs px-4 py-3 rounded-xl outline-none placeholder-[#B09C8E]/40 border border-[#AA8E7E]/10 focus:border-[#F8D272] transition-all" />
               </div>
 
               <button type="submit" disabled={loading}

@@ -26,16 +26,15 @@ export default function LoginStaff() {
     setLoading(true)
     beginPortalValidation('staff')
 
-    let signedIn = false
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       })
       if (signInError) throw signInError
-      signedIn = true
 
       const role = await fetchProfileRole(data?.user?.id)
+      
       if (!roleMatchesPortal('staff', role)) {
         await signOut()
         setError(getPortalDeniedMessage('staff', role))
@@ -44,8 +43,15 @@ export default function LoginStaff() {
 
       navigate(getHomeForRole(role))
     } catch (err) {
-      if (signedIn) await signOut()
-      setError(err?.message || 'Login failed. Please try again.')
+      // Ensure we are signed out if anything failed during role check
+      await signOut()
+      
+      const msg = err?.message || ''
+      if (msg.includes('querying schema')) {
+        setError('Database error: Please run the SQL fix script in your Supabase Editor to resolve RLS recursion.')
+      } else {
+        setError(msg || 'Login failed. Please try again.')
+      }
     } finally {
       endPortalValidation()
       setLoading(false)

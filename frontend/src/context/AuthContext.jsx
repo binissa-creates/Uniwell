@@ -45,11 +45,41 @@ export function AuthProvider({ children }) {
       .select('id, name, student_id, course, year_level, role, created_at')
       .eq('id', session.user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!active) return
-        setProfile(data ?? null)
+        
+        // SELF-HEALING: If profile is missing but user is logged in, create it from metadata.
+        if (!data && session.user) {
+          console.warn('Profile missing for user. Attempting to heal...')
+          const meta = session.user.user_metadata || {}
+          const { data: healed, error: healError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              name: meta.name || splitEmail(session.user.email),
+              student_id: meta.student_id || session.user.id.substring(0, 8),
+              course: meta.course || 'Unspecified',
+              year_level: meta.year_level || 1,
+              role: meta.role || 'student'
+            })
+            .select()
+            .maybeSingle()
+            
+          if (!healError && healed) {
+            setProfile(healed)
+          } else {
+            console.error('Heal failed:', healError)
+            setProfile(null)
+          }
+        } else {
+          setProfile(data ?? null)
+        }
         setLoading(false)
       })
+
+    function splitEmail(email) {
+      return email ? email.split('@')[0] : 'User'
+    }
     return () => {
       active = false
     }

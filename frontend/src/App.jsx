@@ -29,7 +29,11 @@ function LoadingScreen() {
 function ProtectedRoute({ children, allowedRole }) {
   const { session, profile, loading } = useAuth()
   if (!session) return <Navigate to="/login" replace />
-  if (loading || !profile) return <LoadingScreen />
+  if (loading) return <LoadingScreen />
+  if (!profile) {
+    console.error('Profile not found for session:', session.user.id)
+    return <Navigate to="/login" replace />
+  }
   if (!roleCanAccess(allowedRole, profile.role)) {
     return <Navigate to={getHomeForRole(profile.role)} replace />
   }
