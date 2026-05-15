@@ -241,24 +241,39 @@ export default function PeerInsights() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!user?.id) {
+      alert('Please log in to share a strategy.')
+      return
+    }
+
     setSubmitting(true)
     try {
-      const { data: auth } = await supabase.auth.getUser()
-      if (!auth?.user) throw new Error('Not authenticated')
+      // The database 'category' is an ENUM. If 'Other' is used with a custom string,
+      // we must send 'Other' to satisfy the constraint and preserve the custom info in the description.
+      const isCustomCategory = submitForm.category === 'Other' && submitForm.customCategory
+      const finalCategory = isCustomCategory ? 'Other' : (submitForm.category || 'Other')
+      const finalDescription = isCustomCategory 
+        ? `[Category: ${submitForm.customCategory}] ${submitForm.description}`
+        : submitForm.description
+
       const { error } = await supabase.from('coping_strategies').insert({
-        submitter_id: auth.user.id,
-        category: submitForm.category === 'Other' ? (submitForm.customCategory || 'Other') : submitForm.category,
+        submitter_id: user.id,
+        category: finalCategory,
         title: submitForm.title,
-        description: submitForm.description,
+        description: finalDescription,
         trigger_tags: Array.isArray(submitForm.trigger_tags) ? submitForm.trigger_tags : [],
+        status: 'pending' // Explicitly set status
       })
+
       if (error) throw error
+      
       setSubmitDone(true)
       setSubmitForm({ category: '', customCategory: '', title: '', description: '', trigger_tags: [], customTrigger: '' })
       setShowOtherTriggerInput(false)
       setTimeout(() => { setSubmitDone(false); setShowSubmit(false) }, 2500)
     } catch (err) {
       console.error('[submit]', err)
+      alert(`Submission failed: ${err.message || 'Please check all fields and try again.'}`)
     } finally {
       setSubmitting(false)
     }
