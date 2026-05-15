@@ -25,7 +25,10 @@ export default function Journal() {
   const [dailyQuote, setDailyQuote] = useState('')
 
   const loadData = useCallback(async () => {
-    const todayPrompt = journalPromptForToday()
+    const params = new URLSearchParams(window.location.search)
+    const triggerParam = params.get('trigger')
+    
+    const todayPrompt = journalPromptForToday(triggerParam)
     setPrompt(todayPrompt)
     setDailyQuote(dailyQuoteForToday())
     try {
@@ -264,45 +267,45 @@ export default function Journal() {
                 <p className="text-[#3a2b25]/50 text-sm max-w-xs leading-relaxed font-medium">Every journey begins with a single reflection. Start your first entry today.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {entries.map((e, i) => (
-                  <div 
-                    key={e.id} 
-                    onClick={() => setSelectedEntry(e)}
-                    className="group bg-white rounded-3xl p-6 shadow-suncast border border-transparent hover:border-[#F6C945]/20 transition-all cursor-pointer relative overflow-hidden flex flex-col h-full card-hover animate-fadeSlideUp" 
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2 text-[#AA8E7E]">
-                        <Clock size={12} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">
-                          {new Date(e.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
-                      <button
-                        onClick={(ev) => { ev.stopPropagation(); handleDelete(e.id); }}
-                        disabled={deleting === e.id}
-                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg bg-red-50 text-red-400 hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-110"
-                      >
-                        {deleting === e.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={12} />}
-                      </button>
+            <div className="space-y-4 max-h-[750px] overflow-y-auto pr-2 custom-scrollbar">
+              {entries.map((e, i) => (
+                <div 
+                  key={e.id} 
+                  onClick={() => setSelectedEntry(e)}
+                  className="group bg-white rounded-[2rem] p-6 shadow-lift border border-transparent hover:border-[#F6C945]/20 transition-all cursor-pointer relative overflow-hidden flex flex-col animate-fadeSlideUp" 
+                  style={{ animationDelay: `${i * 30}ms` }}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2 text-[#AA8E7E]">
+                      <Clock size={12} className="text-[#F6C945]" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        {new Date(e.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      </span>
                     </div>
-
-                    <h4 className="font-jakarta font-bold text-[#3a2b25] text-sm leading-snug mb-3 line-clamp-2">
-                      {e.prompt ? e.prompt : 'Personal Reflection'}
-                    </h4>
-
-                    <p className="text-xs text-[#3a2b25]/60 leading-relaxed line-clamp-3 mb-6 flex-1">
-                      {e.content}
-                    </p>
-
-                    <div className="mt-auto pt-4 border-t border-[#FDF9F2] flex items-center justify-between">
-                      <span className="text-[9px] font-black text-[#6B5A10]/40 uppercase tracking-widest">Tap to read more</span>
-                      <ArrowRight size={12} className="text-[#6B5A10]/20 group-hover:translate-x-1 transition-transform" />
-                    </div>
+                    <button
+                      onClick={(ev) => { ev.stopPropagation(); handleDelete(e.id); }}
+                      disabled={deleting === e.id}
+                      className="opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-red-50 text-red-400 hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-105"
+                    >
+                      {deleting === e.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={12} />}
+                    </button>
                   </div>
-                ))}
-              </div>
+
+                  <h4 className="font-jakarta font-extrabold text-[#3a2b25] text-sm leading-snug mb-2 line-clamp-1">
+                    {e.prompt ? e.prompt : 'Personal Reflection'}
+                  </h4>
+
+                  <p className="text-xs text-[#3a2b25]/60 leading-relaxed line-clamp-2">
+                    {e.content}
+                  </p>
+
+                  <div className="mt-4 pt-3 border-t border-[#FDF9F2] flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[8px] font-black text-[#6B5A10]/40 uppercase tracking-widest">Read Full Reflection</span>
+                    <ArrowRight size={12} className="text-[#6B5A10]/20 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              ))}
+            </div>
             )}
           </div>
 

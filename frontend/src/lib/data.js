@@ -60,7 +60,39 @@ export const DAILY_QUOTES = [
   "You don't have to be perfect to be amazing."
 ]
 
-export function journalPromptForToday() {
+const TRIGGER_PROMPTS = {
+  'Academics': [
+    'What is one small win you had in your studies today?',
+    'How can you break down your current academic workload into manageable steps?',
+    'Who is one person you can ask for help with your schoolwork?'
+  ],
+  'Finance': [
+    'What are some things you can control about your current financial situation?',
+    'What is one way you can practice gratitude without spending money?',
+    'How do you define financial security for yourself?'
+  ],
+  'Relationships': [
+    'What is one quality you appreciate in your closest friend?',
+    'How can you communicate your needs more clearly in your relationships?',
+    'What boundaries do you need to set to protect your emotional energy?'
+  ],
+  'Health': [
+    'How did you show kindness to your body today?',
+    'What is one healthy habit you want to prioritize this week?',
+    'What does "rest" look like for you right now?'
+  ],
+  'Social': [
+    'Describe a moment where you felt a sense of belonging.',
+    'How can you be more present in your social interactions?',
+    'What is one social activity that truly recharges you?'
+  ]
+}
+
+export function journalPromptForToday(trigger = null) {
+  if (trigger && TRIGGER_PROMPTS[trigger]) {
+    const list = TRIGGER_PROMPTS[trigger]
+    return list[new Date().getDate() % list.length]
+  }
   return JOURNAL_PROMPTS[new Date().getDay() % JOURNAL_PROMPTS.length]
 }
 

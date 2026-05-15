@@ -110,6 +110,12 @@ export default function MoodTracker() {
       // Trigger Support Prompt if mood is low
       if (mood === 'bad' || mood === 'awful') {
         setTimeout(() => setShowSupportPrompt(true), 1000)
+      } else {
+        // Automatically redirect to Journaling after 1.5s for normal moods
+        // Passing the first trigger to auto-set the reflection prompt
+        setTimeout(() => {
+          window.location.href = `/journal?trigger=${encodeURIComponent(allTriggers[0] || '')}`
+        }, 1500)
       }
 
       setTimeout(() => setSuccess(false), 4000)
@@ -330,48 +336,51 @@ export default function MoodTracker() {
                 {history.length === 0 ? (
                   <p className="text-center py-10 text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">No history detected yet</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {history.map(h => (
-                      <div 
-                        key={h.id} 
-                        onClick={() => setSelectedEntry(h)}
-                        className="p-5 rounded-[2rem] bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all flex flex-col gap-3 group cursor-pointer card-hover"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-3xl transform group-hover:scale-110 transition-transform cursor-default">
-                            {getMoodEmoji(h.mood_type)}
-                          </span>
-                          <p className="text-[9px] font-black text-[#AA8E7E] uppercase tracking-widest">
-                            {new Date(h.logged_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[11px] font-black text-[#3a2b25] uppercase tracking-wide">
+                <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                  {history.map((h, i) => (
+                    <div 
+                      key={h.id} 
+                      onClick={() => setSelectedEntry(h)}
+                      className="flex items-center gap-4 p-4 rounded-3xl bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all group cursor-pointer animate-fadeSlideUp"
+                      style={{ animationDelay: `${i * 30}ms` }}
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center text-2xl shadow-sm group-hover:scale-105 transition-transform border border-[#AA8E7E]/5">
+                        {getMoodEmoji(h.mood_type)}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-jakarta font-black text-[#3a2b25] text-xs uppercase tracking-wider truncate">
                             {getMoodLabel(h.mood_type)}
-                          </span>
-                          <span className="text-[9px] font-black text-white px-2 py-0.5 rounded uppercase tracking-[0.15em]"
+                          </h4>
+                          <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-lg uppercase tracking-widest shadow-sm"
                             style={{ backgroundColor: INTENSITY_COLORS[h.intensity] }}>
                             LVL {h.intensity}
                           </span>
                         </div>
-
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {h.triggers?.slice(0, 2).map(t => (
-                            <span key={t} className="text-[7px] font-black uppercase tracking-widest text-[#6B5A10] border border-[#6B5A10]/10 px-2 py-0.5 rounded bg-white">
-                              {t}
-                            </span>
-                          ))}
-                          {h.triggers?.length > 2 && <span className="text-[7px] font-black text-[#AA8E7E]">+ {h.triggers.length - 2} more</span>}
-                        </div>
-
-                        <div className="mt-2 pt-3 border-t border-[#AA8E7E]/5 flex items-center justify-between">
-                          <span className="text-[8px] font-black text-[#AA8E7E]/40 uppercase tracking-widest">Tap to view</span>
-                          <ArrowRight size={10} className="text-[#AA8E7E]/20 group-hover:translate-x-1 transition-transform" />
+                        
+                        <div className="flex items-center gap-3">
+                          <p className="text-[9px] font-bold text-[#AA8E7E] uppercase tracking-widest">
+                            {new Date(h.logged_at).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+                          </p>
+                          {h.triggers?.length > 0 && (
+                            <div className="flex gap-1">
+                              {h.triggers.slice(0, 1).map(t => (
+                                <span key={t} className="text-[7px] font-black uppercase tracking-widest text-[#6B5A10]/60">
+                                  • {t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#AA8E7E]/30 group-hover:text-[#6B5A10] group-hover:bg-[#F6C945]/10 transition-all">
+                        <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 )}
               </div>
             </div>

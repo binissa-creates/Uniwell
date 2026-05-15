@@ -239,14 +239,14 @@ export default function AdminModeration() {
               </div>
             ) : (
               /* ── 3-column masonry grid matching Peer Insights layout ── */
-              <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
                 {(filteredPending || []).map((s, idx) => {
                   const tags = Array.isArray(s?.trigger_tags) ? s.trigger_tags : []
                   const catStyle = CAT_STYLE[s.category] || CAT_STYLE['Other']
                   return (
                     <div
                       key={s.id}
-                      className="break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden flex flex-col gap-3 animate-fadeSlideUp cursor-pointer"
+                      className="bg-white rounded-3xl p-5 shadow-suncast border border-white hover:shadow-lift transition-all relative overflow-hidden flex flex-col gap-3 animate-fadeSlideUp cursor-pointer"
                       style={{ animationDelay: `${idx * 80}ms` }}
                       onClick={() => setSelectedCard(s)}
                     >

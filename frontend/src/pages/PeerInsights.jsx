@@ -85,9 +85,32 @@ export default function PeerInsights() {
       const votedIds = new Set((voteRes.data || []).map(v => v.strategy_id))
       const savedIds = new Set((bookRes.data || []).map(b => b.strategy_id))
       setFavIds(savedIds)
-      setStrategies(
-        (stratRes.data || []).map(s => ({ ...s, i_voted: votedIds.has(s.id) ? 1 : 0 }))
-      )
+
+      // Smart Matching: Get user's latest triggers
+      const { data: latestMood } = await supabase
+        .from('mood_logs')
+        .select('id, mood_triggers(trigger_category)')
+        .eq('user_id', user?.id)
+        .order('logged_at', { ascending: false })
+        .limit(1)
+        .single()
+      
+      const userTriggers = (latestMood?.mood_triggers || []).map(t => t.trigger_category)
+
+      let finalData = (stratRes.data || []).map(s => ({ ...s, i_voted: votedIds.has(s.id) ? 1 : 0 }))
+      
+      // Sort: Match user triggers first
+      if (userTriggers.length > 0) {
+        finalData.sort((a, b) => {
+          const aMatch = (a.trigger_tags || []).some(t => userTriggers.includes(t))
+          const bMatch = (b.trigger_tags || []).some(t => userTriggers.includes(t))
+          if (aMatch && !bMatch) return -1
+          if (!aMatch && bMatch) return 1
+          return 0
+        })
+      }
+
+      setStrategies(finalData)
     } catch (err) {
       console.error('[coping fetch]', err)
     }
@@ -273,9 +296,9 @@ export default function PeerInsights() {
             {strategies.length === 0 ? (
               <EmptyState emoji="💡" title="No strategies found" sub="Try a different filter or be the first to share!" />
             ) : (
-              <div className="columns-1 sm:columns-2 md:columns-3 gap-5 space-y-5">
-                {strategies.map((s, i) => (
-                  <StrategyCard key={s.id} s={s} i={i}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+              {strategies.map((s, i) => (
+                <StrategyCard key={s.id} s={s} i={i}
                     isFav={favIds.has(s.id)}
                     onVote={handleVote}
                     onBookmark={handleBookmark}
@@ -308,9 +331,9 @@ export default function PeerInsights() {
               <EmptyState emoji="🔖" title="No favorites yet"
                 sub="Tap the bookmark icon on any strategy to save it here." />
             ) : (
-              <div className="columns-1 sm:columns-2 md:columns-3 gap-5 space-y-5">
-                {favStrategies.map((s, i) => (
-                  <StrategyCard key={s.id} s={s} i={i}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+              {favStrategies.map((s, i) => (
+                <StrategyCard key={s.id} s={s} i={i}
                     isFav={true}
                     onVote={() => { }}
                     onBookmark={handleBookmark}
@@ -571,7 +594,7 @@ export default function PeerInsights() {
 function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hideLike, onOpen }) {
   return (
     <div
-      className={`break-inside-avoid bg-white rounded-3xl p-5 shadow-suncast flex flex-col gap-3 relative overflow-hidden card-hover cursor-pointer ${i % 3 === 2 ? 'petal-accent' : ''}`}
+      className={`bg-white rounded-3xl p-5 shadow-suncast flex flex-col gap-3 relative overflow-hidden card-hover cursor-pointer ${i % 3 === 2 ? 'petal-accent' : ''}`}
       onClick={() => onOpen({ ...s, _isFav: isFav, _hideLike: hideLike })}
     >
       <CategoryBadge category={s.category} />

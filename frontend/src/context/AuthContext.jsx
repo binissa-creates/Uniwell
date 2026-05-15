@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
       .maybeSingle()
       .then(async ({ data }) => {
         if (!active) return
-        
+
         // SELF-HEALING: If profile is missing but user is logged in, create it from metadata.
         if (!data && session.user) {
           console.warn('Profile missing for user. Attempting to heal...')
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
             })
             .select()
             .maybeSingle()
-            
+
           if (!healError && healed) {
             setProfile(healed)
           } else {
@@ -101,10 +101,10 @@ export function AuthProvider({ children }) {
 
   const user = session?.user
     ? {
-        id: session.user.id,
-        email: session.user.email,
-        ...(profile ?? {}),
-      }
+      id: session.user.id,
+      email: session.user.email,
+      ...(profile ?? {}),
+    }
     : null
 
   return (
