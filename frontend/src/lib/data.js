@@ -130,16 +130,23 @@ export async function fetchMoodHistory(days = 7) {
  */
 export function computeStreak(logs) {
   const days = Array.from(
-    new Set((logs || []).map((l) => new Date(l.logged_at).toISOString().slice(0, 10)))
-  )
+    new Set((logs || []).map((l) => {
+      const d = new Date(l.logged_at)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    }))
+  ).sort((a, b) => new Date(b) - new Date(a))
+
   let streak = 0
   let current = new Date()
   current.setHours(0, 0, 0, 0)
+
   for (const d of days) {
-    const date = new Date(d)
-    date.setHours(0, 0, 0, 0)
-    const diff = Math.floor((current - date) / 86400000)
-    if (diff <= 1) {
+    const parts = d.split('-').map(Number)
+    const date = new Date(parts[0], parts[1] - 1, parts[2])
+    const diff = Math.round((current - date) / 86400000)
+
+    // Grace Period: Allow a 1-day gap (diff <= 2) to keep the streak alive
+    if (diff <= 2) {
       streak++
       current = date
     } else break

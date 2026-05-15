@@ -143,6 +143,19 @@ export default function MoodTracker() {
       .slice(-days)
   })()
 
+  // Trend Analytics for the Trajectory Card
+  const trendInfo = (() => {
+    if (history.length < 2) return { label: 'Awaiting Data', color: '#AA8E7E', bg: '#FDF9F2', insight: 'Start logging to see your growth map.' }
+    
+    const intensities = history.map(h => MOOD_SCORE_MAP[h.mood_type] || 3)
+    const recentAvg = intensities.slice(0, 5).reduce((a, b) => a + b, 0) / (intensities.slice(0, 5).length || 1)
+    const prevAvg = intensities.slice(5, 10).reduce((a, b) => a + b, 0) / (intensities.slice(5, 10).length || 1)
+
+    if (recentAvg > prevAvg + 0.2) return { label: 'Improving', color: '#6A9966', bg: '#EAF2E6', insight: 'You’re blooming beautifully lately!' }
+    if (recentAvg < prevAvg - 0.2) return { label: 'Declining', color: '#BA1A1A', bg: '#FFF0F0', insight: 'Rough patch—but roots grow in the dark.' }
+    return { label: 'Steady', color: '#AA8E7E', bg: '#FDF9F2', insight: 'Your emotional weather is stable and consistent.' }
+  })()
+
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       <div className="fixed top-0 right-0 w-[45rem] h-[45rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/3 translate-x-1/3 pointer-events-none" />
@@ -283,12 +296,18 @@ export default function MoodTracker() {
 
             {/* Trend chart */}
             <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white">
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-6 mb-8">
                 <div>
-                  <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Growth Trajectory</h3>
-                  <p className="text-[10px] font-bold text-[#AA8E7E] mt-1 uppercase tracking-tighter">Mood consistency map</p>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Growth Trajectory</h3>
+                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest" style={{ backgroundColor: trendInfo.bg, color: trendInfo.color }}>
+                      {trendInfo.label}
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-tighter mb-2">Mood consistency map</p>
+                  <p className="text-[11px] font-bold text-[#3a2b25]/60 italic">"{trendInfo.insight}"</p>
                 </div>
-                <div className="bg-[#FDF9F2] rounded-xl p-1 flex gap-1 border border-[#AA8E7E]/10">
+                <div className="bg-[#FDF9F2] rounded-xl p-1 flex gap-1 border border-[#AA8E7E]/10 flex-shrink-0">
                   {['week', 'month'].map(p => (
                     <button key={p} onClick={() => setPeriod(p)}
                       className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${period === p ? 'bg-[#F6C945] text-[#3E3006] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}>

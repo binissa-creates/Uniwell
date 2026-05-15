@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
+import RadianceDose from '../components/RadianceDose'
 import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS, dailyQuoteForToday } from '../lib/data'
 import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, Quote, ChevronDown, Type, ArrowRight, Book, X } from 'lucide-react'
@@ -22,7 +23,6 @@ export default function Journal() {
   const [deleting, setDeleting] = useState(null)
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [charCount, setCharCount] = useState(0)
-  const [dailyQuote, setDailyQuote] = useState('')
 
   const loadData = useCallback(async () => {
     const params = new URLSearchParams(window.location.search)
@@ -30,7 +30,6 @@ export default function Journal() {
     
     const todayPrompt = journalPromptForToday(triggerParam)
     setPrompt(todayPrompt)
-    setDailyQuote(dailyQuoteForToday())
     try {
       const { data, error } = await supabase
         .from('journal_entries')
@@ -126,30 +125,18 @@ export default function Journal() {
             </p>
           </div>
 
-          {/* Compact Sunflower Rectangle Quote */}
-          <div className="bg-[#F6C945]/10 backdrop-blur-md rounded-[2rem] p-6 border border-[#F6C945]/20 shadow-suncast max-w-sm animate-slideInRight">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#6B5A10]">
-                <Sparkles size={14} />
-              </div>
-              <span className="text-[10px] font-black text-[#6B5A10] uppercase tracking-widest">Radiance Dose</span>
-            </div>
-            <p className="font-playfair text-lg font-bold text-[#3a2b25] italic leading-relaxed">
-              "{dailyQuote}"
-            </p>
-            <div className="mt-3 flex items-center gap-2">
-              <div className="h-px flex-1 bg-[#6B5A10]/10"></div>
-              <span className="text-[8px] font-black text-[#6B5A10]/40 uppercase tracking-widest">Daily Bloom</span>
-            </div>
+          <div className="animate-slideInRight max-w-md w-full md:w-auto">
+            <RadianceDose />
           </div>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-8 items-start">
 
           {/* ── LEFT SIDE: COMPOSE ── */}
-          <div className="lg:col-span-5 hidden lg:block sticky top-32 space-y-6">
-
-            <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-1 shadow-lift border border-white overflow-hidden">
+          <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-8">
+            
+            <div className="hidden lg:block">
+              <form onSubmit={handleSubmit} className="bg-white rounded-[2.5rem] p-1 shadow-lift border border-white overflow-hidden">
               <div className="p-8 lg:p-10 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -240,6 +227,7 @@ export default function Journal() {
               </div>
             </form>
           </div>
+        </div>
 
           {/* ── MOBILE COMPOSE TRIGGER ── */}
           <button className="lg:hidden w-full bg-[#3a2b25] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lift">
