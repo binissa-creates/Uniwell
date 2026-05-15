@@ -58,9 +58,10 @@ export default function PeerInsights() {
 
   // Submit modal
   const [showSubmit, setShowSubmit] = useState(false)
-  const [submitForm, setSubmitForm] = useState({ category: '', title: '', description: '', trigger_tags: [] })
+  const [submitForm, setSubmitForm] = useState({ category: '', customCategory: '', title: '', description: '', trigger_tags: [], customTrigger: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitDone, setSubmitDone] = useState(false)
+  const [showOtherTriggerInput, setShowOtherTriggerInput] = useState(false)
 
   // ── Fetch community ────────────────────────────────────────
   const fetchStrategies = useCallback(async () => {
@@ -214,10 +215,29 @@ export default function PeerInsights() {
   }
 
   // ── Submit ─────────────────────────────────────────────────
-  const toggleTag = t => setSubmitForm(f => ({
-    ...f,
-    trigger_tags: f.trigger_tags.includes(t) ? f.trigger_tags.filter(x => x !== t) : [...f.trigger_tags, t],
-  }))
+  const toggleTag = t => {
+    if (t === 'Other') {
+      setShowOtherTriggerInput(!showOtherTriggerInput)
+      return
+    }
+    setSubmitForm(f => ({
+      ...f,
+      trigger_tags: f.trigger_tags.includes(t) ? f.trigger_tags.filter(x => x !== t) : [...f.trigger_tags, t],
+    }))
+  }
+
+  const addCustomTrigger = () => {
+    const t = submitForm.customTrigger.trim()
+    if (!t) return
+    if (!submitForm.trigger_tags.includes(t)) {
+      setSubmitForm(f => ({
+        ...f,
+        trigger_tags: [...f.trigger_tags, t],
+        customTrigger: ''
+      }))
+    }
+    setShowOtherTriggerInput(false)
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -227,14 +247,15 @@ export default function PeerInsights() {
       if (!auth?.user) throw new Error('Not authenticated')
       const { error } = await supabase.from('coping_strategies').insert({
         submitter_id: auth.user.id,
-        category: submitForm.category,
+        category: submitForm.category === 'Other' ? (submitForm.customCategory || 'Other') : submitForm.category,
         title: submitForm.title,
         description: submitForm.description,
         trigger_tags: Array.isArray(submitForm.trigger_tags) ? submitForm.trigger_tags : [],
       })
       if (error) throw error
       setSubmitDone(true)
-      setSubmitForm({ category: '', title: '', description: '', trigger_tags: [] })
+      setSubmitForm({ category: '', customCategory: '', title: '', description: '', trigger_tags: [], customTrigger: '' })
+      setShowOtherTriggerInput(false)
       setTimeout(() => { setSubmitDone(false); setShowSubmit(false) }, 2500)
     } catch (err) {
       console.error('[submit]', err)
@@ -434,7 +455,7 @@ export default function PeerInsights() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-warm/45 uppercase tracking-widest mb-2 block">Category</label>
                     <select required value={submitForm.category}
                       onChange={e => setSubmitForm(f => ({ ...f, category: e.target.value }))}
@@ -443,6 +464,15 @@ export default function PeerInsights() {
                       <option value="">Select…</option>
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
+                    {submitForm.category === 'Other' && (
+                      <input 
+                        required
+                        value={submitForm.customCategory}
+                        onChange={e => setSubmitForm(f => ({ ...f, customCategory: e.target.value }))}
+                        placeholder="Type category..."
+                        className="w-full rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30 animate-fadeIn"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="text-xs font-bold text-warm/45 uppercase tracking-widest mb-2 block">Title</label>
@@ -466,11 +496,36 @@ export default function PeerInsights() {
                   <div className="flex flex-wrap gap-2">
                     {TRIGGERS.map(t => (
                       <button key={t} type="button" onClick={() => toggleTag(t)}
-                        className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-all duration-150 ${submitForm.trigger_tags.includes(t) ? 'chip-active' : 'chip-inactive'}`}>
+                        className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-all duration-150 ${submitForm.trigger_tags.includes(t) || (t === 'Other' && showOtherTriggerInput) ? 'chip-active' : 'chip-inactive'}`}>
                         {t}
                       </button>
                     ))}
+                    {submitForm.trigger_tags.filter(t => !TRIGGERS.includes(t)).map(t => (
+                       <button key={t} type="button" onClick={() => toggleTag(t)}
+                       className="text-xs px-3 py-1.5 rounded-full font-semibold transition-all duration-150 chip-active">
+                       {t}
+                     </button>
+                    ))}
                   </div>
+                  {showOtherTriggerInput && (
+                    <div className="mt-3 flex gap-2 animate-fadeIn">
+                      <input 
+                        autoFocus
+                        value={submitForm.customTrigger}
+                        onChange={e => setSubmitForm(f => ({ ...f, customTrigger: e.target.value }))}
+                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomTrigger())}
+                        placeholder="Type custom trigger and press Enter..."
+                        className="flex-1 rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30"
+                      />
+                      <button 
+                        type="button"
+                        onClick={addCustomTrigger}
+                        className="px-4 py-2 bg-primary text-on-primary-container text-[10px] font-black uppercase rounded-xl hover:opacity-90"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <button type="submit" disabled={submitting}
                   className="w-full gradient-cta text-on-primary font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 text-sm mt-2">

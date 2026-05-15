@@ -1,0 +1,94 @@
+# UniWell System Context & Instructions
+
+This document provides a comprehensive overview of the **UniWell** project—a premium student wellness portal designed to foster emotional resilience and community support. Use this context to guide any AI assistant working on the codebase.
+
+---
+
+## 1. Project Overview
+**UniWell** is a specialized mental health and wellness platform for students. It combines personal emotional tracking with community-shared coping strategies and private journaling, all wrapped in a "High-End Editorial" aesthetic inspired by the natural growth of a sunflower.
+
+- **Objective**: To reduce student cognitive load while providing actionable mental health insights.
+- **Tone**: Warm, organic, empowering, and premium.
+
+---
+
+## 2. Technology Stack
+- **Frontend**: React (Vite), Tailwind CSS, Lucide Icons, Recharts (for mood trends).
+- **Backend/DB**: Supabase (PostgreSQL).
+- **Authentication**: Supabase Auth with custom `profiles` table.
+- **Deployment**: Vercel.
+
+---
+
+## 3. Core Database Schema (Supabase)
+### `profiles`
+Stores student metadata. 
+- `id`: UUID (matches auth.users)
+- `name`, `course`, `year_level`, `avatar_url`, `is_staff` (boolean for admin access).
+
+### `mood_logs`
+Primary emotional data.
+- `mood_type`: Enum (`rad`, `good`, `meh`, `bad`, `awful`, etc.).
+- `intensity`: 1–5 scale.
+- `note`: Optional reflective text.
+- `logged_at`: Timestamp.
+
+### `mood_triggers`
+Links `mood_logs` to specific life areas.
+- Categories: `Academics`, `Social`, `Family`, `Health`, `Finance`, `Relationships`, `Personal Growth`.
+
+### `journal_entries`
+Private, encrypted-feeling reflections.
+- `content`, `prompt` (optional), `created_at`.
+
+### `coping_strategies`
+The "Peer Insights" engine.
+- `status`: `pending`, `approved`, `rejected`.
+- `category`, `title`, `description`, `trigger_tags` (array).
+
+---
+
+## 4. UI/UX Design System: "The Solar Pulse"
+UniWell follows a strict design specification called **The Solar Pulse**.
+
+### **The "No-Line" Rule**
+- **Borders are forbidden** for sectioning. Use background color shifts and padding instead.
+- If an element needs separation, use `surface-container-low` (#fff1ed) on a `surface` (#fff8f6) background.
+
+### **Color Palette (Radiant Organic)**
+- **Primary (Sun)**: `#F6C945` (Gold/Yellow)
+- **Text (Earth)**: `#5D4037` (Warm Brown). **Pure black (#000000) is strictly prohibited.**
+- **Accent (Leaf)**: `#b0cfad` (Muted Green).
+- **Background**: `#FDF9F2` (Creamy Surface).
+
+### **Typography**
+- **Headers**: *Plus Jakarta Sans* (Bold, Editorial).
+- **Body**: *Inter* (Clean, Functional).
+- **Aesthetic**: Large display scales, italicized serif subheaders (Playfair Display for specific accents).
+
+### **Layout Principles**
+- **Asymmetry**: Avoid rigid 50/50 grids. Use overlapping layers and intentional white space.
+- **Glassmorphism**: Use `backdrop-blur-md` with 70% opacity for floating bars and modals.
+- **Radii**: Use large corner radii (`2rem` for cards, `pill` for buttons).
+
+---
+
+## 5. Key Modules & Page Mapping
+- **Dashboard (`Dashboard.jsx`)**: Hero section with streak tracking and wellness overview.
+- **Mood Chronicle (`MoodTracker.jsx`)**: Logging interface and a **compact, organized list** of past moods.
+- **Journal Sanctuary (`Journal.jsx`)**: Writing area with daily prompts and a **clean, vertical timeline** of entries.
+- **Peer Insights (`PeerInsights.jsx`)**: A community grid of approved strategies, sorted by helpfulness and trigger matching.
+- **Admin Portal (`AdminModeration.jsx`)**: Review queue for staff to approve/reject student submissions.
+
+---
+
+## 6. AI Implementation Guidelines
+1. **Always use the Warm Palette**: Replace any default `gray-500` or `text-black` with project-specific warm browns and ambers.
+2. **Prioritize Motion**: Use `animate-fadeIn`, `animate-scaleIn`, and `animate-fadeSlideUp` for almost all page elements.
+3. **Keep it Compact**: When displaying history/archives, use the recently implemented **organized list views** instead of large cards to prevent "scroll fatigue."
+4. **Follow the Grid**: Use `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` for community cards, ensuring a **left-to-right** reading order.
+5. **No Placeholders**: Use meaningful icons (Lucide) and high-quality generated imagery.
+
+---
+**Version**: 1.1 (Organized List Update)
+**Last Updated**: May 2026
