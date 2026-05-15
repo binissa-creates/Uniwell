@@ -102,29 +102,29 @@ export default function Dashboard() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-32 relative z-10 page-enter">
 
         {/* ── Hero Personalised Greeting ── */}
-        <div className="mb-14 relative group">
-          <div className="flex items-center gap-3 mb-4 animate-fadeIn">
-            <div className="h-px w-10 bg-[#6B5A10]/30 transition-all group-hover:w-16"></div>
-            <p className="text-[#6B5A10] text-[10px] font-black uppercase tracking-[0.4em]">{greeting}, {firstName} ✨</p>
+        <div className="mb-10 sm:mb-14 relative group text-center lg:text-left">
+          <div className="flex items-center justify-center lg:justify-start gap-3 mb-4 animate-fadeIn">
+            <div className="hidden sm:block h-px w-10 bg-[#6B5A10]/30 transition-all group-hover:w-16"></div>
+            <p className="text-[#6B5A10] text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em]">{greeting}, {firstName} ✨</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-            <div>
-              <h1 className="font-jakarta text-5xl md:text-7xl font-extrabold text-[#3a2b25] leading-[1.1] mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 sm:gap-12">
+            <div className="max-w-2xl">
+              <h1 className="font-jakarta text-4xl sm:text-5xl md:text-7xl font-extrabold text-[#3a2b25] leading-tight sm:leading-[1.1] mb-4 sm:mb-6">
                 <span className="font-playfair italic text-[#6B5A10] font-bold">How are you blooming</span><br />
                 today? <span className="inline-block animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
               </h1>
-              <p className="text-[#3a2b25]/50 text-base md:text-lg leading-relaxed font-medium">
+              <p className="text-[#3a2b25]/50 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-4 sm:px-0">
                 Every emotion is data for growth. Take a moment to check in with yourself and see how you're blooming today.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch gap-6 animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
+            <div className="flex flex-col sm:flex-row items-center lg:items-stretch gap-6 animate-fadeSlideUp justify-center" style={{ animationDelay: '100ms' }}>
               {/* Streak Plant in Header Right */}
-              <div className="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-lift flex flex-col justify-center min-w-[220px]">
+              <div className="bg-white/80 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] border border-white shadow-lift flex flex-col justify-center min-w-[200px] sm:min-w-[220px] w-full sm:w-auto max-w-[280px]">
                 <SunflowerProgress streak={streak} maxStreak={30} />
               </div>
             </div>
@@ -132,13 +132,13 @@ export default function Dashboard() {
         </div>
 
         {/* ── Dashboard Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
 
           {/* ── Left Column ── */}
           <div className="md:col-span-8 flex flex-col gap-6 lg:gap-8">
 
             {/* Quick Mood Log */}
-            <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-lift border border-white relative overflow-hidden group">
+            <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-lift border border-white relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-2xl shadow-inner transform -rotate-3 group-hover:rotate-0 transition-transform">
@@ -188,7 +188,7 @@ export default function Dashboard() {
               
               {/* Latest Reflections */}
               <div className="lg:col-span-7">
-                <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative h-full">
+                <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative h-full">
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-2xl bg-[#A8C5A0]/10 flex items-center justify-center text-[#2D5A29]">
@@ -219,7 +219,7 @@ export default function Dashboard() {
 
               {/* Mood Archive Preview */}
               <div className="lg:col-span-5 h-full">
-                <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-suncast border border-white h-full flex flex-col">
+                <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-suncast border border-white h-full flex flex-col">
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Archive</h3>

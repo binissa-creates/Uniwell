@@ -210,17 +210,17 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Nav Bar (Bottom Floating) — primary tabs only */}
-        <div className="md:hidden fixed bottom-6 inset-x-6 z-50" ref={mobileMoreRef}>
-          <div className="glass shadow-lift border border-white/50 rounded-[2.5rem] p-2 flex items-center justify-between">
+        <div className="md:hidden fixed bottom-6 inset-x-4 sm:inset-x-6 z-50" ref={mobileMoreRef}>
+          <div className="glass shadow-lift border border-white/50 rounded-[2rem] p-1.5 flex items-center justify-between">
             {primaryLinks.map(({ to, icon: Icon, label }) => {
               const active = isActivePath(to, location.pathname)
               return (
                 <Link key={to} to={to} className={`
-                  flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300
+                  flex-1 flex flex-col items-center py-2.5 gap-1 rounded-2xl transition-all duration-300
                   ${active ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm' : 'text-[#AA8E7E] hover:bg-white/40'}
                 `}>
-                  <Icon size={20} strokeWidth={active ? 2.5 : 2} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+                  <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+                  <span className="text-[8px] font-black uppercase tracking-widest text-center px-1">{label}</span>
                 </Link>
               )
             })}

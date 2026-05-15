@@ -9,7 +9,7 @@ export default function FloatingSupportButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 z-[90] w-14 h-14 rounded-full bg-[#F6C945] text-[#3E3006] shadow-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group"
+        className="fixed bottom-28 md:bottom-8 right-6 md:right-8 z-[90] w-14 h-14 rounded-full bg-[#F6C945] text-[#3E3006] shadow-glow flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-300 group"
         title="Campus Support"
       >
         <div className="absolute inset-0 rounded-full bg-[#F6C945] animate-ping opacity-20 group-hover:opacity-40 transition-opacity"></div>
