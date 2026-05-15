@@ -18,6 +18,7 @@ const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year'
 export default function AdminModeration() {
   const [pending, setPending] = useState([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState('newest')
   const [acting, setActing] = useState(null)
   const [apiError, setApiError] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState(null)
@@ -63,7 +64,7 @@ export default function AdminModeration() {
         .from('coping_strategies')
         .select('id, category, title, description, trigger_tags, created_at, submitter:profiles!submitter_id(name, course, year_level)')
         .eq('status', 'pending')
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: sortBy === 'oldest' })
       if (error) throw error
       // Flatten nested submitter so existing UI (expects s.course / s.year_level) still works.
       setPending(
@@ -81,7 +82,7 @@ export default function AdminModeration() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [sortBy])
 
   useEffect(() => { fetchPending() }, [fetchPending])
 
@@ -128,17 +129,35 @@ export default function AdminModeration() {
               </p>
             </div>
 
-            {!loading && (pending || []).length > 0 && (
-              <div className="bg-white/60 backdrop-blur-md rounded-[2rem] px-8 py-5 border border-white shadow-lift flex items-center gap-4 animate-slideInRight">
-                <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10]">
-                  <ShieldCheck size={20} />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">Awaiting Pulse</p>
-                  <p className="text-sm font-black text-[#3a2b25]">{pending.length} Strategies</p>
-                </div>
+            <div className="flex items-center gap-4 animate-slideInRight">
+              {/* Sort Control */}
+              <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-1.5 flex gap-1 border border-[#AA8E7E]/10">
+                <button 
+                  onClick={() => setSortBy('newest')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'newest' ? 'bg-[#F6C945] text-[#3E3006] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                >
+                  Latest
+                </button>
+                <button 
+                  onClick={() => setSortBy('oldest')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${sortBy === 'oldest' ? 'bg-[#F6C945] text-[#3E3006] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                >
+                  Oldest
+                </button>
               </div>
-            )}
+
+              {!loading && (pending || []).length > 0 && (
+                <div className="bg-white/60 backdrop-blur-md rounded-[2rem] px-8 py-5 border border-white shadow-lift flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10]">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">Awaiting Pulse</p>
+                    <p className="text-sm font-black text-[#3a2b25]">{pending.length} Strategies</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
