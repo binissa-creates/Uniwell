@@ -111,20 +111,20 @@ export default function Dashboard() {
             <p className="text-[#6B5A10] text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em]">{greeting}, {firstName} ✨</p>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 sm:gap-12">
-            <div className="max-w-4xl xl:max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center">
+            <div className="md:col-span-8">
               <h1 className="font-jakarta text-4xl sm:text-5xl md:text-7xl font-extrabold text-[#3a2b25] leading-tight sm:leading-[1.1] mb-4 sm:mb-6">
                 <span className="font-playfair italic text-[#6B5A10] font-bold lg:whitespace-nowrap">How are you blooming</span><br />
-                today? <span className="inline-block animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
+                today? <span className="inline-block ml-3 animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
               </h1>
-              <p className="text-[#3a2b25]/50 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-4 sm:px-0">
+              <p className="text-[#3a2b25]/50 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-4 sm:px-0 lg:max-w-2xl">
                 Every emotion is data for growth. Take a moment to check in with yourself and see how you're blooming today.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center lg:items-stretch gap-6 animate-fadeSlideUp justify-center" style={{ animationDelay: '100ms' }}>
+            <div className="md:col-span-4 flex justify-center lg:justify-end animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
               {/* Streak Plant in Header Right */}
-              <div className="bg-white/80 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] border border-white shadow-lift flex flex-col justify-center min-w-[200px] sm:min-w-[220px] w-full sm:w-auto max-w-[280px]">
+              <div className="bg-white/80 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] border border-white shadow-lift flex flex-col justify-center w-full max-w-[320px] lg:max-w-none">
                 <SunflowerProgress streak={streak} maxStreak={30} />
               </div>
             </div>
