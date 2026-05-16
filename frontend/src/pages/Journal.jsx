@@ -23,6 +23,7 @@ export default function Journal() {
   const [deleting, setDeleting] = useState(null)
   const [selectedEntry, setSelectedEntry] = useState(null)
   const [charCount, setCharCount] = useState(0)
+  const [showMobileCompose, setShowMobileCompose] = useState(false)
 
   const loadData = useCallback(async () => {
     const params = new URLSearchParams(window.location.search)
@@ -77,6 +78,7 @@ export default function Journal() {
       setCustomTitle('')
       setCharCount(0)
       setSuccess(true)
+      setShowMobileCompose(false)
       // Background refresh to confirm server state
       loadData()
       setTimeout(() => setSuccess(false), 4000)
@@ -230,9 +232,105 @@ export default function Journal() {
         </div>
 
           {/* ── MOBILE COMPOSE TRIGGER ── */}
-          <button className="lg:hidden w-full bg-[#3a2b25] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lift">
+          <button 
+            onClick={() => setShowMobileCompose(true)}
+            className="lg:hidden w-full bg-[#3a2b25] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lift mb-8"
+          >
             <PenLine size={16} /> Write New Entry
           </button>
+
+          {/* ── MOBILE COMPOSE MODAL ── */}
+          {showMobileCompose && (
+            <div className="fixed inset-0 z-[60] bg-[#FDF9F2] overflow-y-auto page-enter lg:hidden flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b border-[#AA8E7E]/10 bg-white sticky top-0 z-10">
+                 <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10]">
+                     <PenLine size={20} />
+                   </div>
+                   <h2 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase tracking-tight">New Entry</h2>
+                 </div>
+                 <button onClick={() => setShowMobileCompose(false)} className="p-2 bg-[#FDF9F2] rounded-2xl text-[#AA8E7E] hover:text-[#3a2b25] transition-colors">
+                   <X size={24} />
+                 </button>
+              </div>
+              <div className="p-6 pb-24 flex-1">
+                <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-lift border border-white">
+                  {/* Replicating Form logic for mobile */}
+                  <div className="space-y-6">
+                    {/* Mode Selector */}
+                    <div className="flex bg-[#FDF9F2] p-1.5 rounded-2xl border border-[#AA8E7E]/10">
+                      <button
+                        type="button"
+                        onClick={() => setEntryMode('prompt')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryMode === 'prompt' ? 'bg-white text-[#6B5A10] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                      >
+                        <Sparkles size={12} /> Use Prompt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEntryMode('custom')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${entryMode === 'custom' ? 'bg-white text-[#6B5A10] shadow-sm' : 'text-[#AA8E7E] hover:text-[#3a2b25]'}`}
+                      >
+                        <Type size={12} /> Custom Title
+                      </button>
+                    </div>
+
+                    {/* Title/Prompt Input */}
+                    {entryMode === 'prompt' ? (
+                      <div className="relative">
+                        <select
+                          value={prompt}
+                          onChange={(e) => setPrompt(e.target.value)}
+                          className="w-full appearance-none rounded-2xl bg-[#FDF9F2] px-6 py-4 text-[13px] font-bold text-[#3a2b25] border border-[#F6C945]/20 focus:ring-2 focus:ring-[#6B5A10]/10 outline-none transition-all cursor-pointer"
+                        >
+                          {JOURNAL_PROMPTS.map((p, idx) => (
+                            <option key={idx} value={p}>{p}</option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-[#6B5A10] pointer-events-none" />
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        value={customTitle}
+                        onChange={(e) => setCustomTitle(e.target.value)}
+                        placeholder="Enter your entry title..."
+                        className="w-full rounded-2xl bg-[#FDF9F2] px-6 py-4 text-[13px] font-bold text-[#3a2b25] border border-[#F6C945]/20 focus:ring-2 focus:ring-[#6B5A10]/10 outline-none transition-all"
+                      />
+                    )}
+
+                    <div className="relative group">
+                      <textarea
+                        value={content}
+                        onChange={handleContentChange}
+                        placeholder="Begin your reflection..."
+                        className="w-full rounded-[2rem] bg-[#FDF9F2] p-6 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.6] font-medium"
+                        style={{ minHeight: '250px' }}
+                      />
+                      <div className="absolute bottom-6 right-6 flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest">{charCount} characters</span>
+                      </div>
+                    </div>
+
+                    {errorMsg && (
+                      <div className="bg-red-50 text-red-600 rounded-2xl p-4 text-xs font-bold flex items-center justify-center animate-scaleIn">
+                        {errorMsg}
+                      </div>
+                    )}
+
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!content.trim() || loading}
+                      className="w-full gradient-cta text-[#3E3006] font-black uppercase tracking-[0.2em] rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lift hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
+                    >
+                      {loading && <Loader2 size={16} className="animate-spin" />}
+                      {loading ? 'Securing...' : 'Commit to Garden'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── TIMELINE ── */}
           <div className="lg:col-span-7 space-y-6">
