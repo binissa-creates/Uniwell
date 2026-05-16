@@ -112,9 +112,9 @@ export default function Dashboard() {
           </div>
 
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 sm:gap-12">
-            <div className="max-w-2xl">
+            <div className="max-w-4xl xl:max-w-5xl">
               <h1 className="font-jakarta text-4xl sm:text-5xl md:text-7xl font-extrabold text-[#3a2b25] leading-tight sm:leading-[1.1] mb-4 sm:mb-6">
-                <span className="font-playfair italic text-[#6B5A10] font-bold">How are you blooming</span><br />
+                <span className="font-playfair italic text-[#6B5A10] font-bold lg:whitespace-nowrap">How are you blooming</span><br />
                 today? <span className="inline-block animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
               </h1>
               <p className="text-[#3a2b25]/50 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-4 sm:px-0">
