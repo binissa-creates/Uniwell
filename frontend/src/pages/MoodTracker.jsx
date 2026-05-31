@@ -8,9 +8,14 @@ import {
 } from 'recharts'
 import SupportModal from '../components/SupportModal'
 import SupportPrompt from '../components/SupportPrompt'
+import MoodAnimationOverlay from '../components/MoodAnimationOverlay'
 
 const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth']
 const MOOD_LEVEL_LABELS = { 1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Very High' }
+
+// Animation Categories
+const POSITIVE_MOODS = ['rad', 'good', 'excited', 'hopeful', 'grateful', 'proud', 'content', 'calm']
+const NEGATIVE_MOODS = ['bad', 'awful', 'lonely', 'burned_out', 'frustrated', 'angry', 'nervous', 'confused']
 
 // Build lookup maps dynamically from ALL_MOODS so extended emotions work too
 const MOOD_SCORE_MAP = {
@@ -54,6 +59,7 @@ export default function MoodTracker() {
   const [errorMsg, setErrorMsg] = useState(null)
   const [showSupportPrompt, setShowSupportPrompt] = useState(false)
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
+  const [animationType, setAnimationType] = useState(null)
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -107,6 +113,13 @@ export default function MoodTracker() {
         triggers: allTriggers,
       }
       setHistory(prev => [optimisticEntry, ...prev])
+
+      // Trigger Mood Animation Overlay
+      if (POSITIVE_MOODS.includes(mood)) {
+        setAnimationType('positive')
+      } else if (NEGATIVE_MOODS.includes(mood)) {
+        setAnimationType('negative')
+      }
 
       setSuccess(true)
       setMood(''); setIntensity(3); setTriggers([]); setNote('')
@@ -545,6 +558,12 @@ export default function MoodTracker() {
       <SupportModal 
         isOpen={isSupportModalOpen} 
         onClose={() => setIsSupportModalOpen(false)} 
+      />
+
+      <MoodAnimationOverlay 
+        type={animationType} 
+        isVisible={!!animationType} 
+        onClose={() => setAnimationType(null)} 
       />
     </div>
   )

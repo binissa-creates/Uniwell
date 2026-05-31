@@ -12,16 +12,14 @@ import { ArrowRight, Loader2, Sparkles, TrendingUp, BookOpen, Clock, Heart } fro
 import SupportCard from '../components/SupportCard'
 import SupportModal from '../components/SupportModal'
 import DemoModal from '../components/DemoModal'
-
-
-const QUICK_ACTIONS = [
-  { label: 'Log Mood', to: '/mood', emoji: '😊', desc: 'Track how you feel', color: 'bg-primary-container' },
-  { label: 'Journal', to: '/journal', emoji: '📖', desc: 'Reflect and release', color: 'bg-secondary-container' },
-  { label: 'Peer Tips', to: '/peer-insights', emoji: '💡', desc: 'Coping strategies', color: 'bg-tertiary-container' },
-]
+import MoodAnimationOverlay from '../components/MoodAnimationOverlay'
 
 const moodEmoji = { rad: '🤩', good: '😊', meh: '😐', bad: '😔', awful: '😢' }
 const moodLabel = { rad: 'Radiant', good: 'Good', meh: 'Okay', bad: 'Low', awful: 'Rough' }
+
+// Animation Categories
+const POSITIVE_MOODS = ['rad', 'good', 'excited', 'hopeful', 'grateful', 'proud', 'content', 'calm']
+const NEGATIVE_MOODS = ['bad', 'awful', 'lonely', 'burned_out', 'frustrated', 'angry', 'nervous', 'confused']
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -35,15 +33,29 @@ export default function Dashboard() {
   const [moodHistory, setMoodHistory] = useState([])
   const [isSupportOpen, setIsSupportOpen] = useState(false)
   const [isDemoOpen, setIsDemoOpen] = useState(false)
+  const [animationType, setAnimationType] = useState(null)
 
   const firstName = user?.name?.split(' ')[0] || 'Blooming'
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening'
+  
+  const greeting = (() => {
+    if (hour < 5) return 'Still awake'
+    if (hour < 12) return 'Good Morning'
+    if (hour < 17) return 'Good Afternoon'
+    if (hour < 21) return 'Good Evening'
+    return 'Rest well'
+  })()
+
+  const subGreeting = (() => {
+    if (streak >= 30) return `Your ${streak}-day garden is thriving.`
+    if (streak >= 7) return `You're on a beautiful ${streak}-day roll.`
+    if (hour < 5) return 'The stars are watching over you.'
+    if (hour >= 21) return 'Reflect on your day before sleep.'
+    return "Every emotion is data for growth."
+  })()
 
   const fetchData = useCallback(async () => {
     try {
-      // Pull 365 days of mood logs so the streak calc has enough history;
-      // only the first 6 show in the "recent" strip.
       const [history, journalRes] = await Promise.all([
         fetchMoodHistory(365),
         supabase
@@ -77,11 +89,10 @@ export default function Dashboard() {
       setRecentEntries([])
       setDominantMood('')
     }
-  }, [])
+  }, [user.id])
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // Scroll to top on component mount
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -91,6 +102,13 @@ export default function Dashboard() {
     setLogging(true)
     try {
       await logMood({ mood_type: mood, intensity: 3 })
+      
+      if (POSITIVE_MOODS.includes(mood)) {
+        setAnimationType('positive')
+      } else if (NEGATIVE_MOODS.includes(mood)) {
+        setAnimationType('negative')
+      }
+
       setLogDone(true)
       fetchData()
       setTimeout(() => setLogDone(false), 4000)
@@ -104,7 +122,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
-      {/* Dynamic Background */}
       <div className="fixed top-0 right-0 w-[40rem] h-[40rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
       <div className="fixed bottom-0 left-0 w-[30rem] h-[30rem] rounded-full bg-[#A8C5A0]/10 blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
@@ -112,7 +129,6 @@ export default function Dashboard() {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-32 relative z-10 page-enter">
 
-        {/* ── Hero Personalised Greeting ── */}
         <div className="mb-10 sm:mb-14 relative group text-center lg:text-left">
           <div className="flex items-center justify-center lg:justify-start gap-3 mb-4 animate-fadeIn">
             <div className="hidden sm:block h-px w-10 bg-[#6B5A10]/30 transition-all group-hover:w-16"></div>
@@ -132,12 +148,11 @@ export default function Dashboard() {
                 today? <span className="inline-block ml-3 animate-breathe grayscale-[0.2] transition-all hover:grayscale-0">🌻</span>
               </h1>
               <p className="text-[#3a2b25]/50 text-sm sm:text-base md:text-lg leading-relaxed font-medium px-4 sm:px-0 lg:max-w-2xl">
-                Every emotion is data for growth. Take a moment to check in with yourself and see how you're blooming today.
+                {subGreeting}
               </p>
             </div>
 
             <div className="md:col-span-4 flex justify-center lg:justify-end animate-fadeSlideUp" style={{ animationDelay: '100ms' }}>
-              {/* Streak Plant in Header Right */}
               <div className="bg-white/80 backdrop-blur-md p-6 sm:p-8 rounded-[2.5rem] border border-white shadow-lift flex flex-col justify-center w-full max-w-[320px] lg:max-w-none">
                 <SunflowerProgress streak={streak} maxStreak={30} />
               </div>
@@ -145,13 +160,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* ── Dashboard Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-
-          {/* ── Left Column ── */}
           <div className="md:col-span-8 flex flex-col gap-6 lg:gap-8">
-
-            {/* Quick Mood Log */}
             <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-lift border border-white relative overflow-hidden group">
               <div className="flex items-center justify-between mb-8 relative z-10">
                 <div className="flex items-center gap-4">
@@ -197,10 +207,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* ── Secondary Grid: Reflections & Archive ── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-              
-              {/* Latest Reflections */}
               <div className="lg:col-span-7">
                 <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-suncast border border-white overflow-hidden relative h-full">
                   <div className="flex items-center justify-between mb-8">
@@ -231,7 +238,6 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Mood Archive Preview */}
               <div className="lg:col-span-5 h-full">
                 <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 lg:p-10 shadow-suncast border border-white h-full flex flex-col">
                   <div className="flex items-center justify-between mb-8">
@@ -269,33 +275,32 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── Right Column ── */}
           <div className="md:col-span-4 space-y-6 lg:space-y-8">
-            
-            {/* Radiance Dose */}
             <RadianceDose />
-
-            {/* Campus Support Card */}
             <SupportCard onOpenModal={() => setIsSupportOpen(true)} />
           </div>
+        </div>
 
-          </div>
-
-          {/* ── Wide Footer ── */}
-          <div className="md:col-span-12 space-y-6 pt-12">
-            <div className="flex flex-col items-center">
-              <div className="flex gap-8 mb-6">
-                <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Emergency Aid</a>
-                <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Privacy Circle</a>
-                <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Wellness FAQ</a>
-              </div>
-              <p className="text-[9px] font-bold text-[#AA8E7E]/30 uppercase tracking-[0.5em]">UniWell Campus Sanctuary © 2024</p>
+        <div className="md:col-span-12 space-y-6 pt-12">
+          <div className="flex flex-col items-center">
+            <div className="flex gap-8 mb-6">
+              <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Emergency Aid</a>
+              <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Privacy Circle</a>
+              <a href="#" className="text-[10px] font-black text-[#AA8E7E] hover:text-[#3a2b25] uppercase tracking-widest transition-colors">Wellness FAQ</a>
             </div>
+            <p className="text-[9px] font-bold text-[#AA8E7E]/30 uppercase tracking-[0.5em]">UniWell Campus Sanctuary © 2024</p>
           </div>
-        </main>
+        </div>
+      </main>
 
       <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
       <DemoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} onReset={fetchData} />
+
+      <MoodAnimationOverlay 
+        type={animationType} 
+        isVisible={!!animationType} 
+        onClose={() => setAnimationType(null)} 
+      />
     </div>
   )
 }

@@ -414,23 +414,23 @@ export default function Journal() {
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-8 pt-6 sm:pt-8 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center text-[#6B5A10]">
-                  <BookOpen size={20} />
+            <div className="flex items-center justify-between px-6 sm:px-10 pt-8 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10] shadow-sm">
+                  <BookOpen size={24} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-[#6B5A10] uppercase tracking-[0.3em]">Journal Archive</p>
-                  <p className="text-xs text-[#3a2b25]/40 font-bold uppercase tracking-widest mt-0.5">
+                  <h2 className="font-jakarta font-black text-[#3a2b25] text-xl uppercase tracking-tight">Journal Archive</h2>
+                  <p className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest mt-0.5">
                     {new Date(selectedEntry.created_at).toLocaleString('en-PH', { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedEntry(null)}
-                className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm"
+                className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm border border-[#AA8E7E]/5"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 

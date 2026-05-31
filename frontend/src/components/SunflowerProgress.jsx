@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 /**
  * Premium "Sparkling Sunflower" Streak Companion
  * A custom illustrated, fully animated component that grows with the student's consistency.
  */
 export default function SunflowerProgress({ streak = 0 }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   // Determine display milestones
   const displayMax = streak > 100 ? 365 : streak > 30 ? 100 : 30;
   const pct = Math.min(streak / displayMax, 1);
@@ -24,8 +26,21 @@ export default function SunflowerProgress({ streak = 0 }) {
   const auraScale = isRoyal ? 1.5 : isRadiant ? 1.2 : isLegendary ? 1.0 : 0.8;
   const auraOpacity = Math.min(0.15 + (streak / 100) * 0.5, 0.7);
 
+  const tooltipText = (() => {
+    if (streak === 0) return "Sow your first seed today."
+    if (isSeedling) return "Watching your roots take hold."
+    if (isBudding) return "Your resilience is budding!"
+    if (isBlooming) return "A beautiful bloom in progress."
+    if (isRoyal) return "A masterpiece of consistency!"
+    return "Your garden is thriving!"
+  })()
+
   return (
-    <div className="flex flex-col items-center gap-6 group perspective-1000">
+    <div 
+      className="flex flex-col items-center gap-6 group perspective-1000 relative"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0); }

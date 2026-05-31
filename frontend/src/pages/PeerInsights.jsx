@@ -569,18 +569,30 @@ export default function PeerInsights() {
             <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #e8a800, #f6c945)' }} />
 
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 p-7 pb-4 mt-1">
-              <CategoryBadge category={selectedCard.category} />
-              <button
+            <div className="flex items-center justify-between px-6 sm:px-10 pt-8 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10] shadow-sm">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <h2 className="font-jakarta font-black text-[#3a2b25] text-xl uppercase tracking-tight">Strategy Detail</h2>
+                  <p className="text-[10px] font-bold text-[#AA8E7E] uppercase tracking-widest mt-0.5">Community Wisdom</p>
+                </div>
+              </div>
+              <button 
                 onClick={() => setSelectedCard(null)}
-                className="text-warm/30 hover:text-warm transition-colors rounded-xl p-3 sm:p-1 hover:bg-surface-container flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm border border-[#AA8E7E]/5"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
 
+            <div className="px-6 sm:px-10 pb-4">
+              <CategoryBadge category={selectedCard.category} />
+            </div>
+
             {/* Body — scrollable */}
-            <div className="overflow-y-auto px-4 sm:px-7 pb-5 flex-1">
+            <div className="overflow-y-auto px-6 sm:px-10 pb-8 flex-1">
               <h2 className="font-jakarta font-extrabold text-warm text-xl leading-snug mb-4 animate-fadeIn">
                 {selectedCard.title}
               </h2>

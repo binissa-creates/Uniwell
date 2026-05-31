@@ -191,6 +191,32 @@ h1, h2, h3, h4, h5, h6 {
   from { opacity: 0; transform: translateX(20px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+@keyframes petalFloat {
+  0% {
+    transform: translateY(110vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-10vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+@keyframes sparkle {
+  0%, 100% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@keyframes heartFloat {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+}
 
 .animate-fadeSlideUp  { animation: fadeSlideUp 0.5s ease both; }
 .animate-fadeIn       { animation: fadeIn 0.4s ease both; }
@@ -199,6 +225,9 @@ h1, h2, h3, h4, h5, h6 {
 .animate-pulse-warm   { animation: pulse-warm 2.5s ease infinite; }
 .animate-scaleIn      { animation: scaleIn 0.35s ease both; }
 .animate-slideInRight { animation: slideInRight 0.4s ease both; }
+.animate-petal        { animation: petalFloat 5s linear infinite; }
+.animate-sparkle      { animation: sparkle 1.5s ease-in-out infinite; }
+.animate-heart-float  { animation: heartFloat 3s ease-out infinite; }
 .animate-shimmer {
   background: linear-gradient(90deg, #fff1ed 25%, #ffe9e3 50%, #fff1ed 75%);
   background-size: 200% 100%;

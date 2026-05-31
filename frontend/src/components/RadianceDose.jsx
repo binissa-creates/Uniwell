@@ -158,9 +158,12 @@ const RadianceDose = () => {
               <BookOpen size={16} strokeWidth={2.5} />
               <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Bible Verse</span>
             </div>
-            <div className="text-[#4b6b49]/50 group-hover:text-[#4b6b49] transition-colors flex items-center gap-1">
-              <span className="font-jakarta text-[9px] font-bold uppercase tracking-widest">Flip</span>
-              <Repeat size={14} />
+            <div className="text-[#4b6b49]/50 group-hover:text-[#4b6b49] transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#A8C5A0]/20 border border-transparent group-hover:border-[#A8C5A0]/40">
+              <span className="font-jakarta text-[9px] font-black uppercase tracking-[0.2em]">Flip</span>
+              <div className="relative">
+                <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-white/40 blur-sm animate-shimmer pointer-events-none" />
+              </div>
             </div>
           </div>
 
