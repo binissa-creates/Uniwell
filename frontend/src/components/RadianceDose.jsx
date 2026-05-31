@@ -1,147 +1,188 @@
-import React from 'react';
-import { Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Repeat, BookOpen } from 'lucide-react';
 
-const QUOTES = [
-  // Self-Care (10)
-  { text: "Rest is not earned, it is a requirement of the soul.", tag: "Self-Care" },
-  { text: "Boundaries are the highest form of self-respect.", tag: "Self-Care" },
-  { text: "Be gentle with yourself; you are doing the best you can.", tag: "Self-Care" },
-  { text: "You cannot pour from an empty cup. Fill yourself first.", tag: "Self-Care" },
-  { text: "Self-care is giving the world the best of you, instead of what’s left of you.", tag: "Self-Care" },
-  { text: "Your worth is not measured by your productivity.", tag: "Self-Care" },
-  { text: "Softness is not weakness; it is the strength to remain open.", tag: "Self-Care" },
-  { text: "It’s okay to take a break. The world will wait for you.", tag: "Self-Care" },
-  { text: "Listen to your body when it whispers, so you don’t have to hear it scream.", tag: "Self-Care" },
-  { text: "Protect your peace like it’s the most valuable thing you own.", tag: "Self-Care" },
-  // Motivation (9)
-  { text: "Resilience is the ability to bloom even after the harshest winter.", tag: "Motivation" },
-  { text: "Progress is rarely a straight line; every curve is part of the journey.", tag: "Motivation" },
-  { text: "Survival is a victory in itself. Honor your strength.", tag: "Motivation" },
-  { text: "Your potential is a seed waiting for the right moment to rise.", tag: "Motivation" },
-  { text: "The hardest step is the one you take when you’re most tired.", tag: "Motivation" },
-  { text: "Keep going. You haven’t even seen the best version of yourself yet.", tag: "Motivation" },
-  { text: "Small wins are still wins. Celebrate every inch of ground gained.", tag: "Motivation" },
-  { text: "You are the architect of your own light. Keep building.", tag: "Motivation" },
-  { text: "The sun always returns, even after the longest night.", tag: "Motivation" },
-  // Mindfulness (5)
-  { text: "Breath is the bridge between the world and your soul.", tag: "Mindfulness" },
-  { text: "Presence is the greatest gift you can give to yourself.", tag: "Mindfulness" },
-  { text: "In stillness, you find the answers that noise tries to hide.", tag: "Mindfulness" },
-  { text: "Letting go is the final act of healing. Release it to the wind.", tag: "Mindfulness" },
-  { text: "Be here now. The past is a memory, the future is a dream.", tag: "Mindfulness" },
-  // Growth (8)
-  { text: "Healing is not a destination, but a continuous unfolding.", tag: "Growth" },
-  { text: "Becoming is better than being perfect.", tag: "Growth" },
-  { text: "Roots must grow deep before the flower can reach the sky.", tag: "Growth" },
-  { text: "Change is the only constant in a garden that is alive.", tag: "Growth" },
-  { text: "Every petal you shed makes room for a new bloom.", tag: "Growth" },
-  { text: "You are blooming in ways you cannot see yet.", tag: "Growth" },
-  { text: "The soil of struggle often produces the most beautiful flowers.", tag: "Growth" },
-  { text: "Grow at your own pace; even the slowest bloom is a miracle.", tag: "Growth" }
+const BIBLE_VERSES = [
+  { text: "I can do all things through Christ who strengthens me.", source: "Philippians 4:13" },
+  { text: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.", source: "Jeremiah 29:11" },
+  { text: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.", source: "Joshua 1:9" },
+  { text: "Trust in the Lord with all your heart and lean not on your own understanding.", source: "Proverbs 3:5" },
+  { text: "Let all that you do be done in love.", source: "1 Corinthians 16:14" },
+  { text: "The joy of the Lord is your strength.", source: "Nehemiah 8:10" },
+  { text: "Commit to the Lord whatever you do, and He will establish your plans.", source: "Proverbs 16:3" },
+  { text: "With God all things are possible.", source: "Matthew 19:26" },
+  { text: "Do not grow weary in doing good.", source: "Galatians 6:9" },
+  { text: "Your word is a lamp to my feet and a light to my path.", source: "Psalm 119:105" },
+  { text: "Cast all your anxiety on Him because He cares for you.", source: "1 Peter 5:7" },
+  { text: "Seek first His kingdom and His righteousness.", source: "Matthew 6:33" },
+  { text: "Love your neighbor as yourself.", source: "Mark 12:31" },
+  { text: "Blessed are the peacemakers.", source: "Matthew 5:9" },
+  { text: "Faith can move mountains.", source: "Matthew 17:20" },
+  { text: "The Lord is my shepherd; I shall not want.", source: "Psalm 23:1" },
+  { text: "Be kind and compassionate to one another.", source: "Ephesians 4:32" },
+  { text: "Whatever you do, work at it with all your heart.", source: "Colossians 3:23" },
+  { text: "Perfect love drives out fear.", source: "1 John 4:18" },
+  { text: "Those who hope in the Lord will renew their strength.", source: "Isaiah 40:31" }
+];
+
+const MOTIVATIONAL_QUOTES = [
+  { text: "Success is the sum of small efforts repeated day in and day out.", source: "Robert Collier" },
+  { text: "Dream big. Start small. Act now.", source: "Motivation" },
+  { text: "Discipline is choosing between what you want now and what you want most.", source: "Motivation" },
+  { text: "Your future is created by what you do today, not tomorrow.", source: "Motivation" },
+  { text: "Progress, not perfection.", source: "Motivation" },
+  { text: "Small steps every day lead to big results.", source: "Motivation" },
+  { text: "The expert in anything was once a beginner.", source: "Motivation" },
+  { text: "Difficult roads often lead to beautiful destinations.", source: "Motivation" },
+  { text: "Stay patient and trust your journey.", source: "Motivation" },
+  { text: "You are capable of more than you think.", source: "Motivation" },
+  { text: "Consistency beats motivation.", source: "Motivation" },
+  { text: "Learn today, lead tomorrow.", source: "Motivation" },
+  { text: "Every accomplishment starts with the decision to try.", source: "Motivation" },
+  { text: "Focus on your goal, not the obstacles.", source: "Motivation" },
+  { text: "Don’t stop until you’re proud.", source: "Motivation" },
+  { text: "Great things never come from comfort zones.", source: "Motivation" },
+  { text: "Your only limit is the one you refuse to overcome.", source: "Motivation" },
+  { text: "Success begins with self-belief.", source: "Motivation" },
+  { text: "Mistakes are proof that you are trying.", source: "Motivation" },
+  { text: "Be stronger than your excuses.", source: "Motivation" }
+];
+
+const BONUS_LINES = [
+  "Keep shining.", "One day at a time.", "Grace over pressure.", "Choose growth.", 
+  "Stay humble. Work hard.", "You’ve got this.", "Faith fuels focus.", 
+  "Rise with purpose.", "Study with intention.", "Radiate positivity."
 ];
 
 const RadianceDose = () => {
-  // Day of year calculation
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  // Day of year calculation for daily reset
   const now = new Date();
   const start = new Date(now.getFullYear(), 0, 0);
   const diff = now - start;
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
   
-  const todayQuote = QUOTES[dayOfYear % QUOTES.length];
+  const todayVerse = BIBLE_VERSES[dayOfYear % BIBLE_VERSES.length];
+  const todayQuote = MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+  const bonusLine = BONUS_LINES[dayOfYear % BONUS_LINES.length];
 
-  const styles = {
-    card: {
-      backgroundColor: '#fff1ed',
-      borderRadius: '1.5rem',
-      padding: '1.5rem 2rem',
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1rem',
-      transition: 'all 0.3s ease',
-    },
-    shimmer: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      width: '150px',
-      height: '150px',
-      background: 'radial-gradient(circle at top right, rgba(246,201,69,0.18), transparent 70%)',
-      pointerEvents: 'none',
-    },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.75rem',
-    },
-    label: {
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      fontSize: '0.75rem',
-      fontWeight: 800,
-      letterSpacing: '0.2em',
-      color: '#b0870a',
-      textTransform: 'uppercase',
-    },
-    quote: {
-      fontFamily: "'Playfair Display', serif",
-      fontSize: '1.5rem',
-      fontWeight: 700,
-      fontStyle: 'italic',
-      color: '#3b2a1a',
-      lineHeight: 1.4,
-      margin: 0,
-    },
-    divider: {
-      height: '1px',
-      backgroundColor: 'rgba(176,135,10,0.15)',
-      width: '100%',
-    },
-    footer: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    tag: {
-      backgroundColor: '#b0cfad',
-      color: '#6a9966',
-      padding: '0.4rem 1rem',
-      borderRadius: '9999px',
-      fontSize: '0.7rem',
-      fontWeight: 800,
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      textTransform: 'uppercase',
-      letterSpacing: '0.05em',
-    },
-    dailyBloom: {
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      fontSize: '0.65rem',
-      fontWeight: 700,
-      color: '#c4a26a',
-      textTransform: 'uppercase',
-      letterSpacing: '0.15em',
-    }
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
   };
 
   return (
-    <div style={styles.card} className="radiance-dose-card animate-fadeIn">
-      <div style={styles.shimmer} />
-      
-      <div style={styles.header}>
-        <Sparkles size={18} color="#b0870a" strokeWidth={2.5} />
-        <span style={styles.label}>Radiance Dose</span>
-      </div>
+    <div className="relative w-full min-w-[320px] sm:min-w-[360px] h-[280px] perspective-1000 group cursor-pointer animate-fadeIn" onClick={handleFlip}>
+      <style>{`
+        .flip-card-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transform-style: preserve-3d;
+        }
+        .flip-card-front, .flip-card-back {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          backface-visibility: hidden;
+          border-radius: 1.5rem;
+          padding: 1.5rem 2rem;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          overflow: hidden;
+        }
+        .flip-card-front {
+          background-color: #fdf6e3;
+          border: 1px solid rgba(176,135,10,0.15);
+        }
+        .flip-card-back {
+          background-color: #f0f4f8;
+          border: 1px solid rgba(100,116,139,0.15);
+          transform: rotateY(180deg);
+        }
+        .cardboard-texture {
+          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          border-radius: 1.5rem;
+        }
+      `}</style>
 
-      <p style={styles.quote}>
-        "{todayQuote.text}"
-      </p>
+      <div className="flip-card-inner" style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
+        
+        {/* FRONT: Motivational Quote */}
+        <div className="flip-card-front">
+          <div className="cardboard-texture" />
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-[radial-gradient(circle_at_top_right,rgba(246,201,69,0.15),transparent_70%)] pointer-events-none rounded-tr-[1.5rem]" />
+          
+          <div className="flex items-center justify-between z-10">
+            <div className="flex items-center gap-2 text-[#b0870a]">
+              <Sparkles size={16} strokeWidth={2.5} />
+              <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Daily Motivation</span>
+            </div>
+            <div className="text-[#b0870a]/50 group-hover:text-[#b0870a] transition-colors flex items-center gap-1">
+              <span className="font-jakarta text-[9px] font-bold uppercase tracking-widest">Flip</span>
+              <Repeat size={14} />
+            </div>
+          </div>
 
-      <div style={styles.divider} />
+          <div className="flex-1 flex flex-col justify-center py-4 z-10">
+            <p className="font-playfair text-xl font-bold italic text-[#3a2b25] leading-snug">
+              "{todayQuote.text}"
+            </p>
+            <p className="font-jakarta text-[11px] font-bold text-[#b0870a]/80 uppercase tracking-widest mt-4">
+              — {todayQuote.source}
+            </p>
+          </div>
 
-      <div style={styles.footer}>
-        <div style={styles.tag}>{todayQuote.tag}</div>
-        <span style={styles.dailyBloom}>Daily Bloom</span>
+          <div className="z-10 mt-auto pt-4 border-t border-[#b0870a]/10 flex justify-between items-center">
+            <span className="px-3 py-1 bg-[#F6C945]/20 text-[#6B5A10] rounded-full text-[10px] font-bold font-jakarta uppercase tracking-wider">
+              {bonusLine}
+            </span>
+            <span className="font-jakarta text-[10px] font-black text-[#b0870a]/60 tracking-[0.15em] uppercase">
+              Side A
+            </span>
+          </div>
+        </div>
+
+        {/* BACK: Bible Verse */}
+        <div className="flip-card-back">
+          <div className="cardboard-texture" />
+          <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-[radial-gradient(circle_at_top_right,rgba(168,197,160,0.2),transparent_70%)] pointer-events-none rounded-tr-[1.5rem]" />
+          
+          <div className="flex items-center justify-between z-10">
+            <div className="flex items-center gap-2 text-[#4b6b49]">
+              <BookOpen size={16} strokeWidth={2.5} />
+              <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Bible Verse</span>
+            </div>
+            <div className="text-[#4b6b49]/50 group-hover:text-[#4b6b49] transition-colors flex items-center gap-1">
+              <span className="font-jakarta text-[9px] font-bold uppercase tracking-widest">Flip</span>
+              <Repeat size={14} />
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center py-4 z-10">
+            <p className="font-playfair text-xl font-bold italic text-[#2c3b2b] leading-snug">
+              "{todayVerse.text}"
+            </p>
+            <p className="font-jakarta text-[11px] font-bold text-[#6a8767] uppercase tracking-widest mt-4">
+              — {todayVerse.source}
+            </p>
+          </div>
+
+          <div className="z-10 mt-auto pt-4 border-t border-[#4b6b49]/10 flex justify-between items-center">
+            <span className="px-3 py-1 bg-[#b0cfad]/30 text-[#4b6b49] rounded-full text-[10px] font-bold font-jakarta uppercase tracking-wider">
+              {bonusLine}
+            </span>
+            <span className="font-jakarta text-[10px] font-black text-[#4b6b49]/50 tracking-[0.15em] uppercase">
+              Side B
+            </span>
+          </div>
+        </div>
+
       </div>
     </div>
   );

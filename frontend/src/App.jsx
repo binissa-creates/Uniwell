@@ -6,6 +6,8 @@ import { getHomeForRole, isPortalValidationActive, roleCanAccess } from './lib/p
 import Login from './pages/Login'
 import LoginStaff from './pages/LoginStaff'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import MoodTracker from './pages/MoodTracker'
 import Journal from './pages/Journal'
@@ -73,6 +75,8 @@ export default function App() {
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
           <Route path="/login-staff" element={<GuestRoute><LoginStaff /></GuestRoute>} />
           <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+          <Route path="/forgot-password" element={<GuestRoute><ForgotPassword /></GuestRoute>} />
+          <Route path="/reset-password" element={<GuestRoute><ResetPassword /></GuestRoute>} />
 
           {/* Student */}
           <Route path="/dashboard" element={<ProtectedRoute allowedRole="student"><Dashboard /></ProtectedRoute>} />

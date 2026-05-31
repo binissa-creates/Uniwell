@@ -46,6 +46,11 @@ export default function Journal() {
 
   useEffect(() => { loadData() }, [loadData])
 
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   const handleContentChange = (e) => {
     setContent(e.target.value)
     setCharCount(e.target.value.length)
@@ -110,16 +115,16 @@ export default function Journal() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── Page Header ── */}
-        <div className="mb-14 flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="mb-6 sm:mb-14 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
           <div className="animate-fadeIn">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-px w-8 bg-[#6B5A10]/30"></div>
               <p className="text-[#6B5A10] text-[10px] font-black uppercase tracking-[0.4em]">Personal Archive</p>
             </div>
-            <h1 className="font-jakarta text-5xl md:text-6xl font-extrabold text-[#3a2b25] mb-4">
+            <h1 className="font-jakarta text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#3a2b25] mb-4">
               Journal <span className="font-playfair italic text-[#6B5A10] font-bold">Sanctuary</span>
             </h1>
             <p className="text-[#3a2b25]/50 text-base md:text-lg max-w-lg leading-relaxed font-medium">
@@ -132,7 +137,7 @@ export default function Journal() {
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8 items-start">
+        <div className="grid lg:grid-cols-12 gap-4 sm:gap-8 items-start">
 
           {/* ── LEFT SIDE: COMPOSE ── */}
           <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-8">
@@ -199,7 +204,7 @@ export default function Journal() {
                     value={content}
                     onChange={handleContentChange}
                     placeholder="Begin your reflection..."
-                    className="w-full rounded-[2rem] bg-[#FDF9F2] p-8 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.8] font-medium"
+                    className="w-full rounded-[2rem] bg-[#FDF9F2] p-4 sm:p-6 lg:p-8 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.8] font-medium"
                     style={{ minHeight: '300px' }}
                   />
                   <div className="absolute bottom-6 right-8 flex items-center gap-2">
@@ -234,7 +239,7 @@ export default function Journal() {
           {/* ── MOBILE COMPOSE TRIGGER ── */}
           <button 
             onClick={() => setShowMobileCompose(true)}
-            className="lg:hidden w-full bg-[#3a2b25] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lift mb-8"
+            className="lg:hidden w-full bg-[#3a2b25] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-lift mb-8 min-h-[44px]"
           >
             <PenLine size={16} /> Write New Entry
           </button>
@@ -242,19 +247,19 @@ export default function Journal() {
           {/* ── MOBILE COMPOSE MODAL ── */}
           {showMobileCompose && (
             <div className="fixed inset-0 z-[60] bg-[#FDF9F2] overflow-y-auto page-enter lg:hidden flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b border-[#AA8E7E]/10 bg-white sticky top-0 z-10">
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-[#AA8E7E]/10 bg-white sticky top-0 z-10">
                  <div className="flex items-center gap-3">
                    <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10]">
                      <PenLine size={20} />
                    </div>
                    <h2 className="font-jakarta font-black text-[#3a2b25] text-lg uppercase tracking-tight">New Entry</h2>
                  </div>
-                 <button onClick={() => setShowMobileCompose(false)} className="p-2 bg-[#FDF9F2] rounded-2xl text-[#AA8E7E] hover:text-[#3a2b25] transition-colors">
+                 <button onClick={() => setShowMobileCompose(false)} className="p-3 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center bg-[#FDF9F2] rounded-2xl text-[#AA8E7E] hover:text-[#3a2b25] transition-colors">
                    <X size={24} />
                  </button>
               </div>
-              <div className="p-6 pb-24 flex-1">
-                <div className="bg-white rounded-[2.5rem] p-6 sm:p-8 shadow-lift border border-white">
+              <div className="p-4 sm:p-6 pb-24 flex-1">
+                <div className="bg-white rounded-[2.5rem] p-4 sm:p-8 shadow-lift border border-white">
                   {/* Replicating Form logic for mobile */}
                   <div className="space-y-6">
                     {/* Mode Selector */}
@@ -304,7 +309,7 @@ export default function Journal() {
                         value={content}
                         onChange={handleContentChange}
                         placeholder="Begin your reflection..."
-                        className="w-full rounded-[2rem] bg-[#FDF9F2] p-6 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.6] font-medium"
+                        className="w-full rounded-[2rem] bg-[#FDF9F2] p-4 sm:p-6 text-base text-[#3a2b25] placeholder-[#AA8E7E]/40 outline-none focus:ring-2 focus:ring-[#6B5A10]/10 border border-transparent transition-all resize-none leading-[1.6] font-medium"
                         style={{ minHeight: '250px' }}
                       />
                       <div className="absolute bottom-6 right-6 flex items-center gap-2">
@@ -321,7 +326,7 @@ export default function Journal() {
                     <button
                       onClick={handleSubmit}
                       disabled={!content.trim() || loading}
-                      className="w-full gradient-cta text-[#3E3006] font-black uppercase tracking-[0.2em] rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lift hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
+                      className="w-full gradient-cta text-[#3E3006] font-black uppercase tracking-[0.2em] rounded-2xl py-5 flex items-center justify-center gap-3 shadow-lift hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs min-h-[44px]"
                     >
                       {loading && <Loader2 size={16} className="animate-spin" />}
                       {loading ? 'Securing...' : 'Commit to Garden'}
@@ -337,9 +342,9 @@ export default function Journal() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <Book size={18} className="text-[#6B5A10]" />
-                <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Timeline</h3>
+                <h3 className="font-jakarta font-black text-[#3a2b25] text-lg sm:text-xl lg:text-2xl uppercase tracking-widest">Timeline</h3>
               </div>
-              <div className="bg-[#F6C945]/10 px-4 py-1.5 rounded-full border border-[#F6C945]/20">
+              <div className="bg-[#F6C945]/10 px-4 py-1.5 rounded-full border border-[#F6C945]/20 animate-fadeIn">
                 <p className="text-[9px] font-black text-[#6B5A10] uppercase tracking-widest">
                   {entries.length} Reflections logged
                 </p>
@@ -358,7 +363,7 @@ export default function Journal() {
                 <div 
                   key={e.id} 
                   onClick={() => setSelectedEntry(e)}
-                  className="group bg-white rounded-[2rem] p-6 shadow-lift border border-transparent hover:border-[#F6C945]/20 transition-all cursor-pointer relative overflow-hidden flex flex-col animate-fadeSlideUp" 
+                  className="group bg-white rounded-[2rem] p-4 sm:p-6 shadow-lift border border-transparent hover:border-[#F6C945]/20 transition-all cursor-pointer relative overflow-hidden flex flex-col animate-fadeSlideUp" 
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
                   <div className="flex items-center justify-between mb-3">
@@ -371,7 +376,7 @@ export default function Journal() {
                     <button
                       onClick={(ev) => { ev.stopPropagation(); handleDelete(e.id); }}
                       disabled={deleting === e.id}
-                      className="opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-red-50 text-red-400 hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-105"
+                      className="opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-red-50 text-red-400 hover:bg-[#ba1a1a] hover:text-white transition-all transform hover:scale-105 min-w-[32px] min-h-[32px] flex items-center justify-center"
                     >
                       {deleting === e.id ? <Loader2 size={10} className="animate-spin" /> : <Trash2 size={12} />}
                     </button>
@@ -405,11 +410,11 @@ export default function Journal() {
           onClick={() => setSelectedEntry(null)}
         >
           <div 
-            className="bg-[#FDF9F2] rounded-[3rem] w-full max-w-2xl shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]"
+            className="bg-[#FDF9F2] rounded-[2.5rem] sm:rounded-[3rem] w-auto mx-4 sm:mx-auto max-w-2xl shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-8 pt-8 pb-4">
+            <div className="flex items-center justify-between px-4 sm:px-8 pt-6 sm:pt-8 pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center text-[#6B5A10]">
                   <BookOpen size={20} />
@@ -423,14 +428,14 @@ export default function Journal() {
               </div>
               <button 
                 onClick={() => setSelectedEntry(null)}
-                className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm"
+                className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-2xl bg-white flex items-center justify-center text-[#3a2b25]/30 hover:text-[#3a2b25] transition-colors shadow-sm"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Scrollable Content */}
-            <div className="px-10 pb-10 pt-4 overflow-y-auto custom-scrollbar flex-1">
+            <div className="px-4 sm:px-10 pb-6 sm:pb-10 pt-4 overflow-y-auto custom-scrollbar flex-1">
               {selectedEntry.prompt && (
                 <div className="mb-8 px-6 py-4 rounded-3xl bg-white border border-[#F6C945]/20 inline-block shadow-sm">
                   <p className="font-playfair text-lg md:text-xl font-bold text-[#6B5A10] italic leading-snug">
@@ -447,11 +452,11 @@ export default function Journal() {
             </div>
 
             {/* Footer */}
-            <div className="px-10 py-6 bg-white border-t border-[#FDF9F2] flex items-center justify-between">
+            <div className="px-4 sm:px-10 py-4 sm:py-6 bg-white border-t border-[#FDF9F2] flex items-center justify-between flex-wrap gap-4">
               <span className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest">End of Reflection</span>
               <button
                 onClick={() => { handleDelete(selectedEntry.id); setSelectedEntry(null); }}
-                className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors"
+                className="flex items-center gap-2 text-[10px] font-black text-red-400 uppercase tracking-widest hover:text-red-600 transition-colors min-h-[44px] px-2"
               >
                 <Trash2 size={14} /> Delete Entry
               </button>

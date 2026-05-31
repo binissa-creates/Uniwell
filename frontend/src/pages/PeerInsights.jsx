@@ -164,6 +164,11 @@ export default function PeerInsights() {
     if (tab === 'mine') fetchMine()
   }, [tab, fetchFavorites, fetchMine])
 
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   // ── Vote ───────────────────────────────────────────────────
   const handleVote = async (id) => {
     setVoting(id)
@@ -282,17 +287,17 @@ export default function PeerInsights() {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
-      <main className="max-w-5xl mx-auto px-6 pt-28 pb-24 page-enter">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-24 page-enter">
 
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 mb-8 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-6 sm:gap-8 mb-8">
           <div>
             <p className="text-warm/45 text-xs font-semibold uppercase tracking-widest mb-3">Community</p>
-            <h1 className="font-jakarta text-5xl font-extrabold text-warm editorial-accent mb-4">Peer Insights</h1>
+            <h1 className="font-jakarta text-2xl sm:text-3xl lg:text-4xl font-extrabold text-warm editorial-accent mb-4">Peer Insights</h1>
             <p className="text-warm/50 text-sm leading-relaxed max-w-md">Anonymized coping strategies from students just like you. 💡</p>
           </div>
           <button onClick={() => setShowSubmit(true)}
-            className="flex items-center gap-2 gradient-cta text-on-primary font-semibold text-sm px-6 py-3 rounded-full shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 flex-shrink-0 self-start mt-8">
+            className="flex items-center gap-2 gradient-cta text-on-primary font-semibold text-sm px-6 py-3 rounded-full shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 flex-shrink-0 self-start sm:mt-8 min-h-[44px]">
             <PlusCircle size={16} /> Share a strategy
           </button>
         </div>
@@ -301,7 +306,7 @@ export default function PeerInsights() {
         <div className="flex gap-2 mb-8 flex-wrap">
           {TABS.map(({ key, icon: Icon, label }) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 min-h-[44px]
                 ${tab === key ? 'gradient-cta text-[#3E3006] shadow-glow' : 'bg-white text-warm/50 shadow-suncast hover:text-warm hover:shadow-glow'}`}>
               <Icon size={13} /> {label}
             </button>
@@ -318,7 +323,7 @@ export default function PeerInsights() {
                   placeholder="Search strategies…"
                   className="w-full bg-white rounded-2xl pl-10 pr-4 py-3 text-sm text-warm placeholder-warm/30 outline-none shadow-suncast focus:shadow-glow transition-all duration-200" />
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 flex-wrap">
+              <div className="flex gap-2 overflow-x-auto pb-1 max-w-full custom-scrollbar flex-nowrap sm:flex-wrap">
                 {CATEGORIES.map(c => (
                   <button key={c} onClick={() => setCategory(c)}
                     className={`flex-shrink-0 text-xs px-4 py-2 rounded-full font-semibold transition-all duration-200
@@ -332,7 +337,7 @@ export default function PeerInsights() {
             {strategies.length === 0 ? (
               <EmptyState emoji="💡" title="No strategies found" sub="Try a different filter or be the first to share!" />
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start">
               {strategies.map((s, i) => (
                 <StrategyCard key={s.id} s={s} i={i}
                     isFav={favIds.has(s.id)}
@@ -367,7 +372,7 @@ export default function PeerInsights() {
               <EmptyState emoji="🔖" title="No favorites yet"
                 sub="Tap the bookmark icon on any strategy to save it here." />
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start">
               {favStrategies.map((s, i) => (
                 <StrategyCard key={s.id} s={s} i={i}
                     isFav={true}
@@ -408,7 +413,7 @@ export default function PeerInsights() {
                   const ss = STATUS_STYLE[s.status] || STATUS_STYLE.pending
                   const cat = CAT_STYLE[s.category] || CAT_STYLE['Other']
                   return (
-                    <div key={s.id} className="bg-white rounded-3xl p-5 shadow-suncast flex items-start gap-4 card-hover">
+                    <div key={s.id} className="bg-white rounded-3xl p-4 sm:p-5 shadow-suncast flex items-start gap-3 sm:gap-4 card-hover">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-2">
                           <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ background: cat.bg, color: cat.text }}>{s.category}</span>
@@ -448,7 +453,7 @@ export default function PeerInsights() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(193,208,219,0.55)', backdropFilter: 'blur(20px)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowSubmit(false) }}>
-          <div className="bg-white rounded-3xl p-8 w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden">
+          <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 w-full mx-4 sm:mx-auto max-w-lg max-h-[85vh] overflow-y-auto shadow-lift animate-scaleIn relative overflow-hidden">
             <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl"
               style={{ background: 'linear-gradient(90deg, #e8a800, #f6c945)' }} />
             <div className="flex items-center justify-between mb-6 mt-1">
@@ -456,7 +461,7 @@ export default function PeerInsights() {
                 <Sparkles size={18} className="text-primary" />
                 <h2 className="font-jakarta font-bold text-xl text-warm">Share a Coping Strategy</h2>
               </div>
-              <button onClick={() => setShowSubmit(false)} className="text-warm/30 hover:text-warm transition-colors rounded-xl p-1 hover:bg-surface-container">
+              <button onClick={() => setShowSubmit(false)} className="text-warm/30 hover:text-warm transition-colors rounded-xl p-3 sm:p-1 hover:bg-surface-container min-w-[44px] min-h-[44px] flex items-center justify-center">
                 <X size={20} />
               </button>
             </div>
@@ -469,12 +474,12 @@ export default function PeerInsights() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-xs font-bold text-warm/45 uppercase tracking-widest mb-2 block">Category</label>
                     <select required value={submitForm.category}
                       onChange={e => setSubmitForm(f => ({ ...f, category: e.target.value }))}
-                      className="w-full rounded-2xl px-4 py-3 text-sm text-warm outline-none transition-all duration-200 appearance-none"
+                      className="w-full rounded-2xl px-4 py-3 text-sm text-warm outline-none transition-all duration-200 appearance-none min-h-[44px]"
                       style={{ background: 'var(--color-surface-container-highest)' }}>
                       <option value="">Select…</option>
                       {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
@@ -485,7 +490,7 @@ export default function PeerInsights() {
                         value={submitForm.customCategory}
                         onChange={e => setSubmitForm(f => ({ ...f, customCategory: e.target.value }))}
                         placeholder="Type category..."
-                        className="w-full rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30 animate-fadeIn"
+                        className="w-full rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30 animate-fadeIn min-h-[36px]"
                       />
                     )}
                   </div>
@@ -494,7 +499,7 @@ export default function PeerInsights() {
                     <input required value={submitForm.title}
                       onChange={e => setSubmitForm(f => ({ ...f, title: e.target.value }))}
                       placeholder="e.g. 4-7-8 Breathing"
-                      className="w-full rounded-2xl px-4 py-3 text-sm text-warm placeholder-warm/30 outline-none transition-all duration-200"
+                      className="w-full rounded-2xl px-4 py-3 text-sm text-warm placeholder-warm/30 outline-none transition-all duration-200 min-h-[44px]"
                       style={{ background: 'var(--color-surface-container-highest)' }} />
                   </div>
                 </div>
@@ -530,12 +535,12 @@ export default function PeerInsights() {
                         onChange={e => setSubmitForm(f => ({ ...f, customTrigger: e.target.value }))}
                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomTrigger())}
                         placeholder="Type custom trigger and press Enter..."
-                        className="flex-1 rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30"
+                        className="flex-1 rounded-xl px-4 py-2 text-xs text-warm outline-none bg-[#FCF8F4] border border-[#F6C945]/30 min-h-[36px]"
                       />
                       <button 
                         type="button"
                         onClick={addCustomTrigger}
-                        className="px-4 py-2 bg-primary text-on-primary-container text-[10px] font-black uppercase rounded-xl hover:opacity-90"
+                        className="px-4 py-2 bg-primary text-on-primary-container text-[10px] font-black uppercase rounded-xl hover:opacity-90 min-h-[36px]"
                       >
                         Add
                       </button>
@@ -543,7 +548,7 @@ export default function PeerInsights() {
                   )}
                 </div>
                 <button type="submit" disabled={submitting}
-                  className="w-full gradient-cta text-on-primary font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 text-sm mt-2">
+                  className="w-full gradient-cta text-on-primary font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 disabled:opacity-40 text-sm mt-2 min-h-[44px]">
                   {submitting && <Loader2 size={16} className="animate-spin" />}
                   {submitting ? 'Submitting…' : 'Submit for review'}
                 </button>
@@ -559,7 +564,7 @@ export default function PeerInsights() {
           style={{ background: 'radial-gradient(circle at center, rgba(246, 201, 69, 0.15), rgba(58, 43, 37, 0.6))', backdropFilter: 'blur(6px)' }}
           onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
         >
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white rounded-3xl w-auto mx-4 sm:mx-auto max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]">
             {/* Top accent bar */}
             <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl" style={{ background: 'linear-gradient(90deg, #e8a800, #f6c945)' }} />
 
@@ -568,18 +573,18 @@ export default function PeerInsights() {
               <CategoryBadge category={selectedCard.category} />
               <button
                 onClick={() => setSelectedCard(null)}
-                className="text-warm/30 hover:text-warm transition-colors rounded-xl p-1 hover:bg-surface-container flex-shrink-0"
+                className="text-warm/30 hover:text-warm transition-colors rounded-xl p-3 sm:p-1 hover:bg-surface-container flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <X size={20} />
               </button>
             </div>
 
             {/* Body — scrollable */}
-            <div className="overflow-y-auto px-7 pb-5 flex-1">
-              <h2 className="font-jakarta font-extrabold text-warm text-xl leading-snug mb-4">
+            <div className="overflow-y-auto px-4 sm:px-7 pb-5 flex-1">
+              <h2 className="font-jakarta font-extrabold text-warm text-xl leading-snug mb-4 animate-fadeIn">
                 {selectedCard.title}
               </h2>
-              <p className="text-sm text-warm/70 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-warm/70 leading-relaxed whitespace-pre-wrap font-medium">
                 {selectedCard.description}
               </p>
 
@@ -591,7 +596,7 @@ export default function PeerInsights() {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {selectedCard.trigger_tags.map(t => (
-                      <span key={t} className="text-xs font-semibold rounded-full px-3 py-1"
+                      <span key={t} className="text-xs font-semibold rounded-full px-3 py-1 shadow-inner whitespace-nowrap"
                         style={{ background: 'var(--color-secondary-container)', color: 'var(--color-secondary)' }}>
                         {t}
                       </span>
@@ -602,7 +607,7 @@ export default function PeerInsights() {
             </div>
 
             {/* Footer — actions */}
-            <div className="px-7 py-5 border-t flex items-center justify-between gap-4"
+            <div className="px-4 sm:px-7 py-4 sm:py-5 border-t flex items-center justify-between flex-wrap gap-4"
               style={{ borderColor: 'rgba(209,197,174,0.2)' }}>
               <span className="text-[10px] text-warm/30 font-medium">Shared anonymously</span>
               <div className="flex items-center gap-3">
@@ -614,7 +619,7 @@ export default function PeerInsights() {
                   }}
                   disabled={bookmarking === selectedCard.id}
                   title={selectedCard._isFav ? 'Remove from favorites' : 'Save to favorites'}
-                  className={`p-2 rounded-full transition-all duration-200 ${
+                  className={`p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${
                     selectedCard._isFav ? 'text-[#755b00] bg-[#f6c945]/20' : 'text-warm/30 hover:text-[#755b00] hover:bg-[#f6c945]/10'
                   }`}
                 >
@@ -639,7 +644,7 @@ export default function PeerInsights() {
                       })
                     }}
                     disabled={voting === selectedCard.id}
-                    className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all duration-200 ${
+                    className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full transition-all duration-200 min-h-[44px] flex items-center justify-center ${
                       selectedCard.i_voted ? 'bg-red-100 text-red-500 shadow-suncast' : 'text-warm/40 hover:bg-red-50 hover:text-red-400'
                     }`}
                   >
@@ -669,13 +674,13 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
     >
       <CategoryBadge category={s.category} />
       <h3 className="font-jakarta font-bold text-warm text-base leading-snug">{s.title}</h3>
-      <p className="text-sm text-warm/65 leading-relaxed line-clamp-3">{s.description}</p>
+      <p className="text-sm text-warm/65 leading-relaxed line-clamp-3 font-medium">{s.description}</p>
       {(() => {
         const tags = Array.isArray(s.trigger_tags) ? s.trigger_tags : []
         return tags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {tags.map(t => (
-              <span key={t} className="text-[10px] font-semibold rounded-full px-2.5 py-1"
+              <span key={t} className="text-[10px] font-semibold rounded-full px-2.5 py-1 whitespace-nowrap"
                 style={{ background: 'var(--color-secondary-container)', color: 'var(--color-secondary)' }}>
                 {t}
               </span>
@@ -690,7 +695,7 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
           {/* Bookmark */}
           <button onClick={() => onBookmark(s.id)} disabled={bookmarking === s.id}
             title={isFav ? 'Remove from favorites' : 'Save to favorites'}
-            className={`p-1.5 rounded-full transition-all duration-200 ${isFav ? 'text-[#755b00] bg-[#f6c945]/20' : 'text-warm/30 hover:text-[#755b00] hover:bg-[#f6c945]/10'}`}>
+            className={`p-2 rounded-full transition-all duration-200 min-w-[36px] min-h-[36px] flex items-center justify-center ${isFav ? 'text-[#755b00] bg-[#f6c945]/20' : 'text-warm/30 hover:text-[#755b00] hover:bg-[#f6c945]/10'}`}>
             {bookmarking === s.id
               ? <Loader2 size={13} className="animate-spin" />
               : <Bookmark size={13} fill={isFav ? 'currentColor' : 'none'} />}
@@ -698,7 +703,7 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
           {/* Like */}
           {!hideLike && (
             <button onClick={() => onVote(s.id)} disabled={voting === s.id}
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full transition-all duration-200 min-h-[36px] flex items-center justify-center
                 ${s.i_voted ? 'bg-red-100 text-red-500 shadow-suncast' : 'text-warm/40 hover:bg-red-50 hover:text-red-400'}`}>
               {voting === s.id ? <Loader2 size={12} className="animate-spin" /> : <Heart size={12} fill={s.i_voted ? 'currentColor' : 'none'} />}
               <span>{s.helpful_count}</span>

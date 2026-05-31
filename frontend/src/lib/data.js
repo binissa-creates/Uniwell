@@ -1,6 +1,19 @@
 import { supabase } from './supabase'
 
 /**
+ * Normalize course names for consistent display.
+ * Converts legacy course names to current standards.
+ */
+export function normalizeCourse(courseName) {
+  if (!courseName) return courseName
+  // Replace legacy "Computer Studies" with "IT"
+  if (courseName.toLowerCase() === 'computer studies') {
+    return 'IT'
+  }
+  return courseName
+}
+
+/**
  * Shared data access helpers. Each one performs a Supabase query and
  * returns normalized shapes that pages can consume directly.
  */
@@ -107,12 +120,21 @@ export function dailyQuoteForToday() {
  * Caller must be authenticated — RLS scopes to auth.uid() automatically.
  */
 export async function fetchMoodHistory(days = 7) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const userId = sessionData?.session?.user?.id
+
   const since = new Date(Date.now() - days * 86400000).toISOString()
-  const { data, error } = await supabase
+  let query = supabase
     .from('mood_logs')
     .select('id, mood_type, intensity, note, logged_at, mood_triggers(trigger_category)')
     .gte('logged_at', since)
     .order('logged_at', { ascending: false })
+
+  if (userId) {
+    query = query.eq('user_id', userId)
+  }
+
+  const { data, error } = await query
   if (error) throw error
   return (data || []).map((row) => ({
     id: row.id,
@@ -167,4 +189,17 @@ export async function logMood({ mood_type, intensity = 3, note = null, triggers 
   })
   if (error) throw error
   return data
+}
+
+/**
+ * Delete a mood log by ID.
+ * RLS ensures only the owner can delete their own logs.
+ */
+export async function deleteMoodEntry(id) {
+  const { error } = await supabase
+    .from('mood_logs')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+  return true
 }

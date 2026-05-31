@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle, GraduationCap } from 'lucide-react'
 
-const COURSES = ['Computer Studies', 'AB Music', 'Political Science', 'Tourism', 'Psychology', 'Nursing', 'Education', 'Business Administration', 'Engineering', 'Architecture', 'Communication']
+const COURSES = ['IT', 'Computer Science', 'AB Music', 'Political Science', 'Tourism', 'Psychology', 'Nursing', 'Education', 'Business Administration', 'Engineering', 'Architecture', 'Communication']
 const YEARS = ['1st', '2nd', '3rd', '4th']
 
 export default function Register() {

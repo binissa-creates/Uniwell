@@ -13,6 +13,9 @@ export default function SunflowerProgress({ streak = 0 }) {
   const offset = circum * (1 - pct);
 
   // Milestone logic
+  const isSeedling = streak < 5;
+  const isBudding = streak >= 5 && streak < 15;
+  const isBlooming = streak >= 15 && streak < 30;
   const isLegendary = streak >= 30;
   const isRadiant = streak >= 60;
   const isRoyal = streak >= 100;
@@ -136,75 +139,127 @@ export default function SunflowerProgress({ streak = 0 }) {
             </div>
           )}
 
-          <div style={{ animation: 'sway 4s ease-in-out infinite', transformOrigin: 'bottom center' }}>
-            {/* Sunflower Graphic */}
-            <svg width="88" height="88" viewBox="0 0 100 100" className="overflow-visible">
-              {/* Stem */}
-              <path d="M50 55 Q50 85 45 105" stroke="#b0cfad" strokeWidth="4" fill="none" strokeLinecap="round" />
+          <div style={{ transition: 'all 1s cubic-bezier(0.34, 1.56, 0.64, 1)', transformOrigin: 'bottom center' }}>
+            <div style={{ animation: 'sway 4s ease-in-out infinite', transformOrigin: 'bottom center' }}>
               
-              {/* Aesthetic Leaf */}
-              <path 
-                d="M48 90 Q65 80 58 68 Q45 78 48 90" 
-                fill="#b0cfad" 
-                opacity="0.9" 
-                transform="rotate(-15 48 90)"
-              />
+              {/* STAGE 1: Seedling (0-4 Days) */}
+              {isSeedling && (
+                <svg width="88" height="88" viewBox="0 0 100 100" className="overflow-visible animate-fadeIn">
+                  <path d="M50 75 Q50 90 45 105" stroke="#b0cfad" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  <path d="M48 85 Q56 75 52 70 Q45 75 48 85" fill="#8cb888" opacity="0.9" />
+                  <path d="M50 82 Q42 75 45 70 Q52 75 50 82" fill="#a0c29d" opacity="0.9" />
+                </svg>
+              )}
 
-              {/* Petals (Back Layer for volume) */}
-              <g style={{ animation: 'breathe 3s ease-in-out infinite', transformOrigin: 'center' }}>
-                {[...Array(12)].map((_, i) => (
-                  <path
-                    key={`back-${i}`}
-                    d="M50 50 Q65 15 50 5 Q35 15 50 50"
-                    fill={isLegendary ? "#f6c945" : "#ffedba"}
-                    opacity="0.7"
-                    transform={`rotate(${i * 30 + 15} 50 50) scale(0.95)`}
+              {/* STAGE 2: Budding (5-14 Days) */}
+              {isBudding && (
+                <svg width="88" height="88" viewBox="0 0 100 100" className="overflow-visible animate-fadeIn">
+                  <path d="M50 65 Q50 85 45 105" stroke="#b0cfad" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  <path d="M48 85 Q62 75 56 65 Q45 75 48 85" fill="#8cb888" opacity="0.9" />
+                  <path d="M49 75 Q35 68 40 60 Q50 68 49 75" fill="#a0c29d" opacity="0.9" />
+                  <circle cx="50" cy="65" r="9" fill="#8cb888" />
+                  <path d="M44 62 Q50 53 56 62 Z" fill="#ffedba" />
+                </svg>
+              )}
+
+              {/* STAGE 3: Blooming (15-29 Days) */}
+              {isBlooming && (
+                <svg width="88" height="88" viewBox="0 0 100 100" className="overflow-visible animate-fadeIn">
+                  <path d="M50 55 Q50 85 45 105" stroke="#b0cfad" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  <path d="M48 90 Q65 80 58 68 Q45 78 48 90" fill="#b0cfad" opacity="0.9" transform="rotate(-15 48 90)" />
+                  <path d="M49 75 Q35 68 40 60 Q50 68 49 75" fill="#8cb888" opacity="0.9" />
+                  <g style={{ animation: 'breathe 3s ease-in-out infinite', transformOrigin: 'center' }}>
+                    {[...Array(8)].map((_, i) => (
+                      <path
+                        key={`front-${i}`}
+                        d="M50 50 Q60 20 50 10 Q40 20 50 50"
+                        fill="#ffedba"
+                        stroke="#f6c945"
+                        strokeWidth="0.8"
+                        transform={`rotate(${i * 45} 50 50) scale(0.85)`}
+                      />
+                    ))}
+                  </g>
+                  <circle cx="50" cy="51" r="14" fill="rgba(0,0,0,0.15)" />
+                  <circle cx="50" cy="50" r="14" fill="#4a352a" />
+                  {[...Array(10)].map((_, i) => {
+                    const angle = i * 137.5 * (Math.PI / 180);
+                    const r = 2 + Math.sqrt(i) * 2.5;
+                    return (
+                      <circle key={i} cx={50 + r * Math.cos(angle)} cy={50 + r * Math.sin(angle)} r="1.2" fill={i % 2 === 0 ? "#f6c945" : "#6e4b3b"} opacity="0.6" />
+                    );
+                  })}
+                </svg>
+              )}
+
+              {/* STAGE 4: Legendary (30+ Days) */}
+              {isLegendary && (
+                <svg width="88" height="88" viewBox="0 0 100 100" className="overflow-visible animate-fadeIn">
+                  {/* Stem */}
+                  <path d="M50 55 Q50 85 45 105" stroke="#b0cfad" strokeWidth="4" fill="none" strokeLinecap="round" />
+                  
+                  {/* Aesthetic Leaf */}
+                  <path 
+                    d="M48 90 Q65 80 58 68 Q45 78 48 90" 
+                    fill="#b0cfad" 
+                    opacity="0.9" 
+                    transform="rotate(-15 48 90)"
                   />
-                ))}
-                
-                {/* Petals (Front Layer) */}
-                {[...Array(12)].map((_, i) => (
-                  <path
-                    key={`front-${i}`}
-                    d="M50 50 Q65 15 50 5 Q35 15 50 50"
-                    fill={isLegendary ? "#f6c945" : "#ffedba"}
-                    stroke={isLegendary ? "#e8a800" : "#f6c945"}
-                    strokeWidth={isLegendary ? "1.2" : "0.6"}
-                    transform={`rotate(${i * 30} 50 50)`}
-                    className="transition-all duration-1000"
-                  />
-                ))}
-              </g>
+                  <path d="M49 75 Q35 68 40 60 Q50 68 49 75" fill="#8cb888" opacity="0.9" />
 
-              {/* Center Shadow for depth */}
-              <circle cx="50" cy="51" r="18" fill="rgba(0,0,0,0.15)" />
+                  {/* Petals (Back Layer for volume) */}
+                  <g style={{ animation: 'breathe 3s ease-in-out infinite', transformOrigin: 'center' }}>
+                    {[...Array(12)].map((_, i) => (
+                      <path
+                        key={`back-${i}`}
+                        d="M50 50 Q65 15 50 5 Q35 15 50 50"
+                        fill="#f6c945"
+                        opacity="0.7"
+                        transform={`rotate(${i * 30 + 15} 50 50) scale(0.95)`}
+                      />
+                    ))}
+                    
+                    {/* Petals (Front Layer) */}
+                    {[...Array(12)].map((_, i) => (
+                      <path
+                        key={`front-${i}`}
+                        d="M50 50 Q65 15 50 5 Q35 15 50 50"
+                        fill="#f6c945"
+                        stroke="#e8a800"
+                        strokeWidth="1.2"
+                        transform={`rotate(${i * 30} 50 50)`}
+                      />
+                    ))}
+                  </g>
 
-              {/* Aesthetic Textured Center */}
-              <circle 
-                cx="50" cy="50" r="18" 
-                fill="#3a2b25" 
-                className="transition-all duration-500"
-                style={{ 
-                  filter: isLegendary ? 'drop-shadow(0 0 10px rgba(246,201,69,0.5))' : 'none' 
-                }}
-              />
-              
-              {/* Seed texture details */}
-              {[...Array(20)].map((_, i) => {
-                const angle = i * 137.5 * (Math.PI / 180);
-                const r = 3 + Math.sqrt(i) * 2.8;
-                return (
+                  {/* Center Shadow for depth */}
+                  <circle cx="50" cy="51" r="18" fill="rgba(0,0,0,0.15)" />
+
+                  {/* Aesthetic Textured Center */}
                   <circle 
-                    key={i} 
-                    cx={50 + r * Math.cos(angle)} 
-                    cy={50 + r * Math.sin(angle)} 
-                    r="1.4" 
-                    fill={i % 3 === 0 ? "#f6c945" : "#5D4037"} 
-                    opacity={i % 3 === 0 ? "0.4" : "0.7"} 
+                    cx="50" cy="50" r="18" 
+                    fill="#3a2b25" 
+                    style={{ filter: 'drop-shadow(0 0 10px rgba(246,201,69,0.5))' }}
                   />
-                );
-              })}
-            </svg>
+                  
+                  {/* Seed texture details */}
+                  {[...Array(20)].map((_, i) => {
+                    const angle = i * 137.5 * (Math.PI / 180);
+                    const r = 3 + Math.sqrt(i) * 2.8;
+                    return (
+                      <circle 
+                        key={i} 
+                        cx={50 + r * Math.cos(angle)} 
+                        cy={50 + r * Math.sin(angle)} 
+                        r="1.4" 
+                        fill={i % 3 === 0 ? "#f6c945" : "#5D4037"} 
+                        opacity={i % 3 === 0 ? "0.4" : "0.7"} 
+                      />
+                    );
+                  })}
+                </svg>
+              )}
+            </div>
           </div>
         </div>
 

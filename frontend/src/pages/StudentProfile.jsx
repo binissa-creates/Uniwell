@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -26,6 +26,11 @@ export default function StudentProfile() {
   const [pwBusy, setPwBusy] = useState(false)
 
   const [tab, setTab] = useState('email') // 'email' | 'password'
+
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
 
   // ── Handlers ───────────────────────────────────────────────
   const handleEmailUpdate = async (e) => {

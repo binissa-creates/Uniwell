@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { Loader2, Users, ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
+import { normalizeCourse } from '../lib/data'
 
 const WARM_DARK = '#3a2b25'
 const WARM_OLIVE = '#6B5A10'
@@ -52,6 +53,11 @@ export default function StudentWellnessOverview() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   // Grouped Data Logic (Anonymized)
   const groupStats = useMemo(() => {
     const groups = {}
@@ -72,7 +78,7 @@ export default function StudentWellnessOverview() {
 
     // Process profiles into groups
     for (const p of profiles) {
-      const c = p.course || 'General'
+      const c = normalizeCourse(p.course || 'General')
       const y = p.year_level || 1
       const key = `${c}|${y}`
       
@@ -105,23 +111,31 @@ export default function StudentWellnessOverview() {
           g.activeCount++
         }
 
+        // Extract last name for display
+        const nameParts = (p.name || '').split(' ')
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
+        
         const silent = !stats.last || (Date.now() - new Date(stats.last).getTime()) > 7 * 86400000
         const avg = stats.count >= 3 ? stats.totalScore / stats.count : null
         const streak = stats.recent.slice(0, 3).length === 3 && stats.recent.slice(0, 3).every(l => (MOOD_SCORE[l.mood_type] || 3) <= 2)
 
         if (streak) {
             g.alerts.streak++
-            g.alertStudents.push({ id: p.student_id, kind: 'Critical Streak', score: avg?.toFixed(1) || '—' })
+            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Critical Streak', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
         } else if (avg !== null && avg < 2.5) {
             g.alerts.lowAvg++
-            g.alertStudents.push({ id: p.student_id, kind: 'Low Trend', score: avg.toFixed(1) })
+            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Low Trend', score: avg.toFixed(1), recentCount: stats.recent.length, logCount: stats.count })
         } else if (silent) {
             g.alerts.silent++
-            g.alertStudents.push({ id: p.student_id, kind: 'Silent', score: avg?.toFixed(1) || '—' })
+            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
         }
       } else {
+        // Extract last name for display
+        const nameParts = (p.name || '').split(' ')
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
+        
         g.alerts.silent++
-        g.alertStudents.push({ id: p.student_id, kind: 'Silent', score: '—' })
+        g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: '—', recentCount: 0, logCount: 0 })
       }
     }
 

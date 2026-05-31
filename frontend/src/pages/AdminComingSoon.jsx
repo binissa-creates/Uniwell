@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import { Sparkles } from 'lucide-react'
 
@@ -10,6 +11,10 @@ const WARM_TAN = '#AA8E7E'
  * Keeps the design system consistent so the nav doesn't lead to a 404.
  */
 export default function AdminComingSoon({ eyebrow, title, accent, blurb, bullets, icon: Icon }) {
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       <div className="fixed top-0 right-0 w-[50rem] h-[50rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />

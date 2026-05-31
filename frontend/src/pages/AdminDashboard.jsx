@@ -35,6 +35,33 @@ const GOLD     = '#E6B86A'
 // ─────────────────────────────────────────────────────────────
 const MOOD_SCORE = { rad: 5, good: 4, meh: 3, bad: 2, awful: 1 }
 
+// 7D — alarming: scores plunge, intervention pressure spikes
+const MOCK_TREND_7D = [
+  { day: 'May 14', score: 3.2, interventions: 2.6 },
+  { day: 'May 15', score: 2.7, interventions: 3.1 },
+  { day: 'May 16', score: 2.1, interventions: 3.7 },
+  { day: 'May 17', score: 1.8, interventions: 4.1 },
+  { day: 'May 18', score: 1.5, interventions: 4.4 },
+  { day: 'May 19', score: 1.7, interventions: 4.2 },
+  { day: 'May 20', score: 1.9, interventions: 4.0 },
+]
+
+// 30D — recovery arc: alert happened ~week 2, now stabilising
+const MOCK_TREND_30D = [
+  { day: 'Apr 21', score: 3.9, interventions: 2.0 },
+  { day: 'Apr 24', score: 3.7, interventions: 2.2 },
+  { day: 'Apr 27', score: 3.4, interventions: 2.5 },
+  { day: 'Apr 30', score: 3.1, interventions: 2.8 },
+  { day: 'May 3',  score: 2.6, interventions: 3.2 },
+  { day: 'May 6',  score: 2.0, interventions: 3.9 },
+  { day: 'May 9',  score: 1.8, interventions: 4.1 },
+  { day: 'May 12', score: 2.3, interventions: 3.6 },
+  { day: 'May 15', score: 2.9, interventions: 3.0 },
+  { day: 'May 18', score: 3.4, interventions: 2.5 },
+  { day: 'May 20', score: 3.8, interventions: 2.1 },
+]
+
+// 90D — legacy mock (unchanged)
 const MOCK_TREND = [
   { day: 'Mar 25', score: 3.8, interventions: 2.1 },
   { day: 'Mar 27', score: 3.5, interventions: 2.4 },
@@ -52,10 +79,21 @@ const MOCK_TREND = [
   { day: 'Apr 20', score: 2.4, interventions: 3.4 },
 ]
 
+// Funnel data per period
+const MOCK_FUNNEL_7D = [
+  { label: 'Good',     count: 18, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
+  { label: 'Caution',  count: 34, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
+  { label: 'Critical', count: 89, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
+]
+const MOCK_FUNNEL_30D = [
+  { label: 'Good',     count: 112, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
+  { label: 'Caution',  count:  58, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
+  { label: 'Critical', count:  21, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
+]
 const MOCK_FUNNEL = [
-  { label: 'Good',     count: 89, pct: 37, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
-  { label: 'Caution',  count: 76, pct: 31, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
-  { label: 'Critical', count: 76, pct: 32, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
+  { label: 'Good',     count: 89, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
+  { label: 'Caution',  count: 76, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
+  { label: 'Critical', count: 76, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
 ]
 
 const MOCK_TRIGGERS = [
@@ -224,6 +262,11 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchAnalytics() }, [fetchAnalytics])
 
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   const handleAction = async (id, status) => {
     setActing(id)
     try {
@@ -240,7 +283,21 @@ export default function AdminDashboard() {
     }
   }
 
-  // ── Data resolution (API → fallback to mock) ──────────────
+  // ── Period-aware mock data (demo) ────────────────────────
+  // When no real API data exists, pick mock sets per period so the
+  // panel can clearly see: 7D = alert, 30D = stabilised & healthy.
+  const mockTrend   = period === '7'  ? MOCK_TREND_7D  : period === '30' ? MOCK_TREND_30D  : MOCK_TREND
+  const mockFunnel  = period === '7'  ? MOCK_FUNNEL_7D : period === '30' ? MOCK_FUNNEL_30D : MOCK_FUNNEL
+
+  // 7D demo stats — alarming
+  const DEMO_7D = { students: 141, avgScore: '1.9', criticalCount: 89, criticalPct: 63, totalReports: 141 }
+  // 30D demo stats — healthy / recovering
+  const DEMO_30D = { students: 191, avgScore: '3.8', criticalCount: 21, criticalPct: 11, totalReports: 191 }
+  // 90D demo stats — mixed
+  const DEMO_90D = { students: 241, avgScore: '3.1', criticalCount: 76, criticalPct: 32, totalReports: 241 }
+  const demoStats = period === '7' ? DEMO_7D : period === '30' ? DEMO_30D : DEMO_90D
+
+  // ── Data resolution (API → fallback to period-aware demo) ──
   const wellnessTrend = analytics?.dailyTrend?.length
     ? (() => {
         const map = {}
@@ -256,7 +313,7 @@ export default function AdminDashboard() {
           interventions: +(5 - v.total / v.count + 1).toFixed(1),
         }))
       })()
-    : MOCK_TREND
+    : mockTrend
 
   const triggerStats = analytics?.topTriggers?.length
     ? analytics.topTriggers.slice(0, 5).map((t, i) => ({
@@ -278,24 +335,35 @@ export default function AdminDashboard() {
       })()
     : MOCK_YEAR_PULSE
 
-  const avgStability = analytics?.moodDistribution?.length
+  // Resolved stats — API wins, otherwise demo values per period
+  const totalStudents  = analytics?.totalStudents || demoStats.students
+  const totalReports   = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || demoStats.totalReports
+  const criticalCount  = analytics?.moodDistribution
+    ? analytics.moodDistribution.filter(m => m.mood_type === 'bad' || m.mood_type === 'awful').reduce((s, m) => s + m.count, 0)
+    : demoStats.criticalCount
+  const criticalPct    = analytics?.moodDistribution
+    ? (totalReports > 0 ? Math.round((criticalCount / totalReports) * 100) : 0)
+    : demoStats.criticalPct
+  const avgStability   = analytics?.moodDistribution?.length
     ? (() => {
         let total = 0, count = 0
         analytics.moodDistribution.forEach((m) => {
           total += (MOOD_SCORE[m.mood_type] || 3) * m.count
           count += m.count
         })
-        return count > 0 ? (total / count).toFixed(1) : '4.0'
+        return count > 0 ? (total / count).toFixed(1) : demoStats.avgScore
       })()
-    : '4.0'
+    : demoStats.avgScore
 
-  const totalStudents = analytics?.totalStudents || 0
-  const totalReports = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || 0
-  
-  // Calculate critical %
-  const criticalCount = analytics?.moodDistribution?.filter(m => m.mood_type === 'bad' || m.mood_type === 'awful').reduce((s, m) => s + m.count, 0) || 0
-  const criticalPct = totalReports > 0 ? Math.round((criticalCount / totalReports) * 100) : 0
-  const isUnstable = criticalPct > 25 || (avgStability !== '—' && parseFloat(avgStability) < 3.0)
+  // ── Period-pinned alert state (demo logic) ────────────────
+  // 7D  → ALWAYS alert (crisis happened this week)
+  // 30D → ALWAYS stable (crisis resolved over the month)
+  // 90D → derive from real/demo data as usual
+  const isUnstable = analytics
+    ? (criticalPct > 25 || parseFloat(avgStability) < 3.0)
+    : period === '7'  ? true
+    : period === '30' ? false
+    : (criticalPct > 25 || parseFloat(avgStability) < 3.0)
 
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
 
@@ -408,16 +476,23 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
             label="Total Respondents" value={totalStudents} sub="Active participants"
-            icon={Users} color={TEAL} trend="↑ 12 new this week"
+            icon={Users} color={TEAL}
+            trend={period === '7' ? '⚠ Spike this week' : '↑ Steady growth'}
           />
           <StatCard
-            label="Average Mood Score" value={avgStability} sub={`Out of 5.0 · ${parseFloat(avgStability) >= 3.8 ? 'Stable' : 'Volatile'}`}
-            icon={TrendingUp} color={parseFloat(avgStability) >= 3.5 ? SAGE : parseFloat(avgStability) >= 2.5 ? GOLD : CORAL} 
-            trend={parseFloat(avgStability) >= 3.0 ? "Healthy range" : "Needs attention"} alert={parseFloat(avgStability) < 2.5}
+            label="Average Mood Score" value={avgStability}
+            sub={`Out of 5.0 · ${parseFloat(avgStability) >= 3.8 ? 'Stable' : parseFloat(avgStability) >= 2.5 ? 'Volatile' : 'Critical'}`}
+            icon={TrendingUp}
+            color={parseFloat(avgStability) >= 3.5 ? SAGE : parseFloat(avgStability) >= 2.5 ? GOLD : CORAL}
+            trend={parseFloat(avgStability) >= 3.0 ? 'Healthy range' : 'Needs attention'}
+            alert={parseFloat(avgStability) < 2.5}
           />
           <StatCard
-            label="Critical Reports" value={criticalCount} sub={`${criticalPct}% of total responses`}
-            icon={AlertTriangle} color={CORAL} trend={criticalPct > 20 ? "High priority" : "Monitor closely"} alert={criticalPct > 15}
+            label="Critical Reports" value={criticalCount}
+            sub={`${criticalPct}% of total responses`}
+            icon={AlertTriangle} color={CORAL}
+            trend={criticalPct > 40 ? '🔴 Immediate action' : criticalPct > 20 ? 'High priority' : 'Monitor closely'}
+            alert={criticalPct > 15}
           />
           <StatCard
             label="Active Engagement" value={totalReports} sub="Total logs recorded"
@@ -457,8 +532,8 @@ export default function AdminDashboard() {
                   count: analytics.moodDistribution.find(m => m.mood_type === 'bad' || m.mood_type === 'awful')?.count || 0,
                   color: CORAL, bg: '#FEE9E7', text: '#A3302A' 
                 },
-              ] : MOCK_FUNNEL).map((f, i) => {
-                const total = (analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || MOCK_FUNNEL.reduce((s, d) => s + d.count, 0))
+              ] : mockFunnel).map((f, i) => {
+                const total = (analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || mockFunnel.reduce((s, d) => s + d.count, 0))
                 const pct = total > 0 ? Math.round((f.count / total) * 100) : 0
                 return (
                   <div key={f.label}>
@@ -492,7 +567,7 @@ export default function AdminDashboard() {
                 Total assessed students
               </span>
               <span className="font-black text-base" style={{ color: WARM_DARK }}>
-                {totalReports || MOCK_FUNNEL.reduce((s, f) => s + f.count, 0)}
+                {totalReports || mockFunnel.reduce((s, f) => s + f.count, 0)}
               </span>
             </div>
           </Card>
