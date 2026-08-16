@@ -14,7 +14,8 @@
     "seed:all": "npm run seed:admins && npm run seed:students"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "dotenv": "^16.4.5"
   }
 }

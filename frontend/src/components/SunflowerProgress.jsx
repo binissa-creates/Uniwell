@@ -142,8 +142,16 @@ export default function SunflowerProgress({ streak = 0 }) {
         </div>
 
         {/* The Illustrated Sunflower */}
-        <div className="relative z-30 flex flex-col items-center" style={{ animation: 'float 4s ease-in-out infinite' }}>
+        <div className="relative z-30 flex flex-col items-center group-hover:scale-110 transition-transform duration-500" style={{ animation: 'float 4s ease-in-out infinite' }}>
           
+          {/* Tooltip Overlay */}
+          {showTooltip && (
+            <div className="absolute -top-16 bg-[#3a2b25] text-white px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-lift animate-scaleIn z-[100]">
+              {tooltipText}
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-[#3a2b25] rotate-45" />
+            </div>
+          )}
+
           {/* Royal Crown (100+ Days) */}
           {isRoyal && (
             <div className="absolute -top-12 scale-100" style={{ animation: 'crownHover 2.5s ease-in-out infinite' }}>

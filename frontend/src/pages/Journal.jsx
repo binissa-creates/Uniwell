@@ -213,8 +213,12 @@ export default function Journal() {
                 </div>
 
                 {success && (
-                  <div className="bg-[#EAF2E6] text-[#2D5A29] rounded-2xl p-4 text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 animate-scaleIn">
-                    <CheckCircle2 size={16} /> Seed of Reflection Sown
+                  <div className="bg-[#EAF2E6] text-[#2D5A29] rounded-2xl p-5 text-[11px] font-black uppercase tracking-[0.2em] flex flex-col items-center gap-3 animate-scaleIn border border-[#A8C5A0]/20">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} /> 
+                      <span>Your thoughts are safe here.</span>
+                    </div>
+                    <p className="text-[9px] text-[#2D5A29]/60 normal-case font-medium text-center">Thank you for being honest with yourself. Reflection is the water for your garden.</p>
                   </div>
                 )}
                 {errorMsg && (

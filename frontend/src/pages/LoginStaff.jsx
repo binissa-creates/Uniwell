@@ -43,12 +43,13 @@ export default function LoginStaff() {
 
       navigate(getHomeForRole(role))
     } catch (err) {
+      // Always log the full error so it's visible in DevTools during debugging
+      console.error('[LoginStaff] handleSubmit error:', err)
       // Ensure we are signed out if anything failed during role check
       await signOut()
-      
       const msg = err?.message || ''
-      if (msg.includes('querying schema')) {
-        setError('Database error: Please run the SQL fix script in your Supabase Editor to resolve RLS recursion.')
+      if (msg.includes('querying schema') || msg.includes('infinite recursion')) {
+        setError('Database error: Please run fix_rls_recursion.sql in your Supabase SQL Editor.')
       } else {
         setError(msg || 'Login failed. Please try again.')
       }

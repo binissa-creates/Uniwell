@@ -6,78 +6,72 @@ const WARM_TAN = '#AA8E7E'
 const CORAL = '#EF7B6C'
 const GOLD = '#E6B86A'
 const LAVENDER = '#9C8EC1'
+const SAGE = '#81B29A'
 
-export default function WellnessAlertsPanel({ groups }) {
-  if (!groups || groups.length === 0) return (
-    <div className="bg-white/40 rounded-[2.5rem] p-12 border border-white text-center">
-      <div className="text-4xl mb-4">🌻</div>
-      <h3 className="font-black text-lg" style={{ color: WARM_DARK }}>Campus wellness is stable</h3>
-      <p className="text-xs font-medium text-warm/60">No high-risk clusters detected across programs.</p>
-    </div>
-  )
+export default function WellnessAlertsPanel({ alerts = [], onSelect }) {
+  const critical = alerts.filter(a => a.severity === 'critical')
+  const warning = alerts.filter(a => a.severity === 'warning')
 
   return (
-    <div className="animate-fadeIn">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="w-8 h-8 rounded-xl bg-coral/10 flex items-center justify-center text-coral">
-          <Bell size={18} />
+    <div className="bg-white rounded-[2.5rem] p-8 lg:p-10 shadow-lift border border-white h-full flex flex-col">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-[#EF7B6C]/10 flex items-center justify-center text-[#EF7B6C]">
+            <Bell size={18} />
+          </div>
+          <h3 className="font-jakarta font-black text-[#3a2b25] text-sm uppercase tracking-widest">Wellness Alerts</h3>
         </div>
-        <h2 className="font-jakarta font-black text-2xl" style={{ color: WARM_DARK }}>High Priority Clusters</h2>
+        <div className="px-3 py-1 rounded-full bg-[#FDF9F2] text-[10px] font-black text-[#AA8E7E] uppercase tracking-widest border border-[#AA8E7E]/10">
+          Live Pulse
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {groups.map((g, idx) => {
-          const initials = g.course.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-          
-          return (
-            <div key={g.id} 
-              className="bg-white rounded-[2.5rem] p-8 shadow-lift border border-white hover:-translate-y-1 transition-all group"
-              style={{ animationDelay: `${idx * 50}ms` }}>
-              
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-[1.25rem] bg-gold flex items-center justify-center font-black text-lg text-white shadow-inner">
-                    {initials}
-                  </div>
-                  <div>
-                    <h3 className="font-black text-lg leading-tight" style={{ color: WARM_DARK }}>{g.course}</h3>
-                    <p className="text-[10px] font-bold tracking-widest uppercase text-warm/40 mt-1">Year {g.year} · {g.totalStudents} Students</p>
-                  </div>
+      <div className="space-y-4 flex-1">
+        {alerts.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center py-10 opacity-30">
+            <CloudRain size={48} strokeWidth={1.5} />
+            <p className="text-[10px] font-black uppercase tracking-widest mt-4">No active alerts</p>
+          </div>
+        ) : (
+          alerts.map((alert, i) => (
+            <button
+              key={i}
+              onClick={() => onSelect?.(alert.group)}
+              className="w-full group text-left p-4 rounded-2xl bg-[#FDF9F2]/60 hover:bg-white border border-transparent hover:border-[#AA8E7E]/10 transition-all flex items-center justify-between"
+            >
+              <div className="flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${alert.severity === 'critical' ? 'bg-[#EF7B6C] text-white' : 'bg-[#E6B86A] text-white'}`}>
+                  <AlertTriangle size={16} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-black text-[#3a2b25] uppercase tracking-wide leading-none mb-1">
+                    {alert.group}
+                  </p>
+                  <p className="text-[9px] font-bold text-[#AA8E7E] uppercase tracking-widest">
+                    {alert.message}
+                  </p>
                 </div>
               </div>
-
-              <div className="space-y-3 mb-8">
-                {g.alerts.streak > 0 && (
-                  <AlertChip icon={AlertTriangle} color={CORAL} label="Critical Streak" count={g.alerts.streak} />
-                )}
-                {g.alerts.lowAvg > 0 && (
-                  <AlertChip icon={CloudRain} color={GOLD} label="Low Trend" count={g.alerts.lowAvg} />
-                )}
-                {g.alerts.silent > 0 && (
-                  <AlertChip icon={Moon} color={LAVENDER} label="Silent" count={g.alerts.silent} />
-                )}
-              </div>
-
-              <button 
-                onClick={() => onSelect(g)}
-                className="w-full py-4 bg-[#FDF9F2] rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors hover:bg-gold/10" 
-                style={{ color: WARM_BODY }}
-              >
-                View Program Details <ChevronRight size={12} />
-              </button>
-            </div>
-          )
-        })}
+              <ChevronRight size={14} className="text-[#AA8E7E]/30 group-hover:text-[#3a2b25] transition-colors" />
+            </button>
+          ))
+        )}
       </div>
+      
+      {alerts.length > 0 && (
+        <p className="text-[9px] font-black text-[#AA8E7E]/40 uppercase tracking-[0.2em] text-center mt-6">
+          Showing {alerts.length} priority groups
+        </p>
+      )}
     </div>
   )
 }
 
-function AlertChip({ icon: Icon, color, label, count }) {
+function AlertItem({ label, count, color, bg }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 rounded-2xl border" style={{ borderColor: `${color}20`, background: `${color}05` }}>
+    <div className="flex items-center justify-between p-4 rounded-2xl transition-all" style={{ background: bg }}>
       <div className="flex items-center gap-3">
-        <Icon size={14} style={{ color }} />
+        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
         <span className="text-[10px] font-black uppercase tracking-widest" style={{ color }}>{label}</span>
       </div>
       <span className="text-xs font-black" style={{ color: WARM_DARK }}>{count} student{count !== 1 ? 's' : ''}</span>

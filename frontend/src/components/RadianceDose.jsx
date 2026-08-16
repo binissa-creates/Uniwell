@@ -123,9 +123,12 @@ const RadianceDose = () => {
               <Sparkles size={16} strokeWidth={2.5} />
               <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Daily Motivation</span>
             </div>
-            <div className="text-[#b0870a]/50 group-hover:text-[#b0870a] transition-colors flex items-center gap-1">
-              <span className="font-jakarta text-[9px] font-bold uppercase tracking-widest">Flip</span>
-              <Repeat size={14} />
+            <div className="text-[#b0870a]/50 group-hover:text-[#b0870a] transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6C945]/10 border border-transparent group-hover:border-[#F6C945]/30">
+              <span className="font-jakarta text-[9px] font-black uppercase tracking-[0.2em]">Flip</span>
+              <div className="relative">
+                <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-white/40 blur-sm animate-shimmer pointer-events-none" />
+              </div>
             </div>
           </div>
 

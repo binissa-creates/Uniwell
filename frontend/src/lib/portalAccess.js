@@ -38,15 +38,23 @@ function normalizeRole(role) {
 export async function fetchProfileRole(userId, client = supabase) {
   if (!userId) return null
 
-  const { data, error } = await client
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .maybeSingle()
-
-  if (error) throw error
-
-  return normalizeRole(data?.role)
+  // Use the SECURITY DEFINER RPC to avoid any RLS recursion issues.
+  // If get_my_role() isn't available yet (pre-migration), fall back to
+  // a direct table query so the app still partially works.
+  try {
+    const { data, error } = await client.rpc('get_my_role')
+    if (error) throw error
+    return normalizeRole(data)
+  } catch (rpcErr) {
+    console.warn('[portalAccess] get_my_role() RPC failed, falling back to direct query:', rpcErr?.message)
+    const { data, error } = await client
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .maybeSingle()
+    if (error) throw error
+    return normalizeRole(data?.role)
+  }
 }
 
 export function getHomeForRole(role) {

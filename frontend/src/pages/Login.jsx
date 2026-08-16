@@ -44,8 +44,15 @@ export default function Login() {
 
       navigate(getHomeForRole(role))
     } catch (err) {
+      // Always log the full error so it's visible in DevTools during debugging
+      console.error('[Login] handleSubmit error:', err)
       if (signedIn) await signOut()
-      setError(err?.message || 'Login failed. Please try again.')
+      const msg = err?.message || ''
+      if (msg.includes('querying schema') || msg.includes('infinite recursion')) {
+        setError('Database error: Please run fix_rls_recursion.sql in your Supabase SQL Editor.')
+      } else {
+        setError(msg || 'Login failed. Please try again.')
+      }
     } finally {
       endPortalValidation()
       setLoading(false)

@@ -74,6 +74,8 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- Convenience: is_admin() helper for RLS policies.
+-- IMPORTANT: Reads from JWT app_metadata (NOT profiles table) to prevent
+-- RLS recursion (profiles_select policy → is_admin() → query profiles → recurse).
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -81,13 +83,50 @@ stable
 security definer
 set search_path = public
 as $$
-  select exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
+  select coalesce(
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin',
+    false
   );
 $$;
 
 grant execute on function public.is_admin() to authenticated;
+
+-- Sync profile role → auth app_metadata so is_admin() JWT claim stays fresh.
+create or replace function public.sync_role_to_jwt()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  update auth.users
+     set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+                             || jsonb_build_object('role', NEW.role::text)
+   where id = NEW.id;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists on_profile_role_change on public.profiles;
+create trigger on_profile_role_change
+  after insert or update of role on public.profiles
+  for each row execute function public.sync_role_to_jwt();
+
+-- RPC: bypass RLS for own-role lookup (SECURITY DEFINER).
+create or replace function public.get_my_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role::text
+  from public.profiles
+  where id = auth.uid()
+  limit 1;
+$$;
+
+grant execute on function public.get_my_role() to authenticated;
 
 -- ── Mood logs ────────────────────────────────────────────────────────────────
 create table if not exists public.mood_logs (
@@ -174,7 +213,7 @@ grant usage, select on all sequences in schema public to authenticated;
 drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles
   for select to authenticated
-  using (id = auth.uid() or public.is_admin() or role = 'student');
+  using (id = auth.uid() or public.is_admin());
 
 drop policy if exists profiles_update_self on public.profiles;
 create policy profiles_update_self on public.profiles
