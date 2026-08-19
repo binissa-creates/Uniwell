@@ -32,9 +32,16 @@ export default function Journal() {
     const todayPrompt = journalPromptForToday(triggerParam)
     setPrompt(todayPrompt)
     try {
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth?.user) {
+        setEntries([])
+        return
+      }
+
       const { data, error } = await supabase
         .from('journal_entries')
         .select('id, content, prompt, created_at')
+        .eq('user_id', auth.user.id)
         .order('created_at', { ascending: false })
       if (error) throw error
       setEntries(data || [])

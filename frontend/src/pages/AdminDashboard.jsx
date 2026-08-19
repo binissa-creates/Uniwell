@@ -104,13 +104,6 @@ const MOCK_TRIGGERS = [
   { name: 'Financial',         value:  28, color: TEAL },
 ]
 
-const MOCK_REASONS = [
-  { reason: 'Academic Pressure',  pct: 42, color: CORAL },
-  { reason: 'Social Stress',      pct: 28, color: LAVENDER },
-  { reason: 'Financial Concerns', pct: 18, color: GOLD },
-  { reason: 'Sleep Deprivation',  pct: 12, color: SAGE },
-]
-
 const MOCK_YEAR_PULSE = [
   { name: 'Year 1', score: 2.1 },
   { name: 'Year 2', score: 3.8 },
@@ -283,21 +276,11 @@ export default function AdminDashboard() {
     }
   }
 
-  // ── Period-aware mock data (demo) ────────────────────────
-  // When no real API data exists, pick mock sets per period so the
-  // panel can clearly see: 7D = alert, 30D = stabilised & healthy.
-  const mockTrend   = period === '7'  ? MOCK_TREND_7D  : period === '30' ? MOCK_TREND_30D  : MOCK_TREND
-  const mockFunnel  = period === '7'  ? MOCK_FUNNEL_7D : period === '30' ? MOCK_FUNNEL_30D : MOCK_FUNNEL
+  // Empty analytics are a valid state for a new deployment or new respondent.
+  const emptyTrend = []
+  const emptyFunnel = []
 
-  // 7D demo stats — alarming
-  const DEMO_7D = { students: 141, avgScore: '1.9', criticalCount: 89, criticalPct: 63, totalReports: 141 }
-  // 30D demo stats — healthy / recovering
-  const DEMO_30D = { students: 191, avgScore: '3.8', criticalCount: 21, criticalPct: 11, totalReports: 191 }
-  // 90D demo stats — mixed
-  const DEMO_90D = { students: 241, avgScore: '3.1', criticalCount: 76, criticalPct: 32, totalReports: 241 }
-  const demoStats = period === '7' ? DEMO_7D : period === '30' ? DEMO_30D : DEMO_90D
-
-  // ── Data resolution (API → fallback to period-aware demo) ──
+  // ── Data resolution ──
   const wellnessTrend = analytics?.dailyTrend?.length
     ? (() => {
         const map = {}
@@ -313,7 +296,7 @@ export default function AdminDashboard() {
           interventions: +(5 - v.total / v.count + 1).toFixed(1),
         }))
       })()
-    : mockTrend
+    : emptyTrend
 
   const triggerStats = analytics?.topTriggers?.length
     ? analytics.topTriggers.slice(0, 5).map((t, i) => ({
@@ -321,7 +304,7 @@ export default function AdminDashboard() {
         value: t.count,
         color: [CORAL, LAVENDER, SAGE, GOLD, TEAL][i % 5],
       }))
-    : MOCK_TRIGGERS
+    : []
 
   const yearPulse = analytics?.byYearLevel?.length
     ? (() => {
@@ -333,17 +316,17 @@ export default function AdminDashboard() {
         })
         return Object.values(map).map((v) => ({ name: v.name, score: +(v.total / v.count).toFixed(1) }))
       })()
-    : MOCK_YEAR_PULSE
+    : []
 
-  // Resolved stats — API wins, otherwise demo values per period
-  const totalStudents  = analytics?.totalStudents || demoStats.students
-  const totalReports   = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || demoStats.totalReports
+  // Resolved stats reflect only records returned by the analytics RPC.
+  const totalStudents  = analytics?.totalStudents || 0
+  const totalReports   = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || 0
   const criticalCount  = analytics?.moodDistribution
     ? analytics.moodDistribution.filter(m => m.mood_type === 'bad' || m.mood_type === 'awful').reduce((s, m) => s + m.count, 0)
-    : demoStats.criticalCount
+    : 0
   const criticalPct    = analytics?.moodDistribution
     ? (totalReports > 0 ? Math.round((criticalCount / totalReports) * 100) : 0)
-    : demoStats.criticalPct
+    : 0
   const avgStability   = analytics?.moodDistribution?.length
     ? (() => {
         let total = 0, count = 0
@@ -351,19 +334,14 @@ export default function AdminDashboard() {
           total += (MOOD_SCORE[m.mood_type] || 3) * m.count
           count += m.count
         })
-        return count > 0 ? (total / count).toFixed(1) : demoStats.avgScore
+        return count > 0 ? (total / count).toFixed(1) : '0.0'
       })()
-    : demoStats.avgScore
+    : '0.0'
 
-  // ── Period-pinned alert state (demo logic) ────────────────
-  // 7D  → ALWAYS alert (crisis happened this week)
-  // 30D → ALWAYS stable (crisis resolved over the month)
-  // 90D → derive from real/demo data as usual
+  // Do not show an alert until real responses exist.
   const isUnstable = analytics
     ? (criticalPct > 25 || parseFloat(avgStability) < 3.0)
-    : period === '7'  ? true
-    : period === '30' ? false
-    : (criticalPct > 25 || parseFloat(avgStability) < 3.0)
+    : false
 
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
 
@@ -532,8 +510,8 @@ export default function AdminDashboard() {
                   count: analytics.moodDistribution.find(m => m.mood_type === 'bad' || m.mood_type === 'awful')?.count || 0,
                   color: CORAL, bg: '#FEE9E7', text: '#A3302A' 
                 },
-              ] : mockFunnel).map((f, i) => {
-                const total = (analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || mockFunnel.reduce((s, d) => s + d.count, 0))
+              ] : emptyFunnel).map((f, i) => {
+                const total = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || 0
                 const pct = total > 0 ? Math.round((f.count / total) * 100) : 0
                 return (
                   <div key={f.label}>
@@ -567,7 +545,7 @@ export default function AdminDashboard() {
                 Total assessed students
               </span>
               <span className="font-black text-base" style={{ color: WARM_DARK }}>
-                {totalReports || mockFunnel.reduce((s, f) => s + f.count, 0)}
+                {totalReports}
               </span>
             </div>
           </Card>
@@ -679,20 +657,9 @@ export default function AdminDashboard() {
         <div className="grid lg:grid-cols-3 gap-5 mb-8">
           <Card>
             <SectionTitle eyebrow="Self-Reported" title="Reasons for Low Mood" />
-            <div className="grid grid-cols-2 gap-3">
-              {MOCK_REASONS.map((r) => (
-                <div key={r.reason}
-                  className="rounded-2xl p-4 flex flex-col gap-1 transition-all hover:scale-[1.02]"
-                  style={{ background: `${r.color}14`, border: `1px solid ${r.color}30` }}>
-                  <span className="font-black text-3xl leading-none" style={{ color: r.color }}>
-                    {r.pct}%
-                  </span>
-                  <span className="text-[11px] font-bold leading-tight" style={{ color: WARM_BODY }}>
-                    {r.reason}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm font-medium leading-relaxed" style={{ color: WARM_TAN }}>
+              No self-reported reasons yet.
+            </p>
           </Card>
 
           <Card>

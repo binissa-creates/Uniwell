@@ -11,7 +11,6 @@ import { fetchMoodHistory, computeStreak, logMood } from '../lib/data'
 import { ArrowRight, Loader2, Sparkles, TrendingUp, BookOpen, Clock, Heart } from 'lucide-react'
 import SupportCard from '../components/SupportCard'
 import SupportModal from '../components/SupportModal'
-import DemoModal from '../components/DemoModal'
 import MoodAnimationOverlay from '../components/MoodAnimationOverlay'
 
 const moodEmoji = { rad: '🤩', good: '😊', meh: '😐', bad: '😔', awful: '😢' }
@@ -32,7 +31,6 @@ export default function Dashboard() {
   const [dominantMood, setDominantMood] = useState('')
   const [moodHistory, setMoodHistory] = useState([])
   const [isSupportOpen, setIsSupportOpen] = useState(false)
-  const [isDemoOpen, setIsDemoOpen] = useState(false)
   const [animationType, setAnimationType] = useState(null)
 
   const firstName = user?.name?.split(' ')[0] || 'Blooming'
@@ -133,12 +131,6 @@ export default function Dashboard() {
           <div className="flex items-center justify-center lg:justify-start gap-3 mb-4 animate-fadeIn">
             <div className="hidden sm:block h-px w-10 bg-[#6B5A10]/30 transition-all group-hover:w-16"></div>
             <p className="text-[#6B5A10] text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em]">{greeting}, {firstName} ✨</p>
-            <button
-              onClick={() => setIsDemoOpen(true)}
-              className="ml-2 px-3 py-1 rounded-full bg-[#F6C945]/10 hover:bg-[#F6C945]/20 text-[#6B5A10] text-[9px] font-black uppercase tracking-[0.1em] border border-[#F6C945]/30 transition-all duration-300 flex items-center gap-1 active:scale-95 shadow-sm"
-            >
-              <Sparkles size={8} className="text-[#6B5A10]" /> Demo Controls
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center">
@@ -294,8 +286,6 @@ export default function Dashboard() {
       </main>
 
       <SupportModal isOpen={isSupportOpen} onClose={() => setIsSupportOpen(false)} />
-      <DemoModal isOpen={isDemoOpen} onClose={() => setIsDemoOpen(false)} onReset={fetchData} />
-
       <MoodAnimationOverlay 
         type={animationType} 
         isVisible={!!animationType} 
