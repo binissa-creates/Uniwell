@@ -5,12 +5,18 @@ import { Loader2, Users, ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
 import { normalizeCourse } from '../lib/data'
+import { ACADEMIC_PROGRAMS, academicDepartmentSortIndex, academicProgramSortIndex, departmentForProgram } from '../lib/academicPrograms'
 
 const WARM_DARK = '#3a2b25'
 const WARM_OLIVE = '#6B5A10'
 const WARM_TAN = '#AA8E7E'
 
-const MOOD_SCORE = { rad: 5, good: 4, meh: 3, bad: 2, awful: 1 }
+const REPORTING_DAYS = 90
+const MOOD_SCORE = {
+  rad: 5, good: 4, meh: 3, bad: 2, awful: 1,
+  excited: 5, hopeful: 4, grateful: 5, calm: 4, content: 4, proud: 5,
+  nervous: 2, frustrated: 2, lonely: 2, angry: 1, burned_out: 1, confused: 2,
+}
 
 export default function StudentWellnessOverview() {
   const [profiles, setProfiles] = useState([])
@@ -19,6 +25,7 @@ export default function StudentWellnessOverview() {
   const [error, setError] = useState(null)
   
   const [search, setSearch] = useState('')
+  const [departmentFilter, setDepartmentFilter] = useState('')
   const [courseFilter, setCourseFilter] = useState('')
   const [yearFilter, setYearFilter] = useState(null)
   const [selectedGroup, setSelectedGroup] = useState(null)
@@ -27,6 +34,7 @@ export default function StudentWellnessOverview() {
     setLoading(true)
     setError(null)
     try {
+      const since = new Date(Date.now() - REPORTING_DAYS * 86400000).toISOString()
       const [p, m] = await Promise.all([
         supabase
           .from('profiles')
@@ -35,6 +43,7 @@ export default function StudentWellnessOverview() {
         supabase
           .from('mood_logs')
           .select('user_id, mood_type, intensity, logged_at')
+          .gte('logged_at', since)
           .order('logged_at', { ascending: false }),
       ])
       
@@ -61,6 +70,18 @@ export default function StudentWellnessOverview() {
   // Grouped Data Logic (Anonymized)
   const groupStats = useMemo(() => {
     const groups = {}
+
+    const createBucket = (id, course, year = null) => ({
+      id,
+      course,
+      year,
+      totalStudents: 0,
+      avgMood: 0,
+      moodCount: 0,
+      activeCount: 0,
+      alerts: { silent: 0, streak: 0, lowAvg: 0 },
+      alertStudents: [],
+    })
     
     // Process logs to get per-user stats
     const userStats = {}
@@ -80,36 +101,32 @@ export default function StudentWellnessOverview() {
     for (const p of profiles) {
       const c = normalizeCourse(p.course || 'General')
       const y = p.year_level || 1
-      const key = `${c}|${y}`
+      const key = c
       
       if (!groups[key]) {
-        groups[key] = {
-          id: key,
-          course: c,
-          year: y,
-          totalStudents: 0,
-          avgMood: 0,
-          moodCount: 0,
-          activeCount: 0,
-          alerts: { silent: 0, streak: 0, lowAvg: 0 },
-          alertStudents: [] // Detailed but semi-anonymized (ID only)
-        }
+        groups[key] = createBucket(key, c)
+        groups[key].yearStats = {}
       }
       
       const g = groups[key]
-      g.totalStudents++
+      if (!g.yearStats[y]) g.yearStats[y] = createBucket(`${key}|${y}`, c, y)
+      const buckets = [g, g.yearStats[y]]
+
+      buckets.forEach(bucket => { bucket.totalStudents++ })
       
       const stats = userStats[p.id]
       if (stats) {
-        if (stats.count > 0) {
-          g.avgMood += stats.totalScore / stats.count
-          g.moodCount++
-        }
+        buckets.forEach(bucket => {
+          if (stats.count > 0) {
+            bucket.avgMood += stats.totalScore / stats.count
+            bucket.moodCount++
+          }
+        })
         
         const weekAgo = Date.now() - 7 * 86400000
-        if (stats.last && new Date(stats.last).getTime() > weekAgo) {
-          g.activeCount++
-        }
+        buckets.forEach(bucket => {
+          if (stats.last && new Date(stats.last).getTime() > weekAgo) bucket.activeCount++
+        })
 
         // Extract last name for display
         const nameParts = (p.name || '').split(' ')
@@ -120,45 +137,62 @@ export default function StudentWellnessOverview() {
         const streak = stats.recent.slice(0, 3).length === 3 && stats.recent.slice(0, 3).every(l => (MOOD_SCORE[l.mood_type] || 3) <= 2)
 
         if (streak) {
-            g.alerts.streak++
-            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Critical Streak', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
+            buckets.forEach(bucket => {
+              bucket.alerts.streak++
+              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Critical Streak', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
+            })
         } else if (avg !== null && avg < 2.5) {
-            g.alerts.lowAvg++
-            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Low Trend', score: avg.toFixed(1), recentCount: stats.recent.length, logCount: stats.count })
+            buckets.forEach(bucket => {
+              bucket.alerts.lowAvg++
+              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Low Trend', score: avg.toFixed(1), recentCount: stats.recent.length, logCount: stats.count })
+            })
         } else if (silent) {
-            g.alerts.silent++
-            g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
+            buckets.forEach(bucket => {
+              bucket.alerts.silent++
+              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
+            })
         }
       } else {
         // Extract last name for display
         const nameParts = (p.name || '').split(' ')
         const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
         
-        g.alerts.silent++
-        g.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: '—', recentCount: 0, logCount: 0 })
+        buckets.forEach(bucket => {
+          bucket.alerts.silent++
+          bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: '—', recentCount: 0, logCount: 0 })
+        })
       }
     }
 
+    const finishBucket = bucket => ({
+      ...bucket,
+      avgMood: bucket.moodCount > 0 ? (bucket.avgMood / bucket.moodCount).toFixed(1) : '—',
+      totalAlerts: bucket.alerts.streak + bucket.alerts.lowAvg + bucket.alerts.silent
+    })
+
     return Object.values(groups).map(g => ({
-      ...g,
-      avgMood: g.moodCount > 0 ? (g.avgMood / g.moodCount).toFixed(1) : '—',
-      totalAlerts: g.alerts.streak + g.alerts.lowAvg + g.alerts.silent
-    })).sort((a, b) => b.totalAlerts - a.totalAlerts)
+      ...finishBucket(g),
+      yearStats: Object.fromEntries(Object.entries(g.yearStats).map(([year, bucket]) => [year, finishBucket(bucket)])),
+    })).sort((a, b) => {
+      return academicDepartmentSortIndex(a.course) - academicDepartmentSortIndex(b.course) || academicProgramSortIndex(a.course) - academicProgramSortIndex(b.course) || a.year - b.year
+    })
   }, [profiles, logs])
 
   const courses = useMemo(() => {
-    const set = new Set(profiles.map(p => p.course).filter(Boolean))
-    return Array.from(set).sort()
+    const existing = new Set(profiles.map(p => normalizeCourse(p.course)).filter(Boolean))
+    return ACADEMIC_PROGRAMS.filter(program => existing.has(program))
+      .concat(Array.from(existing).filter(program => !ACADEMIC_PROGRAMS.includes(program)).sort())
   }, [profiles])
 
   const filteredGroups = useMemo(() => {
     return groupStats.filter(g => {
+      if (departmentFilter && departmentForProgram(g.course)?.name !== departmentFilter) return false
       if (courseFilter && g.course !== courseFilter) return false
-      if (yearFilter && g.year !== yearFilter) return false
       if (search && !g.course.toLowerCase().includes(search.toLowerCase())) return false
       return true
-    })
-  }, [groupStats, search, courseFilter, yearFilter])
+    }).map(g => yearFilter ? g.yearStats[yearFilter] : g)
+      .filter(Boolean)
+  }, [groupStats, search, departmentFilter, courseFilter, yearFilter])
 
   if (error) {
     return (
@@ -190,7 +224,7 @@ export default function StudentWellnessOverview() {
             Wellness <span className="font-playfair italic font-bold" style={{ color: WARM_OLIVE }}>Monitor</span>
           </h1>
           <p className="text-lg max-w-2xl leading-relaxed font-medium text-warm/60">
-            A high-level overview of campus emotional health. Monitor trends by program and year level to identify areas needing support.
+            A high-level overview of the last {REPORTING_DAYS} days of campus emotional health. Monitor trends by program and year level to identify areas needing support.
           </p>
         </div>
 
@@ -207,6 +241,11 @@ export default function StudentWellnessOverview() {
                 courses={courses}
                 search={search}
                 setSearch={setSearch}
+                departmentFilter={departmentFilter}
+                setDepartmentFilter={(value) => {
+                  setDepartmentFilter(value)
+                  setCourseFilter('')
+                }}
                 courseFilter={courseFilter}
                 setCourseFilter={setCourseFilter}
                 yearFilter={yearFilter}

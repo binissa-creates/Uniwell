@@ -39,7 +39,7 @@ const MOTIVATIONAL_QUOTES = [
   { text: "Learn today, lead tomorrow.", source: "Motivation" },
   { text: "Every accomplishment starts with the decision to try.", source: "Motivation" },
   { text: "Focus on your goal, not the obstacles.", source: "Motivation" },
-  { text: "Don’t stop until you’re proud.", source: "Motivation" },
+  { text: "Don't stop until you're proud.", source: "Motivation" },
   { text: "Great things never come from comfort zones.", source: "Motivation" },
   { text: "Your only limit is the one you refuse to overcome.", source: "Motivation" },
   { text: "Success begins with self-belief.", source: "Motivation" },
@@ -49,7 +49,7 @@ const MOTIVATIONAL_QUOTES = [
 
 const BONUS_LINES = [
   "Keep shining.", "One day at a time.", "Grace over pressure.", "Choose growth.", 
-  "Stay humble. Work hard.", "You’ve got this.", "Faith fuels focus.", 
+  "Stay humble. Work hard.", "You've got this.", "Faith fuels focus.", 
   "Rise with purpose.", "Study with intention.", "Radiate positivity."
 ];
 
@@ -72,13 +72,13 @@ const RadianceDose = () => {
   };
 
   return (
-    <div className="relative w-full min-w-[320px] sm:min-w-[360px] h-[280px] perspective-1000 group cursor-pointer animate-fadeIn" onClick={handleFlip}>
+    <div className="relative w-full h-[180px] sm:h-[190px] perspective-1000 group cursor-pointer animate-fadeIn" onClick={handleFlip}>
       <style>{`
         .flip-card-inner {
           position: relative;
           width: 100%;
           height: 100%;
-          transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
           transform-style: preserve-3d;
         }
         .flip-card-front, .flip-card-back {
@@ -86,105 +86,99 @@ const RadianceDose = () => {
           width: 100%;
           height: 100%;
           backface-visibility: hidden;
-          border-radius: 1.5rem;
-          padding: 1.5rem 2rem;
+          border-radius: 1.25rem;
+          padding: 1rem 1.25rem;
           display: flex;
           flex-direction: column;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 16px -2px rgba(93, 64, 55, 0.06);
           overflow: hidden;
         }
         .flip-card-front {
-          background-color: #fdf6e3;
-          border: 1px solid rgba(176,135,10,0.15);
+          background-color: #fdfaf3;
+          border: 1px solid rgba(246, 201, 69, 0.3);
         }
         .flip-card-back {
-          background-color: #f0f4f8;
-          border: 1px solid rgba(100,116,139,0.15);
+          background-color: #f4f8f3;
+          border: 1px solid rgba(168, 197, 160, 0.35);
           transform: rotateY(180deg);
         }
         .cardboard-texture {
-          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
           position: absolute;
           inset: 0;
           pointer-events: none;
-          border-radius: 1.5rem;
+          border-radius: 1.25rem;
         }
       `}</style>
 
       <div className="flip-card-inner" style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
         
         {/* FRONT: Motivational Quote */}
-        <div className="flip-card-front">
+        <div className="flip-card-front justify-between">
           <div className="cardboard-texture" />
-          <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-[radial-gradient(circle_at_top_right,rgba(246,201,69,0.15),transparent_70%)] pointer-events-none rounded-tr-[1.5rem]" />
+          <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-[radial-gradient(circle_at_top_right,rgba(246,201,69,0.18),transparent_70%)] pointer-events-none rounded-tr-[1.25rem]" />
           
           <div className="flex items-center justify-between z-10">
-            <div className="flex items-center gap-2 text-[#b0870a]">
-              <Sparkles size={16} strokeWidth={2.5} />
-              <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Daily Motivation</span>
+            <div className="flex items-center gap-1.5 text-[#856804]">
+              <Sparkles size={13} strokeWidth={2.5} />
+              <span className="font-jakarta text-[10px] font-black tracking-widest uppercase">Daily Dose</span>
             </div>
-            <div className="text-[#b0870a]/50 group-hover:text-[#b0870a] transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6C945]/10 border border-transparent group-hover:border-[#F6C945]/30">
-              <span className="font-jakarta text-[9px] font-black uppercase tracking-[0.2em]">Flip</span>
-              <div className="relative">
-                <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-white/40 blur-sm animate-shimmer pointer-events-none" />
-              </div>
+            <div className="text-[#856804]/60 group-hover:text-[#856804] transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F6C945]/15 border border-[#F6C945]/30">
+              <span className="font-jakarta text-[9px] font-black uppercase tracking-wider">Flip</span>
+              <Repeat size={11} className="group-hover:rotate-180 transition-transform duration-500" />
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center py-4 z-10">
-            <p className="font-playfair text-xl font-bold italic text-[#3a2b25] leading-snug">
+          <div className="my-auto py-1 z-10">
+            <p className="font-playfair text-sm sm:text-base font-bold italic text-[#3a2b25] leading-snug line-clamp-3">
               "{todayQuote.text}"
             </p>
-            <p className="font-jakarta text-[11px] font-bold text-[#b0870a]/80 uppercase tracking-widest mt-4">
+            <p className="font-jakarta text-[10px] font-bold text-[#856804] uppercase tracking-wider mt-1.5">
               — {todayQuote.source}
             </p>
           </div>
 
-          <div className="z-10 mt-auto pt-4 border-t border-[#b0870a]/10 flex justify-between items-center">
-            <span className="px-3 py-1 bg-[#F6C945]/20 text-[#6B5A10] rounded-full text-[10px] font-bold font-jakarta uppercase tracking-wider">
+          <div className="z-10 pt-2 border-t border-[#F6C945]/20 flex justify-between items-center text-[10px]">
+            <span className="px-2 py-0.5 bg-[#F6C945]/20 text-[#6B5A10] rounded-full font-bold font-jakarta uppercase tracking-wider text-[9px]">
               {bonusLine}
             </span>
-            <span className="font-jakarta text-[10px] font-black text-[#b0870a]/60 tracking-[0.15em] uppercase">
-              Side A
+            <span className="font-jakarta font-bold text-[#856804]/50 tracking-wider uppercase text-[9px]">
+              Quote · Side A
             </span>
           </div>
         </div>
 
         {/* BACK: Bible Verse */}
-        <div className="flip-card-back">
+        <div className="flip-card-back justify-between">
           <div className="cardboard-texture" />
-          <div className="absolute top-0 right-0 w-[150px] h-[150px] bg-[radial-gradient(circle_at_top_right,rgba(168,197,160,0.2),transparent_70%)] pointer-events-none rounded-tr-[1.5rem]" />
+          <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-[radial-gradient(circle_at_top_right,rgba(168,197,160,0.22),transparent_70%)] pointer-events-none rounded-tr-[1.25rem]" />
           
           <div className="flex items-center justify-between z-10">
-            <div className="flex items-center gap-2 text-[#4b6b49]">
-              <BookOpen size={16} strokeWidth={2.5} />
-              <span className="font-jakarta text-xs font-black tracking-[0.2em] uppercase">Bible Verse</span>
+            <div className="flex items-center gap-1.5 text-[#2e4d2a]">
+              <BookOpen size={13} strokeWidth={2.5} />
+              <span className="font-jakarta text-[10px] font-black tracking-widest uppercase">Bible Verse</span>
             </div>
-            <div className="text-[#4b6b49]/50 group-hover:text-[#4b6b49] transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#A8C5A0]/20 border border-transparent group-hover:border-[#A8C5A0]/40">
-              <span className="font-jakarta text-[9px] font-black uppercase tracking-[0.2em]">Flip</span>
-              <div className="relative">
-                <Repeat size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                <div className="absolute inset-0 bg-white/40 blur-sm animate-shimmer pointer-events-none" />
-              </div>
+            <div className="text-[#2e4d2a]/60 group-hover:text-[#2e4d2a] transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#A8C5A0]/25 border border-[#A8C5A0]/40">
+              <span className="font-jakarta text-[9px] font-black uppercase tracking-wider">Flip</span>
+              <Repeat size={11} className="group-hover:rotate-180 transition-transform duration-500" />
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center py-4 z-10">
-            <p className="font-playfair text-xl font-bold italic text-[#2c3b2b] leading-snug">
+          <div className="my-auto py-1 z-10">
+            <p className="font-playfair text-sm sm:text-base font-bold italic text-[#2c3b2b] leading-snug line-clamp-3">
               "{todayVerse.text}"
             </p>
-            <p className="font-jakarta text-[11px] font-bold text-[#6a8767] uppercase tracking-widest mt-4">
+            <p className="font-jakarta text-[10px] font-bold text-[#4a6549] uppercase tracking-wider mt-1.5">
               — {todayVerse.source}
             </p>
           </div>
 
-          <div className="z-10 mt-auto pt-4 border-t border-[#4b6b49]/10 flex justify-between items-center">
-            <span className="px-3 py-1 bg-[#b0cfad]/30 text-[#4b6b49] rounded-full text-[10px] font-bold font-jakarta uppercase tracking-wider">
+          <div className="z-10 pt-2 border-t border-[#A8C5A0]/20 flex justify-between items-center text-[10px]">
+            <span className="px-2 py-0.5 bg-[#b0cfad]/30 text-[#2e4d2a] rounded-full font-bold font-jakarta uppercase tracking-wider text-[9px]">
               {bonusLine}
             </span>
-            <span className="font-jakarta text-[10px] font-black text-[#4b6b49]/50 tracking-[0.15em] uppercase">
-              Side B
+            <span className="font-jakarta font-bold text-[#2e4d2a]/50 tracking-wider uppercase text-[9px]">
+              Verse · Side B
             </span>
           </div>
         </div>

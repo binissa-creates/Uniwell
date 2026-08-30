@@ -1,3 +1,4 @@
+import { Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { getHomeForRole, isPortalValidationActive, roleCanAccess } from './lib/portalAccess'
@@ -26,6 +27,46 @@ function LoadingScreen() {
       Loading…
     </div>
   )
+}
+
+class AppErrorBoundary extends Component {
+  state = { hasError: false }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error) {
+    console.error('[AppErrorBoundary]', error)
+  }
+
+  handleReset = () => {
+    window.location.assign('/login')
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children
+
+    return (
+      <main className="min-h-screen bg-[#FDF9F2] flex items-center justify-center px-6 py-12">
+        <section className="w-full max-w-md rounded-[2.5rem] bg-white p-8 sm:p-10 text-center shadow-lift">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-[#EEDDCB] text-3xl">🌻</div>
+          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#6B5A10]">UniWell</p>
+          <h1 className="font-jakarta text-2xl font-extrabold text-[#3a2b25]">Something needs a reset</h1>
+          <p className="mt-3 text-sm leading-relaxed text-[#3a2b25]/60">
+            This page could not finish loading. Return to sign in and try again.
+          </p>
+          <button
+            type="button"
+            onClick={this.handleReset}
+            className="mt-8 w-full rounded-2xl bg-[#F6C945] px-5 py-4 text-xs font-black uppercase tracking-[0.2em] text-[#3E3006] transition hover:shadow-glow"
+          >
+            Return to sign in
+          </button>
+        </section>
+      </main>
+    )
+  }
 }
 
 function ProtectedRoute({ children, allowedRole }) {
@@ -66,10 +107,11 @@ function StudentSupportWrapper() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <StudentSupportWrapper />
-        <Routes>
+    <AppErrorBoundary>
+      <AuthProvider>
+        <BrowserRouter>
+          <StudentSupportWrapper />
+          <Routes>
           {/* Public */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
@@ -128,8 +170,9 @@ export default function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </AppErrorBoundary>
   )
 }

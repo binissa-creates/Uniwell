@@ -193,29 +193,94 @@ h1, h2, h3, h4, h5, h6 {
 }
 @keyframes petalFloat {
   0% {
-    transform: translateY(110vh) rotate(0deg);
+    transform: translateY(-40px) translateX(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.85);
     opacity: 0;
   }
   10% {
-    opacity: 1;
+    opacity: 0.95;
+  }
+  30% {
+    transform: translateY(30vh) translateX(45px) rotateX(120deg) rotateY(45deg) rotateZ(90deg) scale(1.05);
+  }
+  60% {
+    transform: translateY(60vh) translateX(-35px) rotateX(240deg) rotateY(90deg) rotateZ(180deg) scale(0.95);
   }
   90% {
-    opacity: 1;
+    opacity: 0.95;
   }
   100% {
-    transform: translateY(-10vh) rotate(360deg);
+    transform: translateY(105vh) translateX(25px) rotateX(360deg) rotateY(180deg) rotateZ(360deg) scale(0.85);
+    opacity: 0;
+  }
+}
+@keyframes rainFall {
+  0% {
+    transform: translateY(-50px) translateX(0) rotate(-15deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateY(110vh) translateX(-100px) rotate(-15deg);
+    opacity: 0;
+  }
+}
+@keyframes windFlow {
+  0% {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+@keyframes leafFlutter {
+  0% {
+    transform: translateY(-30px) translateX(-50px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(50vh) translateX(80px) rotate(180deg) scale(1.1);
+  }
+  85% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(105vh) translateX(180px) rotate(360deg) scale(0.8);
+    opacity: 0;
+  }
+}
+@keyframes rippleCalm {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.8);
     opacity: 0;
   }
 }
 @keyframes sparkle {
   0%, 100% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
-@keyframes heartFloat {
-  0% { transform: translateY(0) scale(1); opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { transform: translateY(-40px) scale(1.2); opacity: 0; }
+@keyframes countdownBar {
+  from { width: 100%; }
+  to   { width: 0%; }
 }
 
 .animate-fadeSlideUp  { animation: fadeSlideUp 0.5s ease both; }
@@ -225,9 +290,13 @@ h1, h2, h3, h4, h5, h6 {
 .animate-pulse-warm   { animation: pulse-warm 2.5s ease infinite; }
 .animate-scaleIn      { animation: scaleIn 0.35s ease both; }
 .animate-slideInRight { animation: slideInRight 0.4s ease both; }
-.animate-petal        { animation: petalFloat 5s linear infinite; }
+.animate-petal        { animation: petalFloat 5.5s cubic-bezier(0.35, 1, 0.45, 1) infinite; }
+.animate-rain         { animation: rainFall 2.2s linear infinite; }
+.animate-leaf         { animation: leafFlutter 6s ease-in-out infinite; }
+.animate-wind         { animation: windFlow 4s ease-in-out infinite; }
+.animate-ripple       { animation: rippleCalm 3s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
 .animate-sparkle      { animation: sparkle 1.5s ease-in-out infinite; }
-.animate-heart-float  { animation: heartFloat 3s ease-out infinite; }
+.animate-countdown    { animation: countdownBar 4.5s linear forwards; }
 .animate-shimmer {
   background: linear-gradient(90deg, #fff1ed 25%, #ffe9e3 50%, #fff1ed 75%);
   background-size: 200% 100%;

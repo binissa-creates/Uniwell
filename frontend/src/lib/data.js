@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { LEGACY_PROGRAM_ALIASES } from './academicPrograms'
 
 /**
  * Normalize course names for consistent display.
@@ -6,11 +7,8 @@ import { supabase } from './supabase'
  */
 export function normalizeCourse(courseName) {
   if (!courseName) return courseName
-  // Replace legacy "Computer Studies" with "IT"
-  if (courseName.toLowerCase() === 'computer studies') {
-    return 'IT'
-  }
-  return courseName
+  if (courseName.toLowerCase() === 'computer studies') return 'Bachelor of Science in Information Technology'
+  return LEGACY_PROGRAM_ALIASES[courseName] || courseName
 }
 
 /**
@@ -151,6 +149,18 @@ export async function fetchMoodHistory(days = 7) {
  * from an array of mood logs sorted DESC by logged_at.
  */
 export function computeStreak(logs) {
+  const metrics = computeStreakMetrics(logs)
+  return metrics.currentStreak
+}
+
+/**
+ * Compute comprehensive streak & garden metrics:
+ * - currentStreak: Unbroken daily chain with 1-day grace period
+ * - totalDays: Total unique lifetime check-in days (never resets)
+ * - bestStreak: Highest consecutive milestone achieved
+ * - loggedToday: Boolean indicating if a check-in happened today
+ */
+export function computeStreakMetrics(logs) {
   const days = Array.from(
     new Set((logs || []).map((l) => {
       const d = new Date(l.logged_at)
@@ -158,22 +168,56 @@ export function computeStreak(logs) {
     }))
   ).sort((a, b) => new Date(b) - new Date(a))
 
-  let streak = 0
-  let current = new Date()
-  current.setHours(0, 0, 0, 0)
+  const totalDays = days.length
 
+  let currentStreak = 0
+  let now = new Date()
+  now.setHours(0, 0, 0, 0)
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const loggedToday = days.includes(todayStr)
+
+  let cursor = now
   for (const d of days) {
     const parts = d.split('-').map(Number)
     const date = new Date(parts[0], parts[1] - 1, parts[2])
-    const diff = Math.round((current - date) / 86400000)
+    const diff = Math.round((cursor - date) / 86400000)
 
     // Grace Period: Allow a 1-day gap (diff <= 2) to keep the streak alive
     if (diff <= 2) {
-      streak++
-      current = date
+      currentStreak++
+      cursor = date
     } else break
   }
-  return streak
+
+  // Calculate historical Best Streak
+  let bestStreak = 0
+  let tempStreak = 0
+  let prevDate = null
+
+  const ascDays = [...days].sort((a, b) => new Date(a) - new Date(b))
+  for (const d of ascDays) {
+    const parts = d.split('-').map(Number)
+    const date = new Date(parts[0], parts[1] - 1, parts[2])
+    if (!prevDate) {
+      tempStreak = 1
+    } else {
+      const diff = Math.round((date - prevDate) / 86400000)
+      if (diff <= 2) {
+        tempStreak++
+      } else {
+        tempStreak = 1
+      }
+    }
+    prevDate = date
+    if (tempStreak > bestStreak) bestStreak = tempStreak
+  }
+
+  return {
+    currentStreak,
+    totalDays,
+    bestStreak: Math.max(bestStreak, currentStreak),
+    loggedToday
+  }
 }
 
 /**

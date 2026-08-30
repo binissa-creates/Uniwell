@@ -2,18 +2,25 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle, GraduationCap } from 'lucide-react'
+import { ACADEMIC_DEPARTMENTS } from '../lib/academicPrograms'
 
-const COURSES = ['IT', 'Computer Science', 'AB Music', 'Political Science', 'Tourism', 'Psychology', 'Nursing', 'Education', 'Business Administration', 'Engineering', 'Architecture', 'Communication']
 const YEARS = ['1st', '2nd', '3rd', '4th']
 
 export default function Register() {
   const navigate = useNavigate()
   const [form, setForm] = useState({ name: '', email: '', student_id: '', course: '', year_level: 0, password: '' })
   const [showPw, setShowPw] = useState(false)
+  const [selectedDepartment, setSelectedDepartment] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+
+  const handleDepartmentChange = (e) => {
+    const department = ACADEMIC_DEPARTMENTS.find((item) => item.name === e.target.value)
+    setSelectedDepartment(e.target.value)
+    setForm({ ...form, course: department?.programs.length ? '' : e.target.value })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -162,18 +169,34 @@ export default function Register() {
               </div>
 
               <div>
-                <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block">Program / Course</label>
+                <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block">Academic Department</label>
                 <div className="relative">
-                  <select name="course" value={form.course} onChange={handleChange} required
+                  <select value={selectedDepartment} onChange={handleDepartmentChange} required
                     className="w-full bg-[#FCF8F4] text-[#3a2b25] text-sm px-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-[#F8D272] border border-transparent focus:border-[#F8D272] appearance-none transition-all cursor-pointer">
-                    <option value="">Select your academic program</option>
-                    {COURSES.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="">Select your college</option>
+                    {ACADEMIC_DEPARTMENTS.map(department => <option key={department.name} value={department.name}>{department.name}</option>)}
                   </select>
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#B09C8E]">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                   </div>
                 </div>
               </div>
+
+              {selectedDepartment && ACADEMIC_DEPARTMENTS.find((department) => department.name === selectedDepartment)?.programs.length > 0 && (
+                <div>
+                  <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block">Academic Program</label>
+                  <div className="relative">
+                    <select name="course" value={form.course} onChange={handleChange} required
+                      className="w-full bg-[#FCF8F4] text-[#3a2b25] text-sm px-4 py-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-[#F8D272] border border-transparent focus:border-[#F8D272] appearance-none transition-all cursor-pointer">
+                      <option value="">Select your program</option>
+                      {ACADEMIC_DEPARTMENTS.find((department) => department.name === selectedDepartment).programs.map(program => <option key={program} value={program}>{program}</option>)}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#B09C8E]">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="text-[9px] font-bold text-[#B09C8E] uppercase tracking-widest mb-2 block">Year Level</label>

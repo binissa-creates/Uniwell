@@ -32,7 +32,7 @@ export default function ProgramDetailModal({ group, onClose }) {
             </div>
             <div>
               <h2 className="font-jakarta font-black text-2xl" style={{ color: WARM_DARK }}>{group.course}</h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-warm/40 mt-1">Year {group.year} · Wellness Summary</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-warm/40 mt-1">{group.year ? `Year ${group.year}` : 'All year levels'} · Wellness Summary</p>
             </div>
           </div>
           <button 

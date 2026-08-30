@@ -220,6 +220,15 @@ function PieLegend({ data }) {
   )
 }
 
+function EmptyChartState({ message }) {
+  return (
+    <div className="min-h-[112px] flex items-center justify-center rounded-2xl border border-dashed px-5 text-center"
+      style={{ borderColor: `${WARM_TAN}35`, background: WARM_CREAM }}>
+      <p className="text-[10px] font-bold leading-relaxed" style={{ color: WARM_TAN }}>{message}</p>
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────
 // MAIN
 // ─────────────────────────────────────────────────────────────
@@ -229,9 +238,11 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics]   = useState(null)
   const [pendingItems, setPending]  = useState([])
   const [acting, setActing]         = useState(null)
+  const [loadError, setLoadError]   = useState('')
 
   const fetchAnalytics = useCallback(async () => {
     setRefresh(true)
+    setLoadError('')
     try {
       const [aRes, pRes] = await Promise.all([
         supabase.rpc('admin_analytics', { p_days: parseInt(period, 10) || 30 }),
@@ -248,6 +259,7 @@ export default function AdminDashboard() {
       setPending(pRes.data || [])
     } catch (err) {
       console.error('Failed to fetch admin data', err)
+      setLoadError(err?.message || 'Unable to load admin analytics. Please try again.')
     } finally {
       setRefresh(false)
     }
@@ -344,6 +356,18 @@ export default function AdminDashboard() {
     : false
 
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
+  const trendDelta = wellnessTrend.length > 1
+    ? +(wellnessTrend[wellnessTrend.length - 1].score - wellnessTrend[0].score).toFixed(1)
+    : 0
+  const snapshotMessage = !analytics
+    ? 'Analytics will appear here once responses are available.'
+    : totalReports === 0
+      ? `No mood reports were recorded during the ${rangeLabel.toLowerCase()}.`
+      : trendDelta > 0.2
+        ? `Average mood is improving by ${trendDelta.toFixed(1)} points across the ${rangeLabel.toLowerCase()}.`
+        : trendDelta < -0.2
+          ? `Average mood is down by ${Math.abs(trendDelta).toFixed(1)} points across the ${rangeLabel.toLowerCase()}. Review critical reports first.`
+          : `Average mood is holding steady at ${avgStability} out of 5 across the ${rangeLabel.toLowerCase()}.`
 
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
@@ -406,6 +430,31 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
+
+        {loadError && (
+          <div className="mb-8 rounded-3xl bg-[#FEE9E7] px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 animate-fadeIn" role="alert">
+            <div className="w-10 h-10 rounded-2xl bg-[#FDE2DF] flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={18} style={{ color: CORAL }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#991B1B' }}>
+                Analytics unavailable
+              </p>
+              <p className="text-[12px] font-medium leading-relaxed break-words" style={{ color: '#B91C1C' }}>
+                {loadError}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fetchAnalytics}
+              disabled={isRefreshing}
+              className="rounded-2xl bg-white px-4 py-3 text-[10px] font-black uppercase tracking-widest transition hover:shadow-sm disabled:opacity-50"
+              style={{ color: WARM_DARK }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
 
         {/* ── CAMPUS ALERT BANNER ──────────────────────────────── */}
         {isUnstable && (
@@ -473,9 +522,25 @@ export default function AdminDashboard() {
             alert={criticalPct > 15}
           />
           <StatCard
-            label="Active Engagement" value={totalReports} sub="Total logs recorded"
+            label="Mood Reports" value={totalReports} sub="Total logs recorded"
             icon={Bell} color={LAVENDER} trend="Student participation"
           />
+        </div>
+
+        <div className="mb-8 rounded-[2rem] px-6 py-5 flex items-center gap-4 animate-fadeIn"
+          style={{ background: '#FFF8E7', border: `1px solid ${WARM_GOLD}35` }}>
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${WARM_GOLD}25`, color: WARM_OLIVE }}>
+            <Heart size={17} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: WARM_OLIVE }}>
+              Campus snapshot
+            </p>
+            <p className="text-sm font-semibold leading-relaxed" style={{ color: WARM_BODY }}>
+              {snapshotMessage}
+            </p>
+          </div>
         </div>
 
         {/* ── MOOD FUNNEL + TRIGGER PIE ─────────────────────────── */}
@@ -537,12 +602,15 @@ export default function AdminDashboard() {
                   </div>
                 )
               })}
+              {!analytics?.moodDistribution?.length && (
+                <EmptyChartState message={`No mood reports recorded in the ${rangeLabel.toLowerCase()}.`} />
+              )}
             </div>
 
             <div className="mt-6 pt-5 border-t flex items-center justify-between"
               style={{ borderColor: '#F3EEE4' }}>
               <span className="text-xs font-semibold" style={{ color: WARM_TAN }}>
-                Total assessed students
+                Total mood reports
               </span>
               <span className="font-black text-base" style={{ color: WARM_DARK }}>
                 {totalReports}
@@ -579,7 +647,9 @@ export default function AdminDashboard() {
                 <span className="text-[9px] font-semibold" style={{ color: WARM_TAN }}>reports</span>
               </div>
             </div>
-            <PieLegend data={triggerStats} />
+            {triggerStats.length > 0
+              ? <PieLegend data={triggerStats} />
+              : <EmptyChartState message={`No trigger categories reported in the ${rangeLabel.toLowerCase()}.`} />}
           </Card>
         </div>
 
@@ -615,9 +685,10 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div style={{ height: 280 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={wellnessTrend} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+          {wellnessTrend.length > 0 ? (
+            <div style={{ height: 280 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={wellnessTrend} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="gradTeal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%"  stopColor={TEAL}  stopOpacity={0.22} />
@@ -629,7 +700,7 @@ export default function AdminDashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="6 6" stroke="#F3EEE4" vertical={false} />
-                <XAxis dataKey="day" axisLine={false} tickLine={false}
+                <XAxis dataKey="day" interval="preserveStartEnd" axisLine={false} tickLine={false}
                   tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={12} />
                 <YAxis axisLine={false} tickLine={false}
                   tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} domain={[1, 5]} dx={-8} />
@@ -648,9 +719,12 @@ export default function AdminDashboard() {
                   stroke={CORAL} strokeWidth={2} strokeDasharray="5 4" fill="url(#gradCoral)"
                   dot={false}
                   activeDot={{ r: 5, fill: CORAL, stroke: 'white', strokeWidth: 2 }} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <EmptyChartState message={`No daily trend data recorded in the ${rangeLabel.toLowerCase()}.`} />
+          )}
         </Card>
 
         {/* ── REASONS + YEAR BARS + PENDING ─────────────────────── */}
@@ -676,9 +750,10 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-            <div style={{ height: 200 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={yearPulse} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
+            {yearPulse.length > 0 ? (
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={yearPulse} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="4 4" stroke="#F3EEE4" vertical={false} />
                   <XAxis dataKey="name" axisLine={false} tickLine={false}
                     tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={8} />
@@ -694,9 +769,12 @@ export default function AdminDashboard() {
                   <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={30}>
                     {yearPulse.map((e, i) => <Cell key={i} fill={barColor(e.score)} />)}
                   </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyChartState message={`No year-level data recorded in the ${rangeLabel.toLowerCase()}.`} />
+            )}
           </Card>
 
           <Card>
