@@ -3,17 +3,18 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, CartesianGrid,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
+
 import {
-  Users, Bell, TrendingUp, Download, RefreshCw, Loader2,
-  Heart, Smile, Frown, Meh, AlertTriangle, CheckCircle, Flag,
-  ExternalLink, ShieldAlert,
+  Users, Bell, Download, RefreshCw, Loader2,
+  Heart, Smile, AlertTriangle, CheckCircle, Flag,
+  ExternalLink, ShieldAlert, Sparkles,
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────
-// DESIGN TOKENS — warm UniWell palette (same as Moderation)
+// DESIGN TOKENS — warm UniWell palette
 // ─────────────────────────────────────────────────────────────
 const WARM_DARK   = '#3a2b25'   // primary text / dark callout bg
 const WARM_BODY   = '#5D4037'   // softer body text
@@ -21,101 +22,35 @@ const WARM_OLIVE  = '#6B5A10'   // olive accent (italic titles)
 const WARM_TAN    = '#AA8E7E'   // muted subheads
 const WARM_GOLD   = '#F6C945'   // primary accent
 const WARM_CREAM  = '#FDF9F2'   // page background
-const WARM_BEIGE  = '#EEDDCB'   // neutral chip background
 
-// Data-viz accents (semantic mood signals — kept for charts)
+// Data-viz accents
 const TEAL     = '#4DB6AC'
 const SAGE     = '#81B29A'
 const LAVENDER = '#9C8EC1'
 const CORAL    = '#EF7B6C'
 const GOLD     = '#E6B86A'
 
-// ─────────────────────────────────────────────────────────────
-// MOCK DATA — used only when analytics RPC returns empty
-// ─────────────────────────────────────────────────────────────
-const MOOD_SCORE = { rad: 5, good: 4, meh: 3, bad: 2, awful: 1 }
+export const MOOD_META = {
+  rad:        { emoji: '🤩', label: 'Radiant', color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00' },
+  good:       { emoji: '😊', label: 'Good', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+  meh:        { emoji: '😐', label: 'Meh', color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D' },
+  bad:        { emoji: '😔', label: 'Bad', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
+  awful:      { emoji: '😢', label: 'Awful', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
+  excited:    { emoji: '😆', label: 'Excited', color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00' },
+  hopeful:    { emoji: '🌟', label: 'Hopeful', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+  grateful:   { emoji: '🙏', label: 'Grateful', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+  calm:       { emoji: '😌', label: 'Calm', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+  content:    { emoji: '🥰', label: 'Content', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+  nervous:    { emoji: '😰', label: 'Nervous', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
+  frustrated: { emoji: '😤', label: 'Frustrated', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
+  lonely:     { emoji: '🥺', label: 'Lonely', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
+  angry:      { emoji: '😠', label: 'Angry', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
+  burned_out: { emoji: '🥱', label: 'Burnt Out', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
+  confused:   { emoji: '😕', label: 'Confused', color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D' },
+  proud:      { emoji: '💪', label: 'Proud', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
+}
 
-// 7D — alarming: scores plunge, intervention pressure spikes
-const MOCK_TREND_7D = [
-  { day: 'May 14', score: 3.2, interventions: 2.6 },
-  { day: 'May 15', score: 2.7, interventions: 3.1 },
-  { day: 'May 16', score: 2.1, interventions: 3.7 },
-  { day: 'May 17', score: 1.8, interventions: 4.1 },
-  { day: 'May 18', score: 1.5, interventions: 4.4 },
-  { day: 'May 19', score: 1.7, interventions: 4.2 },
-  { day: 'May 20', score: 1.9, interventions: 4.0 },
-]
-
-// 30D — recovery arc: alert happened ~week 2, now stabilising
-const MOCK_TREND_30D = [
-  { day: 'Apr 21', score: 3.9, interventions: 2.0 },
-  { day: 'Apr 24', score: 3.7, interventions: 2.2 },
-  { day: 'Apr 27', score: 3.4, interventions: 2.5 },
-  { day: 'Apr 30', score: 3.1, interventions: 2.8 },
-  { day: 'May 3',  score: 2.6, interventions: 3.2 },
-  { day: 'May 6',  score: 2.0, interventions: 3.9 },
-  { day: 'May 9',  score: 1.8, interventions: 4.1 },
-  { day: 'May 12', score: 2.3, interventions: 3.6 },
-  { day: 'May 15', score: 2.9, interventions: 3.0 },
-  { day: 'May 18', score: 3.4, interventions: 2.5 },
-  { day: 'May 20', score: 3.8, interventions: 2.1 },
-]
-
-// 90D — legacy mock (unchanged)
-const MOCK_TREND = [
-  { day: 'Mar 25', score: 3.8, interventions: 2.1 },
-  { day: 'Mar 27', score: 3.5, interventions: 2.4 },
-  { day: 'Mar 29', score: 2.9, interventions: 2.9 },
-  { day: 'Mar 31', score: 2.4, interventions: 3.3 },
-  { day: 'Apr 2',  score: 2.1, interventions: 3.6 },
-  { day: 'Apr 4',  score: 2.5, interventions: 3.2 },
-  { day: 'Apr 6',  score: 3.0, interventions: 2.8 },
-  { day: 'Apr 8',  score: 2.7, interventions: 3.1 },
-  { day: 'Apr 10', score: 2.2, interventions: 3.5 },
-  { day: 'Apr 12', score: 2.8, interventions: 3.0 },
-  { day: 'Apr 14', score: 3.4, interventions: 2.6 },
-  { day: 'Apr 16', score: 2.5, interventions: 3.2 },
-  { day: 'Apr 18', score: 2.0, interventions: 3.8 },
-  { day: 'Apr 20', score: 2.4, interventions: 3.4 },
-]
-
-// Funnel data per period
-const MOCK_FUNNEL_7D = [
-  { label: 'Good',     count: 18, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
-  { label: 'Caution',  count: 34, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
-  { label: 'Critical', count: 89, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
-]
-const MOCK_FUNNEL_30D = [
-  { label: 'Good',     count: 112, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
-  { label: 'Caution',  count:  58, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
-  { label: 'Critical', count:  21, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
-]
-const MOCK_FUNNEL = [
-  { label: 'Good',     count: 89, color: SAGE,  bg: '#EAF5EE', text: '#2D6B47' },
-  { label: 'Caution',  count: 76, color: GOLD,  bg: '#FDF3E3', text: '#7A4F0D' },
-  { label: 'Critical', count: 76, color: CORAL, bg: '#FEE9E7', text: '#A3302A' },
-]
-
-const MOCK_TRIGGERS = [
-  { name: 'Academic Pressure', value: 160, color: CORAL },
-  { name: 'Mental Health',     value: 112, color: LAVENDER },
-  { name: 'Health & Physical', value:  69, color: SAGE },
-  { name: 'Relationships',     value:  42, color: GOLD },
-  { name: 'Financial',         value:  28, color: TEAL },
-]
-
-const MOCK_YEAR_PULSE = [
-  { name: 'Year 1', score: 2.1 },
-  { name: 'Year 2', score: 3.8 },
-  { name: 'Year 3', score: 2.4 },
-  { name: 'Year 4', score: 1.9 },
-]
-
-// ─────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────
-const scoreColor = (s) => (s >= 3.8 ? SAGE : s >= 2.5 ? GOLD : CORAL)
-const barColor   = (s) => scoreColor(s)
+const LOW_MOOD_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
 
 // ─────────────────────────────────────────────────────────────
 // Subcomponents
@@ -134,15 +69,15 @@ function StatCard({ label, value, sub, color, icon: Icon, trend, alert }) {
           <Icon size={16} style={{ color: accent }} />
         </div>
       </div>
-      <p className="font-jakarta font-extrabold text-[34px] leading-none mb-1.5"
+      <p className="font-jakarta font-extrabold text-[32px] leading-none mb-1.5 truncate"
         style={{ color: valueColor }}>
         {value}
       </p>
-      <p className="text-[11px] font-medium" style={{ color: WARM_TAN }}>{sub}</p>
+      <p className="text-[11px] font-medium truncate" style={{ color: WARM_TAN }}>{sub}</p>
       {trend !== undefined && (
         <div className="mt-4 pt-4 border-t flex items-center gap-2" style={{ borderColor: '#F3EEE4' }}>
           <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent }} />
-          <span className="text-[10px] font-bold" style={{ color: accent }}>{trend}</span>
+          <span className="text-[10px] font-bold truncate" style={{ color: accent }}>{trend}</span>
         </div>
       )}
     </div>
@@ -176,42 +111,20 @@ function SectionTitle({ eyebrow, title, children }) {
   )
 }
 
-function TrajTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="rounded-2xl px-4 py-3 shadow-xl text-sm bg-white border"
-      style={{ borderColor: '#F3EEE4' }}>
-      <p className="text-[10px] font-bold mb-2" style={{ color: WARM_TAN }}>{label}</p>
-      {payload.map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-[11px] font-semibold capitalize" style={{ color: WARM_BODY }}>
-            {p.dataKey === 'score' ? 'Mood Score' : 'Intervention Level'}:
-          </span>
-          <span className="font-black text-[11px]" style={{ color: p.color }}>{p.value}</span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function PieLegend({ data }) {
-  const total = data.reduce((s, d) => s + d.value, 0)
   return (
     <div className="space-y-2.5 w-full">
       {data.map((d) => (
         <div key={d.name} className="flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: d.color }} />
-            <span className="text-xs font-semibold truncate" style={{ color: WARM_BODY, maxWidth: 140 }}>
+            <span className="text-xs font-semibold truncate" style={{ color: WARM_BODY, maxWidth: 160 }}>
               {d.name}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold" style={{ color: WARM_TAN }}>{d.value}</span>
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full"
-              style={{ background: `${d.color}22`, color: d.color }}>
-              {Math.round((d.value / total) * 100)}%
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FDF9F2]" style={{ color: WARM_DARK }}>
+              {d.value} {d.value === 1 ? 'report' : 'reports'}
             </span>
           </div>
         </div>
@@ -237,6 +150,7 @@ export default function AdminDashboard() {
   const [isRefreshing, setRefresh]  = useState(false)
   const [analytics, setAnalytics]   = useState(null)
   const [pendingItems, setPending]  = useState([])
+  const [recentLowLogs, setRecentLowLogs] = useState([])
   const [acting, setActing]         = useState(null)
   const [loadError, setLoadError]   = useState('')
 
@@ -244,19 +158,33 @@ export default function AdminDashboard() {
     setRefresh(true)
     setLoadError('')
     try {
-      const [aRes, pRes] = await Promise.all([
-        supabase.rpc('admin_analytics', { p_days: parseInt(period, 10) || 30 }),
+      const days = parseInt(period, 10) || 30
+      const since = new Date(Date.now() - days * 86400000).toISOString()
+
+      const [aRes, pRes, recentLowRes] = await Promise.all([
+        supabase.rpc('admin_analytics', { p_days: days }),
         supabase
           .from('coping_strategies')
           .select('id, category, title, description, trigger_tags, created_at')
           .eq('status', 'pending')
           .order('created_at', { ascending: true })
           .limit(5),
+        supabase
+          .from('mood_logs')
+          .select('id, mood_type, intensity, note, logged_at, mood_triggers(trigger_category)')
+          .in('mood_type', LOW_MOOD_KEYS)
+          .gte('logged_at', since)
+          .order('logged_at', { ascending: false })
+          .limit(6),
       ])
       if (aRes.error) throw aRes.error
       if (pRes.error) throw pRes.error
       setAnalytics(aRes.data)
       setPending(pRes.data || [])
+      setRecentLowLogs((recentLowRes.data || []).map(row => ({
+        ...row,
+        triggers: (row.mood_triggers || []).map(t => t.trigger_category)
+      })))
     } catch (err) {
       console.error('Failed to fetch admin data', err)
       setLoadError(err?.message || 'Unable to load admin analytics. Please try again.')
@@ -267,7 +195,6 @@ export default function AdminDashboard() {
 
   useEffect(() => { fetchAnalytics() }, [fetchAnalytics])
 
-  // Scroll to top on component mount
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -288,28 +215,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Empty analytics are a valid state for a new deployment or new respondent.
-  const emptyTrend = []
-  const emptyFunnel = []
-
-  // ── Data resolution ──
-  const wellnessTrend = analytics?.dailyTrend?.length
-    ? (() => {
-        const map = {}
-        analytics.dailyTrend.forEach((d) => {
-          const date = new Date(d.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-          if (!map[date]) map[date] = { day: date, total: 0, count: 0 }
-          map[date].total += (MOOD_SCORE[d.mood_type] || 3) * d.count
-          map[date].count += d.count
-        })
-        return Object.values(map).map((v) => ({
-          day: v.day,
-          score: +(v.total / v.count).toFixed(1),
-          interventions: +(5 - v.total / v.count + 1).toFixed(1),
-        }))
-      })()
-    : emptyTrend
-
   const triggerStats = analytics?.topTriggers?.length
     ? analytics.topTriggers.slice(0, 5).map((t, i) => ({
         name: t.trigger_category,
@@ -322,56 +227,52 @@ export default function AdminDashboard() {
     ? (() => {
         const map = {}
         analytics.byYearLevel.forEach((y) => {
-          if (!map[y.year_level]) map[y.year_level] = { name: `Year ${y.year_level}`, total: 0, count: 0 }
-          map[y.year_level].total += (MOOD_SCORE[y.mood_type] || 3) * y.count
+          if (!map[y.year_level]) map[y.year_level] = { name: `Year ${y.year_level}`, count: 0 }
           map[y.year_level].count += y.count
         })
-        return Object.values(map).map((v) => ({ name: v.name, score: +(v.total / v.count).toFixed(1) }))
+        return Object.values(map)
       })()
     : []
 
-  // Resolved stats reflect only records returned by the analytics RPC.
-  const totalStudents  = analytics?.totalStudents || 0
-  const totalReports   = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || 0
-  const criticalCount  = analytics?.moodDistribution
-    ? analytics.moodDistribution.filter(m => m.mood_type === 'bad' || m.mood_type === 'awful').reduce((s, m) => s + m.count, 0)
-    : 0
-  const criticalPct    = analytics?.moodDistribution
-    ? (totalReports > 0 ? Math.round((criticalCount / totalReports) * 100) : 0)
-    : 0
-  const avgStability   = analytics?.moodDistribution?.length
-    ? (() => {
-        let total = 0, count = 0
-        analytics.moodDistribution.forEach((m) => {
-          total += (MOOD_SCORE[m.mood_type] || 3) * m.count
-          count += m.count
-        })
-        return count > 0 ? (total / count).toFixed(1) : '0.0'
-      })()
-    : '0.0'
+  // Derived mood statistics strictly from actual mood log entries
+  const totalStudents = analytics?.totalStudents || 0
 
-  // Do not show an alert until real responses exist.
-  const isUnstable = analytics
-    ? (criticalPct > 25 || parseFloat(avgStability) < 3.0)
-    : false
+  const moodList = (analytics?.moodDistribution || [])
+    .map(m => {
+      const meta = MOOD_META[m.mood_type] || { emoji: '😶', label: m.mood_type, color: GOLD, bg: '#FDF9F2', text: WARM_DARK }
+      return {
+        key: m.mood_type,
+        emoji: meta.emoji,
+        label: meta.label,
+        color: meta.color,
+        bg: meta.bg,
+        text: meta.text,
+        count: m.count || 0,
+        isLow: LOW_MOOD_KEYS.includes(m.mood_type)
+      }
+    })
+    .sort((a, b) => b.count - a.count)
 
+  const totalReports = moodList.reduce((s, m) => s + m.count, 0)
+  const mostUsedMood = moodList.length > 0 ? moodList[0] : null
+  const lowMoodCount = moodList.filter(m => m.isLow).reduce((s, m) => s + m.count, 0)
+
+  const hasLowMoods = lowMoodCount > 0
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
-  const trendDelta = wellnessTrend.length > 1
-    ? +(wellnessTrend[wellnessTrend.length - 1].score - wellnessTrend[0].score).toFixed(1)
-    : 0
+
   const snapshotMessage = !analytics
     ? 'Analytics will appear here once responses are available.'
     : totalReports === 0
       ? `No mood reports were recorded during the ${rangeLabel.toLowerCase()}.`
-      : trendDelta > 0.2
-        ? `Average mood is improving by ${trendDelta.toFixed(1)} points across the ${rangeLabel.toLowerCase()}.`
-        : trendDelta < -0.2
-          ? `Average mood is down by ${Math.abs(trendDelta).toFixed(1)} points across the ${rangeLabel.toLowerCase()}. Review critical reports first.`
-          : `Average mood is holding steady at ${avgStability} out of 5 across the ${rangeLabel.toLowerCase()}.`
+      : mostUsedMood
+        ? `A total of ${totalReports} mood entries have been logged across ${totalStudents} students. The most widely reported feeling is ${mostUsedMood.emoji} ${mostUsedMood.label} (${mostUsedMood.count} entries), with ${lowMoodCount} low mood entries recorded.`
+        : `A total of ${totalReports} mood entries recorded during the ${rangeLabel.toLowerCase()}.`
+
+  const maxMoodCount = moodList.length > 0 ? Math.max(...moodList.map(m => m.count)) : 1
 
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
-      {/* Soft blurred orbs, identical pattern to Moderation */}
+      {/* Soft blurred background orbs */}
       <div className="fixed top-0 right-0 w-[50rem] h-[50rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[40rem] h-[40rem] rounded-full bg-[#EF7B6C]/5 blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
@@ -395,11 +296,11 @@ export default function AdminDashboard() {
               </h1>
               <p className="text-base md:text-lg max-w-xl leading-relaxed font-medium"
                 style={{ color: `${WARM_DARK}80` }}>
-                Campus emotional health at a glance. Track how your community is actually feeling — and where to intervene first.
+                Real-time student feelings and mood contributions. Monitor how your campus community is feeling through exact mood entries.
               </p>
             </div>
 
-            {/* Controls — period pill + refresh + export */}
+            {/* Controls — period pill + refresh */}
             <div className="bg-white/60 backdrop-blur-md rounded-full p-1.5 border border-white shadow-lift flex items-center gap-1.5 animate-slideInRight self-start lg:self-end">
               <div className="flex items-center gap-0.5 px-1">
                 {[{ v: '7', l: '7D' }, { v: '30', l: '30D' }, { v: '90', l: '90D' }].map(({ v, l }) => (
@@ -421,11 +322,6 @@ export default function AdminDashboard() {
                 {isRefreshing
                   ? <Loader2 size={14} className="animate-spin" />
                   : <RefreshCw size={14} />}
-              </button>
-              <button
-                className="flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.98]"
-                style={{ background: WARM_DARK, color: 'white' }}>
-                <Download size={12} /> Export
               </button>
             </div>
           </div>
@@ -457,7 +353,7 @@ export default function AdminDashboard() {
         )}
 
         {/* ── CAMPUS ALERT BANNER ──────────────────────────────── */}
-        {isUnstable && (
+        {hasLowMoods ? (
           <div
             className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
             style={{ background: '#FDECEA', border: `1px solid ${CORAL}40` }}
@@ -468,18 +364,15 @@ export default function AdminDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#991B1B' }}>
-                Campus Alert
+                Campus Attention
               </p>
               <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#B91C1C' }}>
-                Wellness scores are currently lower than average. {criticalPct}% of students are in the critical zone.
-                Immediate guidance intervention is recommended for those affected.
+                {lowMoodCount} low or difficult mood {lowMoodCount === 1 ? 'entry' : 'entries'} (awful, bad, burnt out, etc.) recorded in the {rangeLabel.toLowerCase()}. Guidance check-in is recommended for affected students.
               </p>
             </div>
             <div className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: CORAL }} />
           </div>
-        )}
-
-        {!isUnstable && analytics && (
+        ) : analytics ? (
           <div
             className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
             style={{ background: '#EAF5EE', border: `1px solid ${SAGE}40` }}
@@ -490,43 +383,44 @@ export default function AdminDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#065F46' }}>
-                Community Health
+                Community Wellness
               </p>
               <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#065F46' }}>
-                Campus wellness is currently stable. Keep encouraging students to use the wellness tools.
+                Campus wellness is currently positive. {totalReports} mood entries logged with no critical alerts.
               </p>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* ── STAT CARDS ───────────────────────────────────────── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
           <StatCard
-            label="Total Respondents" value={totalStudents} sub="Active participants"
+            label="Active Students" value={totalStudents} sub="Students logged in"
             icon={Users} color={TEAL}
-            trend={period === '7' ? '⚠ Spike this week' : '↑ Steady growth'}
+            trend={totalStudents > 0 ? `${totalStudents} active participants` : 'No participants'}
           />
           <StatCard
-            label="Average Mood Score" value={avgStability}
-            sub={`Out of 5.0 · ${parseFloat(avgStability) >= 3.8 ? 'Stable' : parseFloat(avgStability) >= 2.5 ? 'Volatile' : 'Critical'}`}
-            icon={TrendingUp}
-            color={parseFloat(avgStability) >= 3.5 ? SAGE : parseFloat(avgStability) >= 2.5 ? GOLD : CORAL}
-            trend={parseFloat(avgStability) >= 3.0 ? 'Healthy range' : 'Needs attention'}
-            alert={parseFloat(avgStability) < 2.5}
+            label="Total Mood Entries" value={totalReports} sub="Total logs recorded"
+            icon={Bell} color={LAVENDER}
+            trend="Real-time check-ins"
           />
           <StatCard
-            label="Critical Reports" value={criticalCount}
-            sub={`${criticalPct}% of total responses`}
+            label="Low Mood Entries" value={lowMoodCount}
+            sub="Awful, bad & high stress"
             icon={AlertTriangle} color={CORAL}
-            trend={criticalPct > 40 ? '🔴 Immediate action' : criticalPct > 20 ? 'High priority' : 'Monitor closely'}
-            alert={criticalPct > 15}
+            trend={lowMoodCount > 0 ? `${lowMoodCount} entries needing care` : 'No low entries'}
+            alert={lowMoodCount > 0}
           />
           <StatCard
-            label="Mood Reports" value={totalReports} sub="Total logs recorded"
-            icon={Bell} color={LAVENDER} trend="Student participation"
+            label="Most Common Mood"
+            value={mostUsedMood ? `${mostUsedMood.emoji} ${mostUsedMood.label}` : '—'}
+            sub={mostUsedMood ? `${mostUsedMood.count} entries logged` : 'No entries yet'}
+            icon={Smile} color={SAGE}
+            trend="Top community emotion"
           />
         </div>
 
+        {/* ── SNAPSHOT BANNER ──────────────────────────────────── */}
         <div className="mb-8 rounded-[2rem] px-6 py-5 flex items-center gap-4 animate-fadeIn"
           style={{ background: '#FFF8E7', border: `1px solid ${WARM_GOLD}35` }}>
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -543,74 +437,74 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* ── MOOD FUNNEL + TRIGGER PIE ─────────────────────────── */}
+        {/* ── MOOD ENTRIES BREAKDOWN + TRIGGER PIE ──────────────── */}
         <div className="grid lg:grid-cols-5 gap-5 mb-8">
           <Card className="lg:col-span-3">
-            <SectionTitle eyebrow="Distribution" title="Mood Funnel Count">
+            <SectionTitle eyebrow="Real-Time Inputs" title="Campus Mood Entries & Feelings">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black self-start"
                 style={{ 
-                  background: isUnstable ? '#FEE2E2' : '#E0F2F1', 
-                  color: isUnstable ? CORAL : SAGE 
+                  background: hasLowMoods ? '#FEE2E2' : '#E0F2F1', 
+                  color: hasLowMoods ? CORAL : SAGE 
                 }}>
-                <div className={`w-1.5 h-1.5 rounded-full ${isUnstable ? 'animate-pulse' : ''}`} 
-                  style={{ background: isUnstable ? CORAL : SAGE }} />
-                {isUnstable ? 'UNSTABLE' : 'STABLE'}
+                <div className={`w-1.5 h-1.5 rounded-full ${hasLowMoods ? 'animate-pulse' : ''}`} 
+                  style={{ background: hasLowMoods ? CORAL : SAGE }} />
+                {hasLowMoods ? `${lowMoodCount} LOW ENTRIES` : 'ALL POSITIVE'}
               </div>
             </SectionTitle>
 
-            <div className="space-y-5">
-              {(analytics?.moodDistribution?.length ? [
-                { 
-                  label: 'Good', 
-                  count: analytics.moodDistribution.find(m => m.mood_type === 'rad' || m.mood_type === 'good')?.count || 0,
-                  color: SAGE, bg: '#EAF5EE', text: '#2D6B47' 
-                },
-                { 
-                  label: 'Caution', 
-                  count: analytics.moodDistribution.find(m => m.mood_type === 'meh')?.count || 0,
-                  color: GOLD, bg: '#FDF3E3', text: '#7A4F0D' 
-                },
-                { 
-                  label: 'Critical', 
-                  count: analytics.moodDistribution.find(m => m.mood_type === 'bad' || m.mood_type === 'awful')?.count || 0,
-                  color: CORAL, bg: '#FEE9E7', text: '#A3302A' 
-                },
-              ] : emptyFunnel).map((f, i) => {
-                const total = analytics?.moodDistribution?.reduce((s, m) => s + m.count, 0) || 0
-                const pct = total > 0 ? Math.round((f.count / total) * 100) : 0
-                return (
-                  <div key={f.label}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                          style={{ background: f.bg }}>
-                          {i === 0 ? <Smile size={14} style={{ color: f.text }} />
-                            : i === 1 ? <Meh size={14} style={{ color: f.text }} />
-                            : <Frown size={14} style={{ color: f.text }} />}
-                        </div>
-                        <span className="text-sm font-bold" style={{ color: WARM_BODY }}>{f.label}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-black text-lg leading-none" style={{ color: f.color }}>{pct}%</span>
-                        <span className="text-xs font-semibold" style={{ color: WARM_TAN }}>{f.count} students</span>
-                      </div>
-                    </div>
-                    <div className="h-3 rounded-full overflow-hidden" style={{ background: '#F6F0E4' }}>
-                      <div className="h-full rounded-full transition-all duration-700"
-                        style={{ width: `${pct}%`, background: f.color }} />
-                    </div>
+            {mostUsedMood && (
+              <div className="mb-5 p-3.5 rounded-2xl bg-[#FDF9F2] border border-[#F6C945]/30 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl">{mostUsedMood.emoji}</span>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#755b00]">Most Widely Used Mood</span>
+                    <p className="text-sm font-black text-warm capitalize">{mostUsedMood.label}</p>
                   </div>
-                )
-              })}
-              {!analytics?.moodDistribution?.length && (
-                <EmptyChartState message={`No mood reports recorded in the ${rangeLabel.toLowerCase()}.`} />
+                </div>
+                <span className="text-xs font-black px-3 py-1 rounded-xl bg-white shadow-sm text-warm">
+                  {mostUsedMood.count} {mostUsedMood.count === 1 ? 'entry' : 'entries'}
+                </span>
+              </div>
+            )}
+
+            <div className="space-y-3.5 max-h-[380px] overflow-y-auto pr-1 custom-scrollbar">
+              {moodList.length > 0 ? (
+                moodList.map((m) => {
+                  const barWidth = Math.max(8, Math.round((m.count / maxMoodCount) * 100))
+                  return (
+                    <div key={m.key} className="p-3 rounded-2xl bg-[#FCF8F4] border border-warm/5">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">{m.emoji}</span>
+                          <span className="text-sm font-bold capitalize" style={{ color: WARM_BODY }}>{m.label}</span>
+                          {m.isLow && (
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                              Low
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-black" style={{ color: m.color }}>
+                            {m.count} {m.count === 1 ? 'entry' : 'entries'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-2.5 rounded-full overflow-hidden bg-white">
+                        <div className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${barWidth}%`, background: m.color }} />
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <EmptyChartState message={`No mood entries recorded during the ${rangeLabel.toLowerCase()}.`} />
               )}
             </div>
 
             <div className="mt-6 pt-5 border-t flex items-center justify-between"
               style={{ borderColor: '#F3EEE4' }}>
               <span className="text-xs font-semibold" style={{ color: WARM_TAN }}>
-                Total mood reports
+                Total recorded mood entries
               </span>
               <span className="font-black text-base" style={{ color: WARM_DARK }}>
                 {totalReports}
@@ -619,7 +513,7 @@ export default function AdminDashboard() {
           </Card>
 
           <Card className="lg:col-span-2">
-            <SectionTitle eyebrow="Sources" title="Trigger Categories" />
+            <SectionTitle eyebrow="Contributing Factors" title="Trigger Categories" />
             <div className="relative h-44 w-full mb-5">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -653,122 +547,76 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* ── WELLNESS TRAJECTORY ──────────────────────────────── */}
-        <Card className="mb-8">
-          <SectionTitle eyebrow="Trend" title="Wellness Trajectory">
-            <div className="flex items-center gap-2 flex-wrap">
-              {[
-                { label: '≥3.8 Good',      color: SAGE },
-                { label: '2.5–3.7 Watch',  color: GOLD },
-                { label: '<2.5 Critical',  color: CORAL },
-              ].map((b) => (
-                <div key={b.label}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold"
-                  style={{ background: `${b.color}18`, color: b.color }}>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ background: b.color }} />
-                  {b.label}
-                </div>
-              ))}
-            </div>
-          </SectionTitle>
-
-          <div className="flex items-center gap-5 flex-wrap mb-4 text-[11px] font-semibold"
-            style={{ color: WARM_TAN }}>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 rounded-full" style={{ background: TEAL }} />
-              <span>Avg Mood Score</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-0.5 rounded-full"
-                style={{ background: CORAL, borderTop: `2px dashed ${CORAL}` }} />
-              <span>Intervention Pressure</span>
-            </div>
-          </div>
-
-          {wellnessTrend.length > 0 ? (
-            <div style={{ height: 280 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={wellnessTrend} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="gradTeal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={TEAL}  stopOpacity={0.22} />
-                    <stop offset="95%" stopColor={TEAL}  stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gradCoral" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={CORAL} stopOpacity={0.18} />
-                    <stop offset="95%" stopColor={CORAL} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="6 6" stroke="#F3EEE4" vertical={false} />
-                <XAxis dataKey="day" interval="preserveStartEnd" axisLine={false} tickLine={false}
-                  tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={12} />
-                <YAxis axisLine={false} tickLine={false}
-                  tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} domain={[1, 5]} dx={-8} />
-                <Tooltip content={<TrajTooltip />} />
-
-                <Area type="monotone" dataKey="score"
-                  stroke={TEAL} strokeWidth={2.5} fill="url(#gradTeal)"
-                  dot={(props) => {
-                    const { cx, cy, payload } = props
-                    return <circle key={`d-${cx}`} cx={cx} cy={cy} r={4}
-                      fill={scoreColor(payload.score)} stroke="white" strokeWidth={2} />
-                  }}
-                  activeDot={{ r: 6, fill: TEAL, stroke: 'white', strokeWidth: 2 }} />
-
-                <Area type="monotone" dataKey="interventions"
-                  stroke={CORAL} strokeWidth={2} strokeDasharray="5 4" fill="url(#gradCoral)"
-                  dot={false}
-                  activeDot={{ r: 5, fill: CORAL, stroke: 'white', strokeWidth: 2 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <EmptyChartState message={`No daily trend data recorded in the ${rangeLabel.toLowerCase()}.`} />
-          )}
-        </Card>
-
-        {/* ── REASONS + YEAR BARS + PENDING ─────────────────────── */}
+        {/* ── RECENT LOW LOGS + YEAR BARS + PENDING STRATEGIES ─── */}
         <div className="grid lg:grid-cols-3 gap-5 mb-8">
+          
+          {/* Card 1: Recent Low Mood Entries */}
           <Card>
-            <SectionTitle eyebrow="Self-Reported" title="Reasons for Low Mood" />
-            <p className="text-sm font-medium leading-relaxed" style={{ color: WARM_TAN }}>
-              No self-reported reasons yet.
-            </p>
+            <SectionTitle eyebrow="Requires Attention" title="Recent Low Mood Logs" />
+            <div className="space-y-2.5 overflow-y-auto pr-1" style={{ maxHeight: 250 }}>
+              {recentLowLogs.length === 0 ? (
+                <div className="py-10 text-center rounded-2xl border border-dashed"
+                  style={{ borderColor: `${WARM_TAN}40` }}>
+                  <p className="text-2xl mb-1">✨</p>
+                  <p className="text-[10px] font-black uppercase" style={{ color: WARM_TAN }}>
+                    No low mood entries
+                  </p>
+                  <p className="text-[10px] text-warm/40 mt-1">All recorded moods are healthy</p>
+                </div>
+              ) : (
+                recentLowLogs.map((log) => {
+                  const meta = MOOD_META[log.mood_type] || { emoji: '😔', label: log.mood_type }
+                  const dateStr = new Date(log.logged_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                  return (
+                    <div key={log.id} className="p-3 rounded-2xl bg-[#FDF9F2] border border-warm/10">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">{meta.emoji}</span>
+                          <span className="text-xs font-bold capitalize text-warm">{meta.label}</span>
+                        </div>
+                        <span className="text-[9px] font-semibold text-warm/40">{dateStr}</span>
+                      </div>
+                      {log.note && (
+                        <p className="text-[11px] text-warm/75 italic line-clamp-2 mt-1 leading-relaxed">
+                          "{log.note}"
+                        </p>
+                      )}
+                      {log.triggers?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {log.triggers.map((t, ti) => (
+                            <span key={ti} className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </Card>
 
+          {/* Card 2: Mood Logins by Year Level */}
           <Card>
-            <SectionTitle eyebrow="By Year Level" title="Mood Index by Year" />
-            <div className="flex gap-3 mb-4">
-              {[
-                { l: 'Good',     c: SAGE },
-                { l: 'Watch',    c: GOLD },
-                { l: 'Critical', c: CORAL },
-              ].map((b) => (
-                <div key={b.l} className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ background: b.c }} />
-                  <span className="text-[9px] font-bold" style={{ color: WARM_TAN }}>{b.l}</span>
-                </div>
-              ))}
-            </div>
+            <SectionTitle eyebrow="By Year Level" title="Mood Entries by Year" />
             {yearPulse.length > 0 ? (
-              <div style={{ height: 200 }}>
+              <div style={{ height: 210 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={yearPulse} margin={{ top: 5, right: 0, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#F3EEE4" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false}
-                    tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={8} />
-                  <YAxis axisLine={false} tickLine={false}
-                    tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} domain={[0, 5]} />
-                  <Tooltip
-                    formatter={(val, _n, props) => [
-                      `${val} avg · ${val >= 3.8 ? 'Good' : val >= 2.5 ? 'Caution' : 'Critical'}`,
-                      props.payload.name,
-                    ]}
-                    contentStyle={{ borderRadius: 12, border: '1px solid #F3EEE4', fontSize: 11 }}
-                  />
-                  <Bar dataKey="score" radius={[10, 10, 0, 0]} barSize={30}>
-                    {yearPulse.map((e, i) => <Cell key={i} fill={barColor(e.score)} />)}
-                  </Bar>
+                  <BarChart data={yearPulse} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="4 4" stroke="#F3EEE4" vertical={false} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false}
+                      tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={8} />
+                    <YAxis axisLine={false} tickLine={false}
+                      tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} allowDecimals={false} />
+                    <Tooltip
+                      formatter={(val, _n, props) => [
+                        `${val} mood entries`,
+                        props.payload.name,
+                      ]}
+                      contentStyle={{ borderRadius: 12, border: '1px solid #F3EEE4', fontSize: 11 }}
+                    />
+                    <Bar dataKey="count" fill={WARM_GOLD} radius={[10, 10, 0, 0]} barSize={32} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -777,6 +625,7 @@ export default function AdminDashboard() {
             )}
           </Card>
 
+          {/* Card 3: Pending Review */}
           <Card>
             <SectionTitle eyebrow={`${pendingItems.length} awaiting`} title="Pending Review">
               <Link to="/admin/moderation"
@@ -787,7 +636,7 @@ export default function AdminDashboard() {
               </Link>
             </SectionTitle>
 
-            <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: 260 }}>
+            <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: 250 }}>
               {pendingItems.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
                   style={{ borderColor: `${WARM_TAN}40` }}>
@@ -797,7 +646,7 @@ export default function AdminDashboard() {
                   </p>
                 </div>
               ) : pendingItems.map((item) => (
-                <div key={item.id} className="p-4 rounded-2xl transition-all"
+                <div key={item.id} className="p-3.5 rounded-2xl transition-all"
                   style={{ background: '#FDF9F2', border: '1px solid #F3EEE4' }}>
                   <h5 className="text-[11px] font-black mb-1" style={{ color: WARM_DARK }}>
                     {item.title}
@@ -833,66 +682,6 @@ export default function AdminDashboard() {
               ))}
             </div>
           </Card>
-        </div>
-
-        {/* ── GUIDANCE BRIEF ──────────────────────────────────── */}
-        <div className="rounded-[2.5rem] p-8 md:p-10 flex flex-col md:flex-row md:items-start gap-6 animate-fadeIn"
-          style={{ background: WARM_DARK, boxShadow: '0 20px 40px -20px rgba(58,43,37,0.35)' }}>
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{ background: 'rgba(246,201,69,0.18)' }}>
-            <Heart size={20} style={{ color: WARM_GOLD }} />
-          </div>
-          <div className="flex-1">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-3"
-              style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Guidance Brief
-            </p>
-            <p className="text-sm md:text-base font-medium leading-relaxed mb-5"
-              style={{ color: 'rgba(255,255,255,0.82)' }}>
-              {isUnstable ? (
-                <>
-                  <span style={{ color: CORAL, fontWeight: 900 }}>⚠ Alert: </span>
-                  Campus wellness is{' '}
-                  <span style={{ color: CORAL, fontWeight: 900 }}>critically unstable</span>. 
-                  Distress levels are rising across key metrics. Immediate outreach programs and scheduled counseling sessions are strongly advised.
-                </>
-              ) : (
-                <>
-                  <span style={{ color: SAGE, fontWeight: 900 }}>✓ Notice: </span>
-                  Campus wellness is currently{' '}
-                  <span style={{ color: SAGE, fontWeight: 900 }}>stable</span>. 
-                  Continue monitoring engagement levels and promoting self-care resources to maintain this positive trend.
-                </>
-              )}
-            </p>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {(isUnstable ? [
-                'Schedule drop-in counseling for critical students',
-                'Run academic stress relief workshop',
-                'Boost Peer Insights section visibility',
-              ] : [
-                'Continue wellness tool promotion',
-                'Analyze positive trend factors',
-                'Update peer support resources',
-              ]).map((action, i) => (
-                <div key={i} className="flex items-start gap-2.5 p-4 rounded-2xl"
-                  style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                  }}>
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5"
-                    style={{ background: isUnstable ? CORAL : SAGE, color: 'white' }}>
-                    {i + 1}
-                  </div>
-                  <p className="text-[11px] font-semibold leading-relaxed"
-                    style={{ color: 'rgba(255,255,255,0.72)' }}>
-                    {action}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Footer */}

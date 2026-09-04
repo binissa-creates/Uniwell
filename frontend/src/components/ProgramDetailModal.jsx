@@ -1,197 +1,372 @@
 import { useState } from 'react'
-import { X, Users, TrendingUp, AlertTriangle, Moon, CloudRain, BellRing, ChevronDown } from 'lucide-react'
+import { X, Users, AlertTriangle, Moon, CloudRain, BellRing, ChevronDown, ChevronLeft, BookOpen, Heart } from 'lucide-react'
 
 const WARM_DARK = '#3a2b25'
-const WARM_BODY = '#5D4037'
 const WARM_TAN = '#AA8E7E'
 const CORAL = '#EF7B6C'
 const GOLD = '#E6B86A'
 const LAVENDER = '#9C8EC1'
+const SAGE = '#81B29A'
 
-export default function ProgramDetailModal({ group, onClose }) {
+export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
+  const [selectedStudent, setSelectedStudent] = useState(null)
+  const [activeTab, setActiveTab] = useState('moods') // 'moods' | 'journals'
+
   if (!group) return null
 
-  const [showMoodExplanation, setShowMoodExplanation] = useState(false)
-  const activePercent = Math.round((group.activeCount / group.totalStudents) * 100)
+  const handleStudentClose = () => setSelectedStudent(null)
+  const handleStudentSelect = (student) => {
+    setSelectedStudent(student)
+    setActiveTab('moods')
+  }
+
+  // Emotion tally sorted by count (top 6 for display)
+  const sortedEmotions = Object.entries(group.emotionTally || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([key, count]) => ({
+      key,
+      count,
+      emoji: moodMeta[key]?.emoji || '😶',
+      label: moodMeta[key]?.label || key,
+    }))
+
+  const totalEmotionEntries = sortedEmotions.reduce((s, e) => s + e.count, 0)
+
+  // Categorize low/difficult mood entries directly from real logs
+  const awfulAndBadCount = (group.emotionTally?.awful || 0) + (group.emotionTally?.bad || 0)
+  const stressCount = (group.emotionTally?.burned_out || 0) + (group.emotionTally?.frustrated || 0) + (group.emotionTally?.nervous || 0)
+  const distressCount = (group.emotionTally?.lonely || 0) + (group.emotionTally?.angry || 0) + (group.emotionTally?.confused || 0)
+  const lowMoodCount = awfulAndBadCount + stressCount + distressCount
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#3a2b25]/60 backdrop-blur-md animate-fadeIn"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-[#FDF9F2] rounded-[3rem] w-full max-w-2xl shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         <div className="absolute top-0 inset-x-0 h-2 bg-gold" />
 
-        <div className="flex items-center justify-between px-10 pt-10 pb-6">
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 pt-8 pb-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gold/10 flex items-center justify-center text-gold">
-              <Users size={24} />
+            <div className="w-12 h-12 rounded-2xl bg-gold/10 flex items-center justify-center text-gold">
+              <Users size={22} />
             </div>
             <div>
-              <h2 className="font-jakarta font-black text-2xl" style={{ color: WARM_DARK }}>{group.course}</h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-warm/40 mt-1">{group.year ? `Year ${group.year}` : 'All year levels'} · Wellness Summary</p>
+              <h2 className="font-jakarta font-black text-xl" style={{ color: WARM_DARK }}>{group.course}</h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-warm/40 mt-0.5">
+                {group.year ? `Year ${group.year}` : 'All Year Levels'} · Mood Chronicle Summary
+              </p>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-warm/20 hover:text-warm/60 transition-colors shadow-sm"
-          >
-            <X size={24} />
+          <button onClick={onClose} className="w-11 h-11 rounded-2xl bg-white flex items-center justify-center text-warm/20 hover:text-warm/60 transition-colors shadow-sm">
+            <X size={22} />
           </button>
         </div>
 
-        <div className="px-10 pb-10 overflow-y-auto custom-scrollbar">
+        <div className="px-8 pb-8 overflow-y-auto custom-scrollbar flex-1">
+
           {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <StatCard label="Total Students" value={group.totalStudents} sub="Population" />
-            <StatCard label="Avg Mood" value={group.avgMood} sub="Emotional Avg" />
-            <StatCard label="Activity" value={`${activePercent}%`} sub="Last 7 Days" />
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <StatCard label="Total Students" value={group.totalStudents} sub="Enrolled" />
+            <StatCard label="Mood Entries" value={totalEmotionEntries} sub="Total logged" />
+            <StatCard label="Low Mood Logs" value={lowMoodCount} sub="Awful / bad / stressed" highlight={lowMoodCount > 0} />
           </div>
 
-          {/* Average Mood Score Explanation - Collapsible */}
-          <div className="mb-8">
-            <button
-              onClick={() => setShowMoodExplanation(!showMoodExplanation)}
-              className="w-full flex items-center justify-between p-5 rounded-2xl border border-gold/20 transition-all hover:bg-gold/5"
-              style={{ background: showMoodExplanation ? 'rgba(246,201,69,0.08)' : '#FDF9F2' }}
-            >
-              <span className="text-xs font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>
-                ℹ️ Average Mood Score Calculation
-              </span>
-              <ChevronDown 
-                size={16} 
-                style={{ 
-                  color: WARM_TAN,
-                  transform: showMoodExplanation ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.3s ease'
-                }} 
-              />
-            </button>
-            
-            {showMoodExplanation && (
-              <div className="mt-3 p-5 rounded-2xl bg-gold/5 border border-gold/15 animate-fadeIn">
-                <p className="text-xs font-medium leading-relaxed text-warm/70 mb-4">
-                  The average mood score is calculated from all mood entries submitted by students in this cohort. 
-                  It ranges from <span className="font-bold text-coral">1.0 (Critical)</span> to <span className="font-bold text-gold">5.0 (Excellent)</span>.
-                </p>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(79,39,35,0.05)' }}>
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#81B29A' }} />
-                    <span className="text-[9px] font-medium text-warm/70"><span className="font-bold">≥4.0</span> Good emotional health</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(230,184,106,0.1)' }}>
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: GOLD }} />
-                    <span className="text-[9px] font-medium text-warm/70"><span className="font-bold">2.5-3.9</span> Moderate concern</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'rgba(239,123,108,0.1)' }}>
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: CORAL }} />
-                    <span className="text-[9px] font-medium text-warm/70"><span className="font-bold">&lt;2.5</span> Critical intervention needed</span>
-                  </div>
-                </div>
+          {/* Emotion Tally */}
+          <div className="mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: WARM_TAN }}>
+              <Heart size={12} className="text-coral" />
+              Reported Mood Entries ({totalEmotionEntries} total)
+            </h3>
+            {sortedEmotions.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {sortedEmotions.map(em => {
+                  return (
+                    <div key={em.key} className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white border border-warm/10 shadow-sm">
+                      <span className="text-xl">{em.emoji}</span>
+                      <div>
+                        <div className="text-xs font-bold" style={{ color: WARM_DARK }}>{em.label}</div>
+                        <div className="text-[10px] font-semibold text-warm/50">{em.count} {em.count === 1 ? 'entry' : 'entries'}</div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
+            ) : (
+              <p className="text-sm italic text-warm/30">No mood entries logged in the last 90 days.</p>
             )}
           </div>
 
-          {/* Alert Breakdown */}
-          <div className="mb-10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2" style={{ color: WARM_TAN }}>
+          {/* Low Mood Breakdown */}
+          <div className="mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: WARM_TAN }}>
               <AlertTriangle size={12} className="text-coral" />
-              Risk Distribution & Explanations
+              Low Mood & At-Risk Entries
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-              <RiskItem icon={AlertTriangle} color={CORAL} label="Critical Streak" count={group.alerts.streak} description="3+ consecutive low mood entries (score ≤2)" />
-              <RiskItem icon={CloudRain} color={GOLD} label="Low Trend" count={group.alerts.lowAvg} description="Consistent average score below 2.5 over recent entries" />
-              <RiskItem icon={Moon} color={LAVENDER} label="Silent" count={group.alerts.silent} description="No mood entries in the last 7 days" />
+            <div className="grid grid-cols-3 gap-3">
+              <RiskItem
+                icon={AlertTriangle}
+                color={CORAL}
+                label="Rough & Awful"
+                count={awfulAndBadCount}
+                description="Awful 😢 & Bad 😔 entries"
+              />
+              <RiskItem
+                icon={CloudRain}
+                color={GOLD}
+                label="Stress & Burnt Out"
+                count={stressCount}
+                description="Burnt out 🥱, Frustrated 😤, Nervous 😰"
+              />
+              <RiskItem
+                icon={Moon}
+                color={LAVENDER}
+                label="Distress & Lonely"
+                count={distressCount}
+                description="Lonely 🥺, Angry 😠, Confused 😕"
+              />
             </div>
           </div>
 
-          {/* Flagged Student List (Name + ID) */}
-          <div className="bg-white rounded-[2rem] p-8 border border-warm/5">
-            <h3 className="text-[10px] font-black uppercase tracking-widest mb-6" style={{ color: WARM_TAN }}>
-              Students Requiring Support
-            </h3>
-            
-            {group.alertStudents.length === 0 ? (
-              <p className="text-sm font-medium italic text-warm/30">No students currently flagged in this group.</p>
+          {/* Student List */}
+          <div className="bg-white rounded-[2rem] border border-warm/5">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-warm/5">
+              <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>
+                All Students ({group.students?.length || 0})
+              </h3>
+              <span className="text-[9px] text-warm/40">Click a student to view mood history</span>
+            </div>
+
+            {(!group.students || group.students.length === 0) ? (
+              <p className="px-6 py-8 text-sm italic text-warm/30">No students in this group.</p>
             ) : (
-              <div className="space-y-4">
-                {group.alertStudents.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between py-4 px-4 rounded-2xl transition-all" 
-                    style={{ background: s.kind === 'Critical Streak' ? `${CORAL}05` : s.kind === 'Low Trend' ? `${GOLD}05` : `${LAVENDER}05` }}>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className="text-sm font-black" style={{ color: WARM_DARK }}>
-                          {s.name} <span className="font-bold text-warm/50">({s.id})</span>
-                        </span>
-                        <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase" 
-                          style={{ 
-                              background: s.kind === 'Critical Streak' ? `${CORAL}15` : s.kind === 'Low Trend' ? `${GOLD}15` : `${LAVENDER}15`,
-                              color: s.kind === 'Critical Streak' ? CORAL : s.kind === 'Low Trend' ? GOLD : LAVENDER
-                          }}>
-                          {s.kind}
-                        </span>
+              <div className="max-h-72 overflow-y-auto custom-scrollbar divide-y divide-warm/5">
+                {group.students.map((s, i) => {
+                  const studentLowCount = s.moodEntries?.filter(m =>
+                    ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused'].includes(m.mood_type)
+                  ).length || 0
+
+                  const hasCritical = s.moodEntries?.some(m => ['awful', 'bad'].includes(m.mood_type))
+                  const topEm = Object.entries(s.emotionTally || {}).sort((a, b) => b[1] - a[1])[0]
+
+                  return (
+                    <div
+                      key={i}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleStudentSelect(s)}
+                      onKeyDown={e => { if (e.key === 'Enter') handleStudentSelect(s) }}
+                      className="flex items-center justify-between px-6 py-3.5 hover:bg-[#FDF9F2] cursor-pointer transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-lg">
+                          {topEm ? (moodMeta[topEm[0]]?.emoji || '😶') : '—'}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold" style={{ color: WARM_DARK }}>{s.name}</span>
+                            <span className="text-[10px] text-warm/40 font-medium">({s.id})</span>
+                            {studentLowCount > 0 && (
+                              <span
+                                className="text-[9px] font-black px-2 py-0.5 rounded-full"
+                                style={{
+                                  background: hasCritical ? '#FEE9E7' : '#FDF3E3',
+                                  color: hasCritical ? CORAL : GOLD
+                                }}
+                              >
+                                {studentLowCount} low {studentLowCount === 1 ? 'mood' : 'moods'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-warm/40">
+                            {s.logCount} {s.logCount === 1 ? 'entry' : 'entries'} ·{' '}
+                            {s.lastLogged ? new Date(s.lastLogged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No entries'}
+                          </p>
+                        </div>
                       </div>
-                      {/* Explanation tooltip */}
-                      <p className="text-[9px] text-warm/60 leading-snug">
-                        {s.kind === 'Critical Streak' && `3+ consecutive mood entries with low scores (≤2). Average: ${s.score}`}
-                        {s.kind === 'Low Trend' && `Consistent low mood pattern. Average score: ${s.score} (scale: 1-5)`}
-                        {s.kind === 'Silent' && `No mood entries recorded in the last 7 days. Last score: ${s.score}`}
-                      </p>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-warm/25 group-hover:text-warm/60 transition-colors">View →</span>
                     </div>
-                    <div className="flex items-center gap-4 ml-4">
-                      <div className="text-right">
-                        <p className="text-[8px] font-bold uppercase tracking-widest text-warm/30">Avg Score</p>
-                        <p className="text-sm font-black" style={{ color: WARM_DARK }}>{s.score}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
         </div>
 
         {/* Action Bar */}
-        <div className="px-10 py-8 bg-white border-t border-warm/5 flex items-center justify-between">
+        <div className="px-8 py-5 bg-white border-t border-warm/5 flex items-center justify-between">
           <div className="flex flex-col">
-            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>Action Plan</p>
+            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>Action</p>
             <p className="text-xs font-bold text-warm/60">Notify guidance staff for this group</p>
           </div>
-          <button className="flex items-center gap-3 px-8 py-4 bg-gold rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-glow hover:scale-105 transition-transform active:scale-95">
-            <BellRing size={16} />
+          <button className="flex items-center gap-3 px-7 py-3.5 bg-gold rounded-2xl font-black text-xs uppercase tracking-widest text-white shadow-glow hover:scale-105 transition-transform active:scale-95">
+            <BellRing size={15} />
             Dispatch Support
           </button>
+        </div>
+      </div>
+
+      {/* Student Detail Sub-Modal */}
+      {selectedStudent && (
+        <StudentDetailModal
+          student={selectedStudent}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onClose={handleStudentClose}
+          moodMeta={moodMeta}
+        />
+      )}
+    </div>
+  )
+}
+
+function StudentDetailModal({ student, activeTab, setActiveTab, onClose, moodMeta }) {
+  const moodEntries = student.moodEntries || []
+  const sharedJournals = student.sharedJournals || []
+
+  return (
+    <div
+      className="absolute inset-0 z-[110] flex items-center justify-center bg-[#3a2b25]/50 backdrop-blur-sm animate-fadeIn rounded-[3rem]"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-scaleIn overflow-hidden flex flex-col max-h-[75vh] mx-4"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Sub-modal header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-warm/10">
+          <div className="flex items-center gap-3">
+            <button onClick={onClose} className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-warm/50 hover:text-warm transition-colors">
+              <ChevronLeft size={16} />
+            </button>
+            <div>
+              <h4 className="font-jakarta font-black text-base" style={{ color: WARM_DARK }}>{student.name}</h4>
+              <p className="text-[10px] text-warm/40 font-medium">{student.id} · {student.course} · Year {student.year}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-warm/30 hover:text-warm transition-colors">
+            <X size={15} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex border-b border-warm/10 px-6">
+          <TabBtn active={activeTab === 'moods'} onClick={() => setActiveTab('moods')} icon={Heart} label="Mood Entries" count={moodEntries.length} />
+          <TabBtn active={activeTab === 'journals'} onClick={() => setActiveTab('journals')} icon={BookOpen} label="Shared Journal" count={sharedJournals.length} />
+        </div>
+
+        {/* Tab Content */}
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
+          {activeTab === 'moods' ? (
+            <div className="p-4 space-y-2">
+              {moodEntries.length === 0 ? (
+                <EmptyTabState icon="😶" title="No mood entries" sub="This student hasn't logged any moods in the last 90 days." />
+              ) : (
+                moodEntries.map((entry, i) => {
+                  const meta = moodMeta[entry.mood_type] || { emoji: '😶', label: entry.mood_type }
+                  const dt = new Date(entry.logged_at)
+                  const dateStr = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                  const timeStr = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+                  return (
+                    <div key={i} className="flex items-start gap-3 p-3 rounded-2xl bg-[#FDF9F2] border border-warm/5">
+                      <span className="text-xl flex-shrink-0 mt-0.5">{meta.emoji}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-sm font-bold capitalize" style={{ color: WARM_DARK }}>{meta.label}</span>
+                          <span className="text-[9px] text-warm/40 font-medium whitespace-nowrap">{dateStr} · {timeStr}</span>
+                        </div>
+                        {entry.note && (
+                          <p className="text-xs text-warm/70 leading-relaxed italic">"{entry.note}"</p>
+                        )}
+                        {entry.triggers?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {entry.triggers.map((t, ti) => (
+                              <span key={ti} className="text-[9px] px-2 py-0.5 rounded-full bg-warm/8 text-warm/50 font-semibold">{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          ) : (
+            <div className="p-4 space-y-2">
+              {sharedJournals.length === 0 ? (
+                <EmptyTabState icon="📖" title="No shared journal entries" sub="This student hasn't shared any journal entries with guidance yet." />
+              ) : (
+                sharedJournals.map((j, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-[#FDF9F2] border border-warm/5">
+                    {j.prompt && <p className="text-[10px] font-bold text-[#755b00] mb-1 uppercase tracking-wider">{j.prompt}</p>}
+                    <p className="text-xs text-warm/80 leading-relaxed">{j.content}</p>
+                    <p className="text-[9px] text-warm/35 mt-2 font-medium">
+                      {new Date(j.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function StatCard({ label, value, sub }) {
+function TabBtn({ active, onClick, icon: Icon, label, count }) {
   return (
-    <div className="bg-white p-6 rounded-[2rem] border border-warm/5 shadow-sm">
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-1 py-3 mr-5 text-[11px] font-black uppercase tracking-wider border-b-2 transition-colors ${
+        active ? 'border-gold text-warm' : 'border-transparent text-warm/40 hover:text-warm/70'
+      }`}
+    >
+      <Icon size={12} />
+      {label}
+      {count > 0 && (
+        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${active ? 'bg-gold/20 text-[#755b00]' : 'bg-warm/10 text-warm/40'}`}>
+          {count}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function EmptyTabState({ icon, title, sub }) {
+  return (
+    <div className="text-center py-12 px-4">
+      <div className="text-4xl mb-3 opacity-30">{icon}</div>
+      <h4 className="font-bold text-sm text-warm mb-1">{title}</h4>
+      <p className="text-xs text-warm/40 max-w-xs mx-auto">{sub}</p>
+    </div>
+  )
+}
+
+function StatCard({ label, value, highlight }) {
+  return (
+    <div className="bg-white p-4 rounded-[1.5rem] border border-warm/5 shadow-sm text-center">
       <p className="text-[8px] font-black uppercase tracking-widest mb-1 text-warm/40">{label}</p>
-      <p className="text-2xl font-black" style={{ color: WARM_DARK }}>{value}</p>
-      <p className="text-[8px] font-bold text-warm/30 mt-1">{sub}</p>
+      <p className="text-2xl font-black" style={{ color: highlight ? CORAL : WARM_DARK }}>{value}</p>
     </div>
   )
 }
 
 function RiskItem({ icon: Icon, color, label, count, description }) {
   return (
-    <div className="flex items-start gap-3 p-4 rounded-2xl border" style={{ borderColor: `${color}15`, background: `${color}05` }}>
-      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15`, color }}>
-        <Icon size={14} />
+    <div className="flex items-start gap-2.5 p-3.5 rounded-2xl border" style={{ borderColor: `${color}18`, background: `${color}06` }}>
+      <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15`, color }}>
+        <Icon size={13} />
       </div>
       <div className="flex-1">
         <p className="text-[9px] font-black uppercase tracking-widest" style={{ color }}>{label}</p>
-        <p className="text-sm font-black mb-1.5" style={{ color: WARM_DARK }}>{count} students</p>
-        {description && (
-          <p className="text-[8px] text-warm/60 leading-snug">{description}</p>
-        )}
+        <p className="text-sm font-black mb-1" style={{ color: WARM_DARK }}>{count} students</p>
+        {description && <p className="text-[8px] text-warm/50 leading-snug">{description}</p>}
       </div>
     </div>
   )

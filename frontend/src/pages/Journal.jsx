@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Navbar from '../components/Navbar'
-import RadianceDose from '../components/RadianceDose'
+
 import ReflectionCapsuleModal from '../components/ReflectionCapsuleModal'
 import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS } from '../lib/data'
 import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
-import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight } from 'lucide-react'
+import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
+import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera } from 'lucide-react'
+
 
 export default function Journal() {
   const [entries, setEntries] = useState([])
@@ -23,6 +25,9 @@ export default function Journal() {
   const [isCapsuleOpen, setIsCapsuleOpen] = useState(false)
   const [capsuleData, setCapsuleData] = useState(null)
   const [userId, setUserId] = useState(null)
+  const [journeyVersion, setJourneyVersion] = useState(0)
+  const [photoUrl, setPhotoUrl] = useState(null)
+  const photoInputRef = useRef(null)
 
   const loadData = useCallback(async () => {
     const params = new URLSearchParams(window.location.search)
@@ -41,7 +46,8 @@ export default function Journal() {
       const [{ data, error }, capsuleRes] = await Promise.all([
         supabase
           .from('journal_entries')
-          .select('id, content, prompt, created_at')
+          .select('id, content, prompt, created_at, shared_with_guidance')
+
           .eq('user_id', auth.user.id)
           .order('created_at', { ascending: false }),
         getReflectionCapsuleData(auth.user.id),
@@ -80,9 +86,11 @@ export default function Journal() {
         .insert({
           user_id: auth.user.id,
           content: content.trim(),
-          prompt: finalPrompt || null
+          prompt: finalPrompt || null,
+          shared_with_guidance: false,
         })
-        .select('id, content, prompt, created_at')
+        .select('id, content, prompt, created_at, shared_with_guidance')
+
         .single()
       if (error) throw error
 
@@ -111,7 +119,7 @@ export default function Journal() {
     try {
       const { error } = await supabase.from('journal_entries').delete().eq('id', id)
       if (error) throw error
-      setEntries((prev) => prev.filter((entry) => entry.id !== id))
+      setEntries(prev => prev.filter(entry => entry.id !== id))
       if (selectedEntry?.id === id) setSelectedEntry(null)
     } catch (err) {
       console.error('[journal delete]', err)
@@ -119,6 +127,23 @@ export default function Journal() {
       setDeleting(null)
     }
   }
+
+  const handleToggleShare = async (entry, e) => {
+    if (e) e.stopPropagation()
+    const newShared = !entry.shared_with_guidance
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .update({ shared_with_guidance: newShared })
+        .eq('id', entry.id)
+      if (error) throw error
+      setEntries(prev => prev.map(en => en.id === entry.id ? { ...en, shared_with_guidance: newShared } : en))
+      if (selectedEntry?.id === entry.id) setSelectedEntry(prev => ({ ...prev, shared_with_guidance: newShared }))
+    } catch (err) {
+      console.error('[journal share toggle]', err)
+    }
+  }
+
 
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
@@ -129,26 +154,22 @@ export default function Journal() {
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 relative z-10 page-enter">
 
-        {/* ── Header Row with Integrated Compact Daily Dose ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center mb-6">
-          <div className="lg:col-span-7">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#755b00] bg-[#f6c945]/20 px-2.5 py-0.5 rounded-full">
-                Personal Archive
-              </span>
-            </div>
-            <h1 className="font-jakarta text-2xl sm:text-3xl font-extrabold text-[#3a2b25] tracking-tight">
-              Journal <span className="font-playfair italic text-[#6B5A10]">Sanctuary</span>
-            </h1>
-            <p className="text-warm/60 text-xs sm:text-sm mt-0.5 max-w-lg leading-relaxed font-medium">
-              Transform your thoughts into clarity and personal growth. A private, safe sanctuary for your inner dialogue.
-            </p>
-          </div>
 
-          <div className="lg:col-span-5">
-            <RadianceDose />
+        {/* ── Page Header ── */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-black uppercase tracking-widest text-[#755b00] bg-[#f6c945]/20 px-2.5 py-0.5 rounded-full">
+              Personal Archive
+            </span>
           </div>
+          <h1 className="font-jakarta text-2xl sm:text-3xl font-extrabold text-[#3a2b25] tracking-tight">
+            Journal <span className="font-playfair italic text-[#6B5A10]">Sanctuary</span>
+          </h1>
+          <p className="text-warm/60 text-xs sm:text-sm mt-0.5 max-w-lg leading-relaxed font-medium">
+            Transform your thoughts into clarity and personal growth. A private, safe sanctuary for your inner dialogue.
+          </p>
         </div>
+
 
         {/* ── Main Layout: Compose (5 cols) + Timeline (7 cols) ── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -357,15 +378,56 @@ export default function Journal() {
                               <span className="text-[10px] font-bold text-warm/50 bg-[#FDF9F2] group-hover:bg-white px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors">
                                 <Clock size={10} /> {entryDate} · {entryTime}
                               </span>
+                              {e.shared_with_guidance && (
+                                <span className="text-[9px] font-bold text-[#2D5A29] bg-[#EAF2E6] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <Lock size={8} /> Shared
+                                </span>
+                              )}
                             </div>
-                            <button
-                              onClick={(evt) => handleDelete(e.id, evt)}
-                              disabled={deleting === e.id}
-                              title="Delete entry"
-                              className="p-1 rounded-lg text-warm/30 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
-                            >
-                              {deleting === e.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={(evt) => {
+                                  evt.stopPropagation()
+                                  toggleSaveToJourney(userId, {
+                                    sourceType: 'journal',
+                                    sourceId: e.id,
+                                    title: e.prompt || 'Journal Reflection',
+                                    note: e.content,
+                                    date: e.created_at,
+                                    emoji: '📖',
+                                  })
+                                  setJourneyVersion(v => v + 1)
+                                }}
+                                title={isSavedToJourney(userId, 'journal', e.id) ? 'Saved in My Journey' : 'Save to My Journey'}
+                                className={`p-1.5 rounded-lg transition-colors flex-shrink-0 flex items-center gap-1 text-[10px] font-bold ${
+                                  isSavedToJourney(userId, 'journal', e.id)
+                                    ? 'text-[#6d5400] bg-[#FFF9EE] border border-[#F6C945]/40'
+                                    : 'text-warm/30 hover:text-[#755b00] hover:bg-[#FFF9EE]'
+                                }`}
+                              >
+                                <Star size={12} fill={isSavedToJourney(userId, 'journal', e.id) ? '#F6C945' : 'none'} className={isSavedToJourney(userId, 'journal', e.id) ? 'text-[#F6C945]' : ''} />
+                                <span className="hidden sm:inline">{isSavedToJourney(userId, 'journal', e.id) ? 'In Journey' : 'Save'}</span>
+                              </button>
+                              <button
+                                onClick={(evt) => handleToggleShare(e, evt)}
+                                title={e.shared_with_guidance ? 'Unshare from guidance' : 'Share with guidance'}
+                                className={`p-1 rounded-lg transition-colors flex-shrink-0 ${
+                                  e.shared_with_guidance
+                                    ? 'text-[#2D5A29] bg-[#EAF2E6] hover:bg-red-50 hover:text-red-500'
+                                    : 'text-warm/30 hover:text-[#2D5A29] hover:bg-[#EAF2E6]'
+                                }`}
+                              >
+                                <Share2 size={12} />
+                              </button>
+                              <button
+                                onClick={(evt) => handleDelete(e.id, evt)}
+                                disabled={deleting === e.id}
+                                title="Delete entry"
+                                className="p-1 rounded-lg text-warm/30 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                              >
+                                {deleting === e.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                              </button>
+                            </div>
                           </div>
 
                           {e.prompt && (
@@ -385,6 +447,7 @@ export default function Journal() {
                             <span>{e.content.length} characters</span>
                           </div>
                         </div>
+
                       )
                     })}
                   </div>
@@ -507,8 +570,42 @@ export default function Journal() {
               </div>
             </div>
 
-            <div className="px-5 sm:px-7 py-3 border-t border-warm/10 flex items-center justify-between bg-surface-low/30">
-              <span className="text-[10px] text-warm/40">{selectedEntry.content.length} characters</span>
+            <div className="px-5 sm:px-7 py-3 border-t border-warm/10 flex items-center justify-between bg-surface-low/30 gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleSaveToJourney(userId, {
+                      sourceType: 'journal',
+                      sourceId: selectedEntry.id,
+                      title: selectedEntry.prompt || 'Journal Reflection',
+                      note: selectedEntry.content,
+                      date: selectedEntry.created_at,
+                      emoji: '📖',
+                    })
+                    setJourneyVersion(v => v + 1)
+                  }}
+                  className={`text-[11px] font-bold flex items-center gap-1.5 py-1 px-2.5 rounded-lg border transition-colors ${
+                    isSavedToJourney(userId, 'journal', selectedEntry.id)
+                      ? 'text-[#6d5400] bg-[#FFF9EE] border-[#F6C945]'
+                      : 'text-warm/60 bg-white border-warm/15 hover:border-[#F6C945]'
+                  }`}
+                >
+                  <Star size={12} fill={isSavedToJourney(userId, 'journal', selectedEntry.id) ? '#F6C945' : 'none'} className={isSavedToJourney(userId, 'journal', selectedEntry.id) ? 'text-[#F6C945]' : ''} />
+                  <span>{isSavedToJourney(userId, 'journal', selectedEntry.id) ? 'Saved in My Journey 🌻' : 'Save to My Journey'}</span>
+                </button>
+                <button
+                  onClick={(e) => handleToggleShare(selectedEntry, e)}
+                  className={`text-[11px] font-bold flex items-center gap-1.5 py-1 px-2.5 rounded-lg transition-colors ${
+                    selectedEntry.shared_with_guidance
+                      ? 'text-[#2D5A29] bg-[#EAF2E6] hover:bg-red-50 hover:text-red-500'
+                      : 'text-warm/50 hover:text-[#2D5A29] hover:bg-[#EAF2E6]'
+                  }`}
+                >
+                  {selectedEntry.shared_with_guidance ? <Lock size={12} /> : <Share2 size={12} />}
+                  {selectedEntry.shared_with_guidance ? 'Unshare from Guidance' : 'Share with Guidance'}
+                </button>
+              </div>
               <button
                 onClick={(e) => handleDelete(selectedEntry.id, e)}
                 className="text-[11px] font-bold text-red-500 hover:text-red-700 flex items-center gap-1 py-1 px-2.5 rounded-lg hover:bg-red-50 transition-colors"

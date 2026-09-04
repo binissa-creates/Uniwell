@@ -17,7 +17,8 @@ begin
     create type public.mood_type as enum (
       'rad', 'good', 'meh', 'bad', 'awful',
       'excited', 'hopeful', 'grateful', 'calm', 'content', 'proud',
-      'nervous', 'frustrated', 'lonely', 'angry', 'burned_out', 'confused'
+      'nervous', 'frustrated', 'lonely', 'angry', 'burned_out', 'confused',
+      'motivated', 'relieved', 'overwhelmed', 'disappointed', 'embarrassed'
     );
   else
     if not exists (select 1 from pg_enum where enumlabel = 'excited' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'excited'; end if;
@@ -32,6 +33,11 @@ begin
     if not exists (select 1 from pg_enum where enumlabel = 'angry' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'angry'; end if;
     if not exists (select 1 from pg_enum where enumlabel = 'burned_out' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'burned_out'; end if;
     if not exists (select 1 from pg_enum where enumlabel = 'confused' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'confused'; end if;
+    if not exists (select 1 from pg_enum where enumlabel = 'motivated' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'motivated'; end if;
+    if not exists (select 1 from pg_enum where enumlabel = 'relieved' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'relieved'; end if;
+    if not exists (select 1 from pg_enum where enumlabel = 'overwhelmed' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'overwhelmed'; end if;
+    if not exists (select 1 from pg_enum where enumlabel = 'disappointed' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'disappointed'; end if;
+    if not exists (select 1 from pg_enum where enumlabel = 'embarrassed' and enumtypid = 'public.mood_type'::regtype) then alter type public.mood_type add value 'embarrassed'; end if;
   end if;
   if not exists (select 1 from pg_type where typname = 'trigger_category') then
     create type public.trigger_category as enum (

@@ -1,27 +1,27 @@
 import { supabase } from './supabase'
 
 const MOOD_VALUES = {
-  rad: 5, excited: 5, proud: 5,
-  good: 4, hopeful: 4, grateful: 4, calm: 4,
-  meh: 3, content: 3, confused: 3,
-  bad: 2, nervous: 2, frustrated: 2, lonely: 2,
+  rad: 5, glowing: 5, excited: 5, proud: 5, motivated: 5,
+  good: 4, hopeful: 4, grateful: 4, calm: 4, relieved: 4,
+  meh: 3, neutral: 3, content: 3, confused: 3,
+  bad: 2, nervous: 2, frustrated: 2, lonely: 2, overwhelmed: 2, disappointed: 2, dissapointed: 2, embarrassed: 2,
   awful: 1, angry: 1, burned_out: 1
 }
 
 const MOOD_EMOJIS = {
-  rad: '🤩', excited: '✨', proud: '🏆',
-  good: '😊', hopeful: '🌱', grateful: '🙏', calm: '🍃',
-  meh: '😐', content: '😌', confused: '🤔',
-  bad: '😔', nervous: '😰', frustrated: '😤', lonely: '🥺',
-  awful: '😢', angry: '😡', burned_out: '🕯️'
+  rad: '🤩', glowing: '🤩', excited: '😆', proud: '💪', motivated: '🎯',
+  good: '😊', hopeful: '🌟', grateful: '🙏', calm: '😌', relieved: '😌',
+  meh: '😐', neutral: '😐', content: '🎯', confused: '🤔',
+  bad: '😔', nervous: '😰', frustrated: '😤', lonely: '🥺', overwhelmed: '🫠', disappointed: '😕', dissapointed: '😕', embarrassed: '😳',
+  awful: '😢', angry: '😠', burned_out: '🥱'
 }
 
 const MOOD_LABELS = {
-  rad: 'Radiant', excited: 'Excited', proud: 'Proud',
-  good: 'Good', hopeful: 'Hopeful', grateful: 'Grateful', calm: 'Calm',
-  meh: 'Okay', content: 'Content', confused: 'Confused',
-  bad: 'Low', nervous: 'Nervous', frustrated: 'Frustrated', lonely: 'Lonely',
-  awful: 'Rough', angry: 'Frustrated', burned_out: 'Burned Out'
+  rad: 'Glowing', glowing: 'Glowing', excited: 'Excited', proud: 'Proud', motivated: 'Motivated',
+  good: 'Good', hopeful: 'Hopeful', grateful: 'Grateful', calm: 'Relieved', relieved: 'Relieved',
+  meh: 'Neutral', neutral: 'Neutral', content: 'Motivated', confused: 'Confused',
+  bad: 'Bad', nervous: 'Nervous', frustrated: 'Frustrated', lonely: 'Lonely', overwhelmed: 'Overwhelmed', disappointed: 'Disappointed', dissapointed: 'Disappointed', embarrassed: 'Embarrassed',
+  awful: 'Awful', angry: 'Angry', burned_out: 'Burnt Out'
 }
 
 /**

@@ -16,36 +16,48 @@ export function normalizeCourse(courseName) {
  * returns normalized shapes that pages can consume directly.
  */
 
-// Maps every UI mood key -> the nearest core DB enum value.
-// Extended moods that have been added to the DB enum via the migration
-// will be passed through directly. If the migration hasn't been run yet,
-// these fallbacks prevent enum constraint errors.
-const MOOD_DB_FALLBACK = {
-  // Core moods — pass through
-  rad: 'rad', good: 'good', meh: 'meh', bad: 'bad', awful: 'awful',
-  // Extended positive
-  excited: 'excited', hopeful: 'hopeful', grateful: 'grateful',
-  calm: 'calm', content: 'content', proud: 'proud',
-  // Extended negative/neutral
-  nervous: 'nervous', frustrated: 'frustrated', lonely: 'lonely',
-  angry: 'angry', burned_out: 'burned_out', confused: 'confused',
-}
+// Maps UI mood keys -> DB enum values that are guaranteed to exist in Supabase schema.
+// Extended moods that are not in the existing DB enum fallback safely to standard values.
+const DB_SAFE_ENUM_MAP = {
+  // Core moods
+  rad: 'rad',
+  glowing: 'rad',
+  good: 'good',
+  meh: 'meh',
+  neutral: 'meh',
+  bad: 'bad',
+  awful: 'awful',
 
-const CORE_FALLBACK = {
-  // Fallback to core enum if extended not yet in DB
-  excited: 'rad', hopeful: 'good', grateful: 'rad',
-  calm: 'good', content: 'good', proud: 'rad',
-  nervous: 'bad', frustrated: 'bad', lonely: 'bad',
-  angry: 'awful', burned_out: 'awful', confused: 'meh',
+  // Positive extensions
+  excited: 'excited',
+  hopeful: 'hopeful',
+  grateful: 'grateful',
+  calm: 'calm',
+  relieved: 'calm',
+  content: 'content',
+  motivated: 'rad',
+  proud: 'proud',
+
+  // Heavy / negative extensions
+  nervous: 'nervous',
+  frustrated: 'frustrated',
+  lonely: 'lonely',
+  confused: 'confused',
+  burned_out: 'burned_out',
+  angry: 'angry',
+  overwhelmed: 'bad',
+  disappointed: 'bad',
+  dissapointed: 'bad',
+  embarrassed: 'bad',
 }
 
 /**
- * Normalise a mood key for the DB. Prefers exact key; falls back to a core
- * enum value so RPC calls never throw an enum constraint error.
+ * Normalise a mood key for the DB. Maps to a valid DB enum value
+ * so RPC calls never throw an enum constraint error.
  */
 export function safeMoodKey(key) {
   if (!key) return 'meh'
-  return MOOD_DB_FALLBACK[key] ?? CORE_FALLBACK[key] ?? 'meh'
+  return DB_SAFE_ENUM_MAP[key] || 'meh'
 }
 
 export const JOURNAL_PROMPTS = [
@@ -134,14 +146,28 @@ export async function fetchMoodHistory(days = 7) {
 
   const { data, error } = await query
   if (error) throw error
-  return (data || []).map((row) => ({
-    id: row.id,
-    mood_type: row.mood_type,
-    intensity: row.intensity,
-    note: row.note,
-    logged_at: row.logged_at,
-    triggers: (row.mood_triggers || []).map((t) => t.trigger_category),
-  }))
+  return (data || []).map((row) => {
+    let resolvedMood = row.mood_type
+    let cleanedNote = row.note || ''
+
+    // Parse specific feeling if preserved in note metadata
+    if (cleanedNote && cleanedNote.includes('[Feeling:')) {
+      const match = cleanedNote.match(/\[Feeling:\s*([a-zA-Z_]+)\]/)
+      if (match && match[1]) {
+        resolvedMood = match[1]
+        cleanedNote = cleanedNote.replace(/\[Feeling:\s*[a-zA-Z_]+\]\n*/, '').trim()
+      }
+    }
+
+    return {
+      id: row.id,
+      mood_type: resolvedMood,
+      intensity: row.intensity,
+      note: cleanedNote || null,
+      logged_at: row.logged_at,
+      triggers: (row.mood_triggers || []).map((t) => t.trigger_category),
+    }
+  })
 }
 
 /**

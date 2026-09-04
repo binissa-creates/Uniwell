@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Navbar from '../components/Navbar'
 import { supabase } from '../lib/supabase'
-import { Loader2, Users, ShieldAlert } from 'lucide-react'
+import { Loader2, ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
 import { normalizeCourse } from '../lib/data'
@@ -9,21 +9,43 @@ import { ACADEMIC_PROGRAMS, academicDepartmentSortIndex, academicProgramSortInde
 
 const WARM_DARK = '#3a2b25'
 const WARM_OLIVE = '#6B5A10'
-const WARM_TAN = '#AA8E7E'
 
 const REPORTING_DAYS = 90
+
 const MOOD_SCORE = {
   rad: 5, good: 4, meh: 3, bad: 2, awful: 1,
   excited: 5, hopeful: 4, grateful: 5, calm: 4, content: 4, proud: 5,
   nervous: 2, frustrated: 2, lonely: 2, angry: 1, burned_out: 1, confused: 2,
 }
 
+const MOOD_META = {
+  rad:        { emoji: '🤩', label: 'Radiant' },
+  good:       { emoji: '😊', label: 'Good' },
+  meh:        { emoji: '😐', label: 'Meh' },
+  bad:        { emoji: '😔', label: 'Bad' },
+  awful:      { emoji: '😢', label: 'Awful' },
+  excited:    { emoji: '😆', label: 'Excited' },
+  hopeful:    { emoji: '🌟', label: 'Hopeful' },
+  grateful:   { emoji: '🙏', label: 'Grateful' },
+  calm:       { emoji: '😌', label: 'Calm' },
+  content:    { emoji: '🥰', label: 'Content' },
+  nervous:    { emoji: '😰', label: 'Nervous' },
+  frustrated: { emoji: '😤', label: 'Frustrated' },
+  lonely:     { emoji: '🥺', label: 'Lonely' },
+  angry:      { emoji: '😠', label: 'Angry' },
+  burned_out: { emoji: '🥱', label: 'Burnt' },
+  confused:   { emoji: '😕', label: 'Confused' },
+  proud:      { emoji: '💪', label: 'Proud' },
+}
+
 export default function StudentWellnessOverview() {
   const [profiles, setProfiles] = useState([])
   const [logs, setLogs] = useState([])
+  const [sharedJournalsByUser, setSharedJournalsByUser] = useState({})
   const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState(null)
-  
+
   const [search, setSearch] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [courseFilter, setCourseFilter] = useState('')
@@ -35,23 +57,40 @@ export default function StudentWellnessOverview() {
     setError(null)
     try {
       const since = new Date(Date.now() - REPORTING_DAYS * 86400000).toISOString()
-      const [p, m] = await Promise.all([
+      const [p, m, j] = await Promise.all([
         supabase
           .from('profiles')
           .select('id, name, student_id, course, year_level, created_at')
           .eq('role', 'student'),
         supabase
           .from('mood_logs')
-          .select('user_id, mood_type, intensity, logged_at')
+          .select('id, user_id, mood_type, intensity, note, logged_at, mood_triggers(trigger_category)')
           .gte('logged_at', since)
           .order('logged_at', { ascending: false }),
+        supabase
+          .from('journal_entries')
+          .select('user_id, id, content, prompt, created_at')
+          .eq('shared_with_guidance', true)
+          .order('created_at', { ascending: false }),
       ])
-      
+
       if (p.error) throw p.error
       if (m.error) throw m.error
+      // j.error is soft — journals may not exist yet
+      const sharedJournals = j.error ? [] : (j.data || [])
 
       setProfiles(p.data || [])
-      setLogs(m.data || [])
+      setLogs((m.data || []).map(row => ({
+        ...row,
+        triggers: (row.mood_triggers || []).map(t => t.trigger_category)
+      })))
+      // Store shared journals keyed by user_id for easy lookup
+      const journalByUser = {}
+      sharedJournals.forEach(entry => {
+        if (!journalByUser[entry.user_id]) journalByUser[entry.user_id] = []
+        journalByUser[entry.user_id].push(entry)
+      })
+      setSharedJournalsByUser(journalByUser)
     } catch (err) {
       console.error('[wellness monitor]', err)
       setError(err.message)
@@ -61,127 +100,135 @@ export default function StudentWellnessOverview() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
-  // Scroll to top on component mount
-  useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
+  // Build per-user stats including full emotion tallies
+  const userStats = useMemo(() => {
+    const map = {}
+    for (const l of logs) {
+      if (!map[l.user_id]) {
+        map[l.user_id] = { count: 0, totalScore: 0, last: null, recent: [], emotionTally: {}, moodEntries: [] }
+      }
+      const u = map[l.user_id]
+      u.count++
+      u.totalScore += MOOD_SCORE[l.mood_type] || 3
+      u.recent.push(l)
+      u.moodEntries.push(l)
+      u.emotionTally[l.mood_type] = (u.emotionTally[l.mood_type] || 0) + 1
+      if (!u.last || new Date(l.logged_at) > new Date(u.last)) {
+        u.last = l.logged_at
+      }
+    }
+    return map
+  }, [logs])
 
-  // Grouped Data Logic (Anonymized)
+  // Compute group-level emotion tallies
   const groupStats = useMemo(() => {
     const groups = {}
 
     const createBucket = (id, course, year = null) => ({
-      id,
-      course,
-      year,
+      id, course, year,
       totalStudents: 0,
-      avgMood: 0,
-      moodCount: 0,
       activeCount: 0,
-      alerts: { silent: 0, streak: 0, lowAvg: 0 },
-      alertStudents: [],
+      totalMoodEntries: 0,
+      lowMoodEntriesCount: 0,
+      criticalCount: 0,
+      emotionTally: {},
+      students: [], // full student records with mood entries
     })
-    
-    // Process logs to get per-user stats
-    const userStats = {}
-    for (const l of logs) {
-      if (!userStats[l.user_id]) {
-        userStats[l.user_id] = { count: 0, totalScore: 0, last: null, recent: [] }
-      }
-      userStats[l.user_id].count++
-      userStats[l.user_id].totalScore += MOOD_SCORE[l.mood_type] || 3
-      userStats[l.user_id].recent.push(l)
-      if (!userStats[l.user_id].last || new Date(l.logged_at) > new Date(userStats[l.user_id].last)) {
-        userStats[l.user_id].last = l.logged_at
-      }
-    }
 
-    // Process profiles into groups
+    const LOW_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
+    const CRITICAL_KEYS = ['awful', 'bad']
+
     for (const p of profiles) {
       const c = normalizeCourse(p.course || 'General')
       const y = p.year_level || 1
       const key = c
-      
+
       if (!groups[key]) {
         groups[key] = createBucket(key, c)
         groups[key].yearStats = {}
       }
-      
+
       const g = groups[key]
       if (!g.yearStats[y]) g.yearStats[y] = createBucket(`${key}|${y}`, c, y)
       const buckets = [g, g.yearStats[y]]
 
-      buckets.forEach(bucket => { bucket.totalStudents++ })
-      
+      buckets.forEach(b => b.totalStudents++)
+
       const stats = userStats[p.id]
+      const nameParts = (p.name || '').split(' ')
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
+
+      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_KEYS.includes(l.mood_type))
+      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_KEYS.includes(l.mood_type))
+
+      const studentRecord = {
+        id: p.student_id,
+        name: lastName,
+        fullName: p.name || 'Unknown',
+        course: c,
+        year: y,
+        moodEntries: stats?.moodEntries || [],
+        emotionTally: stats?.emotionTally || {},
+        lastLogged: stats?.last || null,
+        logCount: stats?.count || 0,
+        lowMoodCount: studentLowMoodEntries.length,
+        criticalCount: studentCriticalEntries.length,
+        sharedJournals: sharedJournalsByUser[p.id] || [],
+      }
+
+      buckets.forEach(b => {
+        b.students.push(studentRecord)
+        b.totalMoodEntries += studentRecord.logCount
+        b.lowMoodEntriesCount += studentLowMoodEntries.length
+        b.criticalCount += studentCriticalEntries.length
+      })
+
       if (stats) {
-        buckets.forEach(bucket => {
-          if (stats.count > 0) {
-            bucket.avgMood += stats.totalScore / stats.count
-            bucket.moodCount++
-          }
-        })
-        
         const weekAgo = Date.now() - 7 * 86400000
-        buckets.forEach(bucket => {
-          if (stats.last && new Date(stats.last).getTime() > weekAgo) bucket.activeCount++
-        })
-
-        // Extract last name for display
-        const nameParts = (p.name || '').split(' ')
-        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
-        
-        const silent = !stats.last || (Date.now() - new Date(stats.last).getTime()) > 7 * 86400000
-        const avg = stats.count >= 3 ? stats.totalScore / stats.count : null
-        const streak = stats.recent.slice(0, 3).length === 3 && stats.recent.slice(0, 3).every(l => (MOOD_SCORE[l.mood_type] || 3) <= 2)
-
-        if (streak) {
-            buckets.forEach(bucket => {
-              bucket.alerts.streak++
-              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Critical Streak', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
-            })
-        } else if (avg !== null && avg < 2.5) {
-            buckets.forEach(bucket => {
-              bucket.alerts.lowAvg++
-              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Low Trend', score: avg.toFixed(1), recentCount: stats.recent.length, logCount: stats.count })
-            })
-        } else if (silent) {
-            buckets.forEach(bucket => {
-              bucket.alerts.silent++
-              bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: avg?.toFixed(1) || '—', recentCount: stats.recent.length, logCount: stats.count })
-            })
-        }
-      } else {
-        // Extract last name for display
-        const nameParts = (p.name || '').split(' ')
-        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
-        
-        buckets.forEach(bucket => {
-          bucket.alerts.silent++
-          bucket.alertStudents.push({ id: p.student_id, name: lastName, kind: 'Silent', score: '—', recentCount: 0, logCount: 0 })
+        buckets.forEach(b => {
+          if (stats.last && new Date(stats.last).getTime() > weekAgo) b.activeCount++
+          // Merge emotion tallies
+          for (const [emotion, cnt] of Object.entries(stats.emotionTally)) {
+            b.emotionTally[emotion] = (b.emotionTally[emotion] || 0) + cnt
+          }
         })
       }
     }
 
-    const finishBucket = bucket => ({
-      ...bucket,
-      avgMood: bucket.moodCount > 0 ? (bucket.avgMood / bucket.moodCount).toFixed(1) : '—',
-      totalAlerts: bucket.alerts.streak + bucket.alerts.lowAvg + bucket.alerts.silent
-    })
+    // Derive topEmotion (top 3 emotions) for each bucket
+    const finishBucket = bucket => {
+      const tallySorted = Object.entries(bucket.emotionTally)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([key, count]) => ({
+          key,
+          count,
+          emoji: MOOD_META[key]?.emoji || '😶',
+          label: MOOD_META[key]?.label || key,
+        }))
+      return {
+        ...bucket,
+        topEmotion: tallySorted.length > 0 ? tallySorted : null,
+        totalAlerts: bucket.lowMoodEntriesCount,
+      }
+    }
 
     return Object.values(groups).map(g => ({
       ...finishBucket(g),
       yearStats: Object.fromEntries(Object.entries(g.yearStats).map(([year, bucket]) => [year, finishBucket(bucket)])),
-    })).sort((a, b) => {
-      return academicDepartmentSortIndex(a.course) - academicDepartmentSortIndex(b.course) || academicProgramSortIndex(a.course) - academicProgramSortIndex(b.course) || a.year - b.year
-    })
-  }, [profiles, logs])
+    })).sort((a, b) =>
+      academicDepartmentSortIndex(a.course) - academicDepartmentSortIndex(b.course) ||
+      academicProgramSortIndex(a.course) - academicProgramSortIndex(b.course) ||
+      a.year - b.year
+    )
+  }, [profiles, userStats])
 
   const courses = useMemo(() => {
     const existing = new Set(profiles.map(p => normalizeCourse(p.course)).filter(Boolean))
-    return ACADEMIC_PROGRAMS.filter(program => existing.has(program))
-      .concat(Array.from(existing).filter(program => !ACADEMIC_PROGRAMS.includes(program)).sort())
+    return ACADEMIC_PROGRAMS.filter(p => existing.has(p))
+      .concat(Array.from(existing).filter(p => !ACADEMIC_PROGRAMS.includes(p)).sort())
   }, [profiles])
 
   const filteredGroups = useMemo(() => {
@@ -224,7 +271,7 @@ export default function StudentWellnessOverview() {
             Wellness <span className="font-playfair italic font-bold" style={{ color: WARM_OLIVE }}>Monitor</span>
           </h1>
           <p className="text-lg max-w-2xl leading-relaxed font-medium text-warm/60">
-            A high-level overview of the last {REPORTING_DAYS} days of campus emotional health. Monitor trends by program and year level to identify areas needing support.
+            Search by department, program, or year level to view student wellness data. Select a program to view individual student emotion entries.
           </p>
         </div>
 
@@ -234,32 +281,28 @@ export default function StudentWellnessOverview() {
             <p className="text-[10px] font-black uppercase tracking-widest text-warm/40">Aggregating Campus Data</p>
           </div>
         ) : (
-          <>
-            <div className="mt-8">
-              <StudentListTable 
-                groups={filteredGroups}
-                courses={courses}
-                search={search}
-                setSearch={setSearch}
-                departmentFilter={departmentFilter}
-                setDepartmentFilter={(value) => {
-                  setDepartmentFilter(value)
-                  setCourseFilter('')
-                }}
-                courseFilter={courseFilter}
-                setCourseFilter={setCourseFilter}
-                yearFilter={yearFilter}
-                setYearFilter={setYearFilter}
-                onSelect={setSelectedGroup}
-              />
-            </div>
-          </>
+          <div className="mt-8">
+            <StudentListTable
+              groups={filteredGroups}
+              courses={courses}
+              search={search}
+              setSearch={setSearch}
+              departmentFilter={departmentFilter}
+              setDepartmentFilter={v => { setDepartmentFilter(v); setCourseFilter('') }}
+              courseFilter={courseFilter}
+              setCourseFilter={setCourseFilter}
+              yearFilter={yearFilter}
+              setYearFilter={setYearFilter}
+              onSelect={setSelectedGroup}
+            />
+          </div>
         )}
       </main>
 
-      <ProgramDetailModal 
-        group={selectedGroup} 
-        onClose={() => setSelectedGroup(null)} 
+      <ProgramDetailModal
+        group={selectedGroup}
+        onClose={() => setSelectedGroup(null)}
+        moodMeta={MOOD_META}
       />
     </div>
   )

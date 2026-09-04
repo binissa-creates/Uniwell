@@ -116,8 +116,18 @@ function FloatingLeafSVG({ scale = 1, rotation = 0 }) {
 }
 
 const MOOD_THEMES = {
-  // Radiant Bloom (Positive)
+  // Glowing / Radiant Bloom (Positive)
   rad: {
+    title: 'Your Radiance is Blooming',
+    message: 'Let this golden energy settle in and nourish your garden.',
+    style: 'radiant',
+    icon: Sun,
+    accentColor: '#F6C945',
+    pillBg: 'bg-[#F6C945]/20',
+    pillText: 'text-[#856804]',
+    tag: 'Sunflower Bloom'
+  },
+  glowing: {
     title: 'Your Radiance is Blooming',
     message: 'Let this golden energy settle in and nourish your garden.',
     style: 'radiant',
@@ -146,6 +156,16 @@ const MOOD_THEMES = {
     pillBg: 'bg-[#F6C945]/20',
     pillText: 'text-[#856804]',
     tag: 'Vitality'
+  },
+  motivated: {
+    title: 'Fueled with Purpose',
+    message: 'Harness this vibrant drive. Step forward with clarity and confidence.',
+    style: 'radiant',
+    icon: Sparkles,
+    accentColor: '#F6C945',
+    pillBg: 'bg-[#F6C945]/20',
+    pillText: 'text-[#856804]',
+    tag: 'Momentum'
   },
   proud: {
     title: 'Honoring Your Growth',
@@ -178,6 +198,46 @@ const MOOD_THEMES = {
     pillBg: 'bg-[#b0cfad]/30',
     pillText: 'text-[#2e4d2a]',
     tag: 'Nurturing Rain'
+  },
+  overwhelmed: {
+    title: 'Slow Down, One Breath at a Time',
+    message: 'When everything feels too loud, pause. You do not need to carry it all right now.',
+    style: 'shelter',
+    icon: Heart,
+    accentColor: '#A8C5A0',
+    pillBg: 'bg-[#b0cfad]/30',
+    pillText: 'text-[#2e4d2a]',
+    tag: 'Gentle Pause'
+  },
+  disappointed: {
+    title: 'Honoring Your Expectations',
+    message: 'It hurts when things do not unfold as hoped. Give yourself grace and gentle patience.',
+    style: 'shelter',
+    icon: CloudRain,
+    accentColor: '#A8C5A0',
+    pillBg: 'bg-[#b0cfad]/30',
+    pillText: 'text-[#2e4d2a]',
+    tag: 'Self-Compassion'
+  },
+  dissapointed: {
+    title: 'Honoring Your Expectations',
+    message: 'It hurts when things do not unfold as hoped. Give yourself grace and gentle patience.',
+    style: 'shelter',
+    icon: CloudRain,
+    accentColor: '#A8C5A0',
+    pillBg: 'bg-[#b0cfad]/30',
+    pillText: 'text-[#2e4d2a]',
+    tag: 'Self-Compassion'
+  },
+  embarrassed: {
+    title: 'We Are All Human',
+    message: 'Moments pass, and kindness endures. Wrap yourself in warmth—you are safe here.',
+    style: 'shelter',
+    icon: Heart,
+    accentColor: '#A8C5A0',
+    pillBg: 'bg-[#b0cfad]/30',
+    pillText: 'text-[#2e4d2a]',
+    tag: 'Kindness'
   },
   burned_out: {
     title: 'Permission to Rest',
@@ -220,7 +280,17 @@ const MOOD_THEMES = {
     tag: 'Inner Balance'
   },
 
-  // Reflective & Peaceful (Neutral / Calm)
+  // Reflective & Peaceful (Neutral / Relieved / Calm)
+  relieved: {
+    title: 'A Deep Sigh of Relief',
+    message: 'The weight is lifting. Take a quiet breath and enjoy this peaceful unburdening.',
+    style: 'breeze',
+    icon: Leaf,
+    accentColor: '#A8C5A0',
+    pillBg: 'bg-[#b0cfad]/25',
+    pillText: 'text-[#2e4d2a]',
+    tag: 'Unburdened'
+  },
   calm: {
     title: 'Serene Equilibrium',
     message: 'A quiet mind is a profound sanctuary. Breathe in this stillness.',
@@ -282,6 +352,16 @@ const MOOD_THEMES = {
     tag: 'Gentle Clarity'
   },
   meh: {
+    title: 'Every Day Counts',
+    message: 'Neutral days give your spirit space to recharge and simply exist.',
+    style: 'breeze',
+    icon: Leaf,
+    accentColor: '#E9A066',
+    pillBg: 'bg-warm/15',
+    pillText: 'text-[#5D4037]',
+    tag: 'Quiet Equilibrium'
+  },
+  neutral: {
     title: 'Every Day Counts',
     message: 'Neutral days give your spirit space to recharge and simply exist.',
     style: 'breeze',

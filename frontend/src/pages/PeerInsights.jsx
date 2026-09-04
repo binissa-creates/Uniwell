@@ -481,8 +481,8 @@ export default function PeerInsights() {
                         <CategoryBadge category={recData.topRecommendation.category} size="xs" />
                       </div>
 
-                      <span className="text-[11px] font-black text-[#856804] px-2.5 py-0.5 rounded-full bg-[#F6C945]/20 border border-[#F6C945]/30">
-                        {recData.topRecommendation.matchScore}% Match
+                      <span className="text-[10px] font-black text-[#856804] px-2.5 py-0.5 rounded-full bg-[#F6C945]/20 border border-[#F6C945]/30 uppercase tracking-wider">
+                        Recommended For You
                       </span>
                     </div>
 
@@ -1008,9 +1008,9 @@ export default function PeerInsights() {
               <div className="flex items-center gap-2.5">
                 <CategoryBadge category={selectedCard.category} />
                 {selectedCard.matchScore && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/30">
-                    <Sparkles size={11} />
-                    {selectedCard.matchScore}% Match
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/30 uppercase tracking-wider">
+                    <Sparkles size={10} />
+                    Personalized Pick
                   </span>
                 )}
               </div>
@@ -1145,9 +1145,9 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
         <div className="flex items-center justify-between gap-1.5 mb-2.5">
           <CategoryBadge category={s.category} size="xs" />
           {s.matchScore && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/30">
-              <Sparkles size={10} />
-              {s.matchScore}% Match
+            <span className="inline-flex items-center gap-1 text-[9px] font-black px-2 py-0.5 rounded-full bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/30 uppercase tracking-wider">
+              <Sparkles size={9} />
+              Recommended
             </span>
           )}
         </div>

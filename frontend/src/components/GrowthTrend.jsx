@@ -2,18 +2,18 @@ import React, { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus, TrendingUp as TrendIconPrimary } from 'lucide-react';
 
 const MOOD_VALUES = {
-  rad: 5, excited: 5, proud: 5,
-  good: 4, hopeful: 4, grateful: 4, calm: 4,
-  meh: 3, content: 3, confused: 3,
-  bad: 2, nervous: 2, frustrated: 2, lonely: 2,
+  rad: 5, glowing: 5, excited: 5, proud: 5, motivated: 5,
+  good: 4, hopeful: 4, grateful: 4, calm: 4, relieved: 4,
+  meh: 3, neutral: 3, content: 3, confused: 3,
+  bad: 2, nervous: 2, frustrated: 2, lonely: 2, overwhelmed: 2, disappointed: 2, dissapointed: 2, embarrassed: 2,
   awful: 1, angry: 1, burned_out: 1
 };
 
 const MOOD_COLORS = {
-  rad: '#F6C945', excited: '#F6C945', proud: '#F6C945',
-  good: '#A8C5A0', hopeful: '#A8C5A0', grateful: '#A8C5A0', calm: '#A8C5A0',
-  meh: '#E9A066', content: '#E9A066', confused: '#E9A066',
-  bad: '#D18D8D', nervous: '#D18D8D', frustrated: '#D18D8D', lonely: '#D18D8D',
+  rad: '#F6C945', glowing: '#F6C945', excited: '#F6C945', proud: '#F6C945', motivated: '#F6C945',
+  good: '#A8C5A0', hopeful: '#A8C5A0', grateful: '#A8C5A0', calm: '#A8C5A0', relieved: '#A8C5A0',
+  meh: '#E9A066', neutral: '#E9A066', content: '#E9A066', confused: '#E9A066',
+  bad: '#D18D8D', nervous: '#D18D8D', frustrated: '#D18D8D', lonely: '#D18D8D', overwhelmed: '#D18D8D', disappointed: '#D18D8D', dissapointed: '#D18D8D', embarrassed: '#D18D8D',
   awful: '#8D8D8D', angry: '#8D8D8D', burned_out: '#8D8D8D'
 };
 

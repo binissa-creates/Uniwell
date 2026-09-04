@@ -282,6 +282,22 @@ h1, h2, h3, h4, h5, h6 {
   from { width: 100%; }
   to   { width: 0%; }
 }
+@keyframes bloomPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(246,201,69,0); }
+  50%       { box-shadow: 0 0 0 18px rgba(246,201,69,0.18); }
+}
+@keyframes slideFromRight {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideFromLeft {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes numberCount {
+  from { opacity: 0; transform: translateY(20px) scale(0.85); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .animate-fadeSlideUp  { animation: fadeSlideUp 0.5s ease both; }
 .animate-fadeIn       { animation: fadeIn 0.4s ease both; }
@@ -297,6 +313,10 @@ h1, h2, h3, h4, h5, h6 {
 .animate-ripple       { animation: rippleCalm 3s cubic-bezier(0, 0.2, 0.8, 1) infinite; }
 .animate-sparkle      { animation: sparkle 1.5s ease-in-out infinite; }
 .animate-countdown    { animation: countdownBar 4.5s linear forwards; }
+.animate-bloom-pulse  { animation: bloomPulse 2.5s ease-in-out infinite; }
+.animate-slide-right  { animation: slideFromRight 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-slide-left   { animation: slideFromLeft 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-number-count { animation: numberCount 0.6s cubic-bezier(0.22,1,0.36,1) both; }
 .animate-shimmer {
   background: linear-gradient(90deg, #fff1ed 25%, #ffe9e3 50%, #fff1ed 75%);
   background-size: 200% 100%;
@@ -409,3 +429,60 @@ input[type='range']:focus::-webkit-slider-thumb {
 
 /* ── Divider (using space, not a line) ───────────────────── */
 .section-gap { margin-top: 2.5rem; }
+
+/* ── My Journey Scrapbook Aesthetic Styles ───────────────── */
+.washi-tape {
+  position: absolute;
+  height: 22px;
+  width: 76px;
+  background: rgba(246, 201, 69, 0.42);
+  backdrop-filter: blur(2px);
+  box-shadow: 0 1px 3px rgba(93, 64, 55, 0.12);
+  z-index: 20;
+  border-left: 2px dashed rgba(255, 255, 255, 0.6);
+  border-right: 2px dashed rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+
+.washi-tape-sage {
+  background: rgba(176, 207, 173, 0.55);
+}
+
+.washi-tape-cream {
+  background: rgba(253, 249, 242, 0.65);
+}
+
+.polaroid-frame {
+  background: #FFFFFF;
+  padding: 10px 10px 24px 10px;
+  box-shadow: 0 10px 25px -4px rgba(93, 64, 55, 0.16), 0 4px 10px -2px rgba(93, 64, 55, 0.08);
+  border-radius: 6px;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.scrapbook-paper {
+  background: #FFFDF9;
+  border: 1px solid rgba(209, 197, 174, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(93, 64, 55, 0.12);
+  border-radius: 20px;
+}
+
+.tilt-left {
+  transform: rotate(-2deg);
+}
+
+.tilt-right {
+  transform: rotate(2deg);
+}
+
+.tilt-slight {
+  transform: rotate(1deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tilt-left,
+  .tilt-right,
+  .tilt-slight {
+    transform: none !important;
+  }
+}
