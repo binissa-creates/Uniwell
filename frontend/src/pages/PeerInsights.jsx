@@ -472,18 +472,12 @@ export default function PeerInsights() {
                 >
                   <div>
                     {/* Header line */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#F6C945] text-[#3E3006] shadow-sm">
-                          <Zap className="w-3 h-3" />
-                          #1 Top Match
-                        </span>
-                        <CategoryBadge category={recData.topRecommendation.category} size="xs" />
-                      </div>
-
-                      <span className="text-[10px] font-black text-[#856804] px-2.5 py-0.5 rounded-full bg-[#F6C945]/20 border border-[#F6C945]/30 uppercase tracking-wider">
-                        Recommended For You
+                    <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#F6C945] text-[#3E3006] shadow-xs">
+                        <Zap className="w-3 h-3" />
+                        #1 Top Match
                       </span>
+                      <CategoryBadge category={recData.topRecommendation.category} size="xs" />
                     </div>
 
                     <h3 className="font-jakarta font-extrabold text-base sm:text-lg text-warm mb-1.5 group-hover:text-[#755b00] transition-colors leading-snug">

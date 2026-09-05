@@ -88,17 +88,6 @@ export default function Navbar() {
         </Link>
 
         <div className="flex items-center gap-2">
-          {!isAdmin && (
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('open-support-modal'))}
-              className="w-9 h-9 rounded-xl bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/40 flex items-center justify-center hover:bg-[#F6C945]/30 active:scale-95 transition-all shadow-xs"
-              title="Campus Support"
-              aria-label="Campus Support"
-            >
-              <Heart size={16} fill="currentColor" />
-            </button>
-          )}
-
           {user && (
             <>
               {!isAdmin ? (
@@ -270,7 +259,7 @@ export default function Navbar() {
 
       {/* Mobile Nav Bar (Bottom Floating) — primary tabs only */}
       <div className="md:hidden fixed bottom-5 inset-x-3 sm:inset-x-6 z-50" ref={mobileMoreRef}>
-        <div className="glass shadow-lift border border-white/50 rounded-[2rem] p-1.5 flex items-center justify-between">
+        <div className="bg-[#FFFDF9]/95 backdrop-blur-2xl shadow-[0_12px_36px_rgba(58,43,37,0.16)] border border-white/80 rounded-[2rem] p-1.5 flex items-center justify-between">
           {primaryLinks.map(({ to, icon: Icon, label }) => {
             const active = isActivePath(to, location.pathname)
             return (

@@ -606,11 +606,11 @@ export default function SunflowerProgress({
 
         {/* ── 5. YOUR CARE JOURNEY (Compact 3-Pill Section) ── */}
         <div className="w-full max-w-md bg-white/70 backdrop-blur-md rounded-2xl p-3 border border-white/60 shadow-sm">
-          <div className="flex items-center justify-between mb-2 px-1">
+          <div className="flex flex-wrap items-center justify-between gap-1 mb-2 px-1">
             <span className="text-[10px] font-black uppercase tracking-wider text-[#5D4037]/50">
               Your Care Journey
             </span>
-            <span className="text-[10px] text-[#5D4037]/60 font-medium">
+            <span className="text-[10px] text-[#5D4037]/60 font-medium whitespace-nowrap">
               {totalDays} total day{totalDays === 1 ? '' : 's'} nurtured
             </span>
           </div>

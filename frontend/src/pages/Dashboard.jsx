@@ -118,49 +118,19 @@ export default function Dashboard() {
                 {!streakMetrics.loggedToday ? (
                   <Link
                     to="/mood"
-                    className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-gradient-to-r from-[#F6C945] via-[#FFD152] to-[#ECA800] hover:brightness-105 text-[#3E3006] font-black text-xs uppercase tracking-widest transition-all shadow-[0_10px_25px_-5px_rgba(246,201,69,0.5)] active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#F6C945] via-[#FFD152] to-[#ECA800] hover:brightness-105 text-[#3E3006] font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all shadow-[0_10px_25px_-5px_rgba(246,201,69,0.5)] active:scale-[0.98] text-center"
                   >
-                    <Droplet size={15} className="text-[#3E3006]" fill="currentColor" />
-                    Water Your Sunflower — Log Today
+                    <Droplet size={14} className="text-[#3E3006] flex-shrink-0" fill="currentColor" />
+                    <span>Water Your Sunflower · Log Today</span>
                   </Link>
                 ) : (
-                  <div className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-[#2D6B47] font-extrabold text-xs uppercase tracking-widest shadow-sm">
-                    <span className="text-sm">🌻</span> Watered today! Your sunflower feels cared for
+                  <div className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-[#2D6B47] font-extrabold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm text-center">
+                    <span className="text-sm flex-shrink-0">🌻</span> <span>Watered today! Your sunflower feels cared for</span>
                   </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ── My Journey Scrapbook Entry Point ── */}
-        <div className="max-w-2xl mx-auto mb-10">
-          <button
-            type="button"
-            onClick={() => setIsScrapbookOpen(true)}
-            className="flex items-center justify-between gap-4 w-full px-5 py-4 rounded-2xl bg-gradient-to-r from-[#3E2A1A] via-[#5D4037] to-[#2D3A2D] border border-[#F6C945]/25 hover:border-[#F6C945]/60 shadow-sm hover:shadow-glow transition-all group text-left"
-          >
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-[#F6C945]/15 border border-[#F6C945]/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                🌻
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-black text-[#F6C945] leading-snug">My Journey Scrapbook</p>
-                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F6C945]/20 text-[#F6C945] border border-[#F6C945]/30">
-                    Story
-                  </span>
-                </div>
-                <p className="text-[11px] text-white/55 font-medium truncate mt-0.5">
-                  A collection of moments and reflections from your wellness journey
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-[#F6C945]/70 group-hover:text-[#F6C945] transition-colors flex-shrink-0">
-              <span className="text-[10px] font-black uppercase tracking-wider hidden sm:block">Open Scrapbook</span>
-              <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </button>
         </div>
 
         {/* ── THE 3 CORE PILLARS (Neat 3-Column Layout) ── */}
@@ -335,6 +305,38 @@ export default function Dashboard() {
                 Explore Strategy
               </Link>
             </div>
+          </div>
+        )}
+
+        {/* ── Weekly Journey Wrap (Appears after 1 week of care, below matched coping strategy) ── */}
+        {scrapbookData?.pages?.length > 0 && (streakMetrics.totalDays >= 7 || streakMetrics.currentStreak >= 7 || (moodHistory && moodHistory.length >= 7)) && (
+          <div className="max-w-3xl mx-auto mb-10">
+            <button
+              type="button"
+              onClick={() => setIsScrapbookOpen(true)}
+              className="flex items-center justify-between gap-4 w-full px-5 sm:px-6 py-4 rounded-3xl bg-gradient-to-r from-[#3E2A1A] via-[#5D4037] to-[#2D3A2D] border border-[#F6C945]/30 hover:border-[#F6C945]/70 shadow-md hover:shadow-glow transition-all group text-left"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-[#F6C945]/15 border border-[#F6C945]/30 flex items-center justify-center text-2xl flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                  🌻
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm sm:text-base font-black text-[#F6C945] leading-snug">Weekly Journey Wrap</p>
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F6C945]/20 text-[#F6C945] border border-[#F6C945]/30">
+                      Weekly Wrap
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/60 font-medium truncate mt-0.5">
+                    A 7-day reflection wrap of your moments, small wins, and personal growth
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[#F6C945] group-hover:translate-x-1 transition-all flex-shrink-0">
+                <span className="text-xs font-black uppercase tracking-wider hidden sm:block">Open Wrap</span>
+                <ChevronRight size={16} />
+              </div>
+            </button>
           </div>
         )}
 
