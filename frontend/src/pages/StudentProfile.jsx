@@ -86,31 +86,31 @@ export default function StudentProfile() {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
-      <main className="max-w-2xl mx-auto px-6 pt-28 pb-24 page-enter">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-36 sm:pb-24 page-enter">
 
         {/* ── Header ── */}
-        <div className="mb-10">
-          <p className="text-warm/45 text-xs font-semibold uppercase tracking-widest mb-3">
+        <div className="mb-8 sm:mb-10">
+          <p className="text-warm/45 text-xs font-semibold uppercase tracking-widest mb-2 sm:mb-3">
             Account
           </p>
-          <h1 className="font-jakarta text-5xl font-extrabold text-warm editorial-accent mb-4">
+          <h1 className="font-jakarta text-3xl sm:text-5xl font-extrabold text-warm editorial-accent mb-3 sm:mb-4">
             My Profile
           </h1>
-          <p className="text-warm/50 text-sm leading-relaxed">
+          <p className="text-warm/50 text-xs sm:text-sm leading-relaxed">
             Manage your account credentials below. Your name and course info are set by your institution.
           </p>
         </div>
 
         {/* ── Identity card ── */}
-        <div className="bg-white rounded-3xl p-6 shadow-suncast mb-8 flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl gradient-cta flex items-center justify-center text-2xl font-black text-[#3E3006] flex-shrink-0 shadow-glow">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-suncast mb-6 sm:mb-8 flex items-center gap-4 sm:gap-5 border border-[#AA8E7E]/10">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl gradient-cta flex items-center justify-center text-xl sm:text-2xl font-black text-[#3E3006] flex-shrink-0 shadow-glow">
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="font-jakarta font-bold text-xl text-warm truncate">
+            <h2 className="font-jakarta font-bold text-lg sm:text-xl text-warm truncate">
               {profile?.name || 'Student'}
             </h2>
-            <p className="text-warm/50 text-sm mt-0.5 truncate">{user?.email}</p>
+            <p className="text-warm/50 text-xs sm:text-sm mt-0.5 truncate">{user?.email}</p>
           </div>
           <div className="hidden sm:flex flex-col gap-1.5 items-end">
             {profile?.student_id && (
@@ -149,7 +149,7 @@ export default function StudentProfile() {
 
         {/* ── Email panel ── */}
         {tab === 'email' && (
-          <div className="bg-white rounded-3xl p-8 shadow-suncast animate-fadeIn">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-suncast border border-[#AA8E7E]/10 animate-fadeIn">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-2xl bg-[#f6c945]/15 flex items-center justify-center">
                 <Mail size={18} className="text-[#755b00]" />
@@ -191,7 +191,7 @@ export default function StudentProfile() {
 
         {/* ── Password panel ── */}
         {tab === 'password' && (
-          <div className="bg-white rounded-3xl p-8 shadow-suncast animate-fadeIn">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-suncast border border-[#AA8E7E]/10 animate-fadeIn">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-2xl bg-[#f6c945]/15 flex items-center justify-center">
                 <Lock size={18} className="text-[#755b00]" />

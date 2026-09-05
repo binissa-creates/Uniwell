@@ -740,7 +740,7 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
       <div className="bg-[#FFFDF9] rounded-3xl w-full max-w-sm p-5 border border-warm/15 shadow-2xl relative">
         <button
           type="button"
@@ -978,7 +978,7 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
   return (
     <>
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center ${rm ? '' : 'animate-fadeIn'}`}
+        className={`fixed inset-0 z-[100] flex items-center justify-center ${rm ? '' : 'animate-fadeIn'}`}
         style={{ background: 'rgba(30, 20, 15, 0.78)', backdropFilter: 'blur(12px)' }}
         role="dialog"
         aria-modal="true"

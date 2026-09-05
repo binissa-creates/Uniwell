@@ -579,12 +579,12 @@ export default function SunflowerProgress({
 
           {/* ── 4. NEXT CARE MILESTONE (Replaces competitive Best Record) ── */}
           <div className="mt-3 pt-2.5 border-t border-[#5D4037]/10">
-            <div className="flex items-center justify-between text-[11px] font-semibold text-[#5D4037]/70 mb-1.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-semibold text-[#5D4037]/70 mb-1.5">
               <span className="flex items-center gap-1">
-                <Sparkles size={12} className="text-[#F6C945]" />
-                Next Milestone: <strong className="text-[#5D4037] font-bold">{nextMilestone.label}</strong>
+                <Sparkles size={12} className="text-[#F6C945] flex-shrink-0" />
+                <span>Next Milestone: <strong className="text-[#5D4037] font-bold">{nextMilestone.label}</strong></span>
               </span>
-              <span>
+              <span className="text-[10px] sm:text-[11px] text-[#5D4037]/70 sm:text-right">
                 {nextMilestone.daysLeft > 0
                   ? `${nextMilestone.daysLeft} day${nextMilestone.daysLeft > 1 ? 's' : ''} of care to go`
                   : 'Milestone reached! ✨'}
@@ -644,7 +644,7 @@ export default function SunflowerProgress({
       {/* ── ABOUT SUNFLOWER CARE MODAL (Compassionate Philosophy) ── */}
       {showGuideModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3A2B25]/60 backdrop-blur-md animate-fadeIn"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#3A2B25]/60 backdrop-blur-md animate-fadeIn"
           onClick={() => setShowGuideModal(false)}
           role="dialog"
           aria-modal="true"

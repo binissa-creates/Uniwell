@@ -81,7 +81,7 @@ export default function Dashboard() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 relative z-10 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-36 sm:pb-24 relative z-10 page-enter">
 
         {/* ── Page Greeting Header ── */}
         <div className="text-center mb-8">

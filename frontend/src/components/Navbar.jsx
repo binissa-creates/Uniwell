@@ -5,7 +5,7 @@ import {
   LayoutDashboard, SmilePlus, BookOpen, Users, LogOut,
   ShieldCheck, ClipboardList, GraduationCap, ChevronDown,
   FileBarChart2, Stethoscope, Bell, Settings, HelpCircle,
-  MoreHorizontal, UserCircle,
+  MoreHorizontal, UserCircle, Heart,
 } from 'lucide-react'
 
 const studentLinks = [
@@ -78,7 +78,65 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`fixed top-0 inset-x-0 z-50 transition-all duration-500 px-6 ${scrolled ? 'pt-4' : 'pt-6'}`}>
+      {/* Mobile Top Header: Full width frosted bar so content cleanly scrolls underneath */}
+      <header className="md:hidden fixed top-0 inset-x-0 h-16 bg-[#FDF9F2]/95 backdrop-blur-md border-b border-[#AA8E7E]/15 z-40 px-4 flex items-center justify-between shadow-xs">
+        <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2 group flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center border border-[#AA8E7E]/10 group-hover:rotate-12 transition-transform">
+            <span className="text-lg">🌻</span>
+          </div>
+          <span className="font-jakarta font-black text-lg tracking-tight text-[#3a2b25]">UniWell</span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          {!isAdmin && (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-support-modal'))}
+              className="w-9 h-9 rounded-xl bg-[#F6C945]/20 text-[#6B5A10] border border-[#F6C945]/40 flex items-center justify-center hover:bg-[#F6C945]/30 active:scale-95 transition-all shadow-xs"
+              title="Campus Support"
+              aria-label="Campus Support"
+            >
+              <Heart size={16} fill="currentColor" />
+            </button>
+          )}
+
+          {user && (
+            <>
+              {!isAdmin ? (
+                <Link
+                  to="/profile"
+                  className="w-9 h-9 rounded-xl overflow-hidden shadow-sm border border-white transform active:scale-95 cursor-pointer"
+                  title="My Profile"
+                >
+                  <div className="w-full h-full gradient-cta flex items-center justify-center">
+                    <span className="text-xs font-black text-[#3E3006]">
+                      {firstName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </Link>
+              ) : (
+                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm border border-white">
+                  <div className="w-full h-full gradient-cta flex items-center justify-center">
+                    <span className="text-xs font-black text-[#3E3006]">
+                      {firstName.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="w-9 h-9 rounded-xl bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 transition-all shadow-xs"
+            title="Sign Out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop Floating Pill Navbar */}
+      <nav className={`hidden md:block fixed top-0 inset-x-0 z-50 transition-all duration-500 px-6 ${scrolled ? 'pt-4' : 'pt-6'}`}>
         <div className={`max-w-6xl mx-auto h-16 flex items-center justify-between gap-4 px-6 rounded-3xl transition-all duration-500 ${scrolled ? 'glass shadow-lift border border-white/50 py-2' : 'bg-transparent py-4 border border-transparent'}`}>
 
           {/* Logo */}
@@ -208,63 +266,63 @@ export default function Navbar() {
             </button>
           </div>
         </div>
+      </nav>
 
-        {/* Mobile Nav Bar (Bottom Floating) — primary tabs only */}
-        <div className="md:hidden fixed bottom-6 inset-x-4 sm:inset-x-6 z-50" ref={mobileMoreRef}>
-          <div className="glass shadow-lift border border-white/50 rounded-[2rem] p-1.5 flex items-center justify-between">
-            {primaryLinks.map(({ to, icon: Icon, label }) => {
-              const active = isActivePath(to, location.pathname)
+      {/* Mobile Nav Bar (Bottom Floating) — primary tabs only */}
+      <div className="md:hidden fixed bottom-5 inset-x-3 sm:inset-x-6 z-50" ref={mobileMoreRef}>
+        <div className="glass shadow-lift border border-white/50 rounded-[2rem] p-1.5 flex items-center justify-between">
+          {primaryLinks.map(({ to, icon: Icon, label }) => {
+            const active = isActivePath(to, location.pathname)
+            return (
+              <Link key={to} to={to} className={`
+                flex-1 flex flex-col items-center py-2.5 gap-1 rounded-2xl transition-all duration-300
+                ${active ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm' : 'text-[#AA8E7E] hover:bg-white/40'}
+              `}>
+                <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+                <span className="text-[8px] font-black uppercase tracking-widest text-center px-1">{label}</span>
+              </Link>
+            )
+          })}
+          {isAdmin && (
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className={`flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300 relative ${overflowActive || moreOpen
+                  ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm'
+                  : 'text-[#AA8E7E] hover:bg-white/40'
+                }`}>
+              <MoreHorizontal size={20} />
+              <span className="text-[9px] font-black uppercase tracking-widest">More</span>
+            </button>
+          )}
+        </div>
+
+        {/* Mobile overflow sheet */}
+        {isAdmin && moreOpen && (
+          <div className="absolute bottom-24 inset-x-0 bg-white rounded-[2rem] shadow-lift border border-white/70 p-2 animate-fadeIn">
+            {adminSecondary.map((item, i) => {
+              if (item.divider) {
+                return <div key={`mdiv-${i}`} className="my-1 mx-3 border-t border-[#F3EEE4]" />
+              }
+              const Icon = item.icon
+              const active = isActivePath(item.to, location.pathname)
               return (
-                <Link key={to} to={to} className={`
-                  flex-1 flex flex-col items-center py-2.5 gap-1 rounded-2xl transition-all duration-300
-                  ${active ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm' : 'text-[#AA8E7E] hover:bg-white/40'}
-                `}>
-                  <Icon size={18} strokeWidth={active ? 2.5 : 2} />
-                  <span className="text-[8px] font-black uppercase tracking-widest text-center px-1">{label}</span>
+                <Link key={item.to} to={item.to}
+                  className="flex items-center gap-3 px-4 py-3 mx-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                  style={{
+                    color: active ? '#3a2b25' : '#AA8E7E',
+                    background: active ? '#FDF9F2' : 'transparent',
+                  }}>
+                  <Icon size={16} className={active ? 'text-[#F6C945]' : ''} />
+                  <span className="flex-1">{item.label}</span>
+                  {item.highlight && (
+                    <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#EF7B6C' }} />
+                  )}
                 </Link>
               )
             })}
-            {isAdmin && (
-              <button
-                onClick={() => setMoreOpen((v) => !v)}
-                className={`flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300 relative ${overflowActive || moreOpen
-                    ? 'bg-[#F8D272] text-[#4F3F08] shadow-sm'
-                    : 'text-[#AA8E7E] hover:bg-white/40'
-                  }`}>
-                <MoreHorizontal size={20} />
-                <span className="text-[9px] font-black uppercase tracking-widest">More</span>
-              </button>
-            )}
           </div>
-
-          {/* Mobile overflow sheet */}
-          {isAdmin && moreOpen && (
-            <div className="absolute bottom-24 inset-x-0 bg-white rounded-[2rem] shadow-lift border border-white/70 p-2 animate-fadeIn">
-              {adminSecondary.map((item, i) => {
-                if (item.divider) {
-                  return <div key={`mdiv-${i}`} className="my-1 mx-3 border-t border-[#F3EEE4]" />
-                }
-                const Icon = item.icon
-                const active = isActivePath(item.to, location.pathname)
-                return (
-                  <Link key={item.to} to={item.to}
-                    className="flex items-center gap-3 px-4 py-3 mx-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                    style={{
-                      color: active ? '#3a2b25' : '#AA8E7E',
-                      background: active ? '#FDF9F2' : 'transparent',
-                    }}>
-                    <Icon size={16} className={active ? 'text-[#F6C945]' : ''} />
-                    <span className="flex-1">{item.label}</span>
-                    {item.highlight && (
-                      <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#EF7B6C' }} />
-                    )}
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </nav>
+        )}
+      </div>
     </>
   )
 }

@@ -60,9 +60,9 @@ export default function ReflectionCapsuleModal({ isOpen, onClose, capsuleData, u
   ]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-earth-dark/40 backdrop-blur-md animate-fadeIn">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-earth-dark/40 backdrop-blur-md animate-fadeIn">
       <div 
-        className="relative w-full max-w-2xl bg-[#FFFDF9] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl border border-warm/10 overflow-hidden flex flex-col max-h-[90vh] animate-scaleIn"
+        className="relative w-full max-w-2xl bg-[#FFFDF9] rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-8 shadow-2xl border border-warm/10 overflow-hidden flex flex-col max-h-[90vh] animate-scaleIn"
         style={{
           boxShadow: '0 25px 50px -12px rgba(93, 64, 55, 0.18)'
         }}

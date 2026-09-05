@@ -152,7 +152,7 @@ export default function Journal() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 relative z-10 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-36 sm:pb-20 relative z-10 page-enter">
 
 
         {/* ── Page Header ── */}
@@ -462,7 +462,7 @@ export default function Journal() {
 
       {/* ── Mobile Compose Modal ── */}
       {showMobileCompose && (
-        <div className="fixed inset-0 z-50 bg-[#3a2b25]/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] bg-[#3a2b25]/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift p-5 animate-scaleIn max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-warm/10">
               <div className="flex items-center gap-2">
@@ -536,11 +536,11 @@ export default function Journal() {
       {/* ── Entry Detail Modal ── */}
       {selectedEntry && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3a2b25]/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-[#3a2b25]/50 backdrop-blur-sm"
           onClick={() => setSelectedEntry(null)}
         >
           <div
-            className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]"
+            className="bg-white rounded-[2rem] sm:rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]"
             onClick={e => e.stopPropagation()}
           >
             <div className="absolute top-0 inset-x-0 h-1.5 gradient-cta" />
@@ -570,8 +570,8 @@ export default function Journal() {
               </div>
             </div>
 
-            <div className="px-5 sm:px-7 py-3 border-t border-warm/10 flex items-center justify-between bg-surface-low/30 gap-2">
-              <div className="flex items-center gap-2">
+            <div className="px-4 sm:px-7 py-3 border-t border-warm/10 flex flex-wrap items-center justify-between bg-surface-low/30 gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => {

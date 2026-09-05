@@ -134,7 +134,7 @@ export default function MoodTracker() {
 
       <Navbar />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 relative z-10 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-36 sm:pb-20 relative z-10 page-enter">
 
         {/* ── Page Header ── */}
         <div className="mb-6">
@@ -390,7 +390,7 @@ export default function MoodTracker() {
       {/* ── Entry Detail Modal ── */}
       {selectedEntry && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3a2b25]/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#3a2b25]/50 backdrop-blur-sm"
           onClick={() => setSelectedEntry(null)}
         >
           <div

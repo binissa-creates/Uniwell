@@ -364,7 +364,7 @@ export default function PeerInsights() {
   return (
     <div className="min-h-screen bg-surface">
       <Navbar />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-20 page-enter">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-36 sm:pb-20 page-enter">
 
         {/* ── Page Header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -847,11 +847,11 @@ export default function PeerInsights() {
       {/* ── Submit Modal ── */}
       {showSubmit && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
           style={{ background: 'rgba(93,64,55,0.45)', backdropFilter: 'blur(8px)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowSubmit(false) }}
         >
-          <div className="bg-white rounded-3xl p-5 sm:p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-lift animate-scaleIn relative">
+          <div className="bg-white rounded-[2rem] sm:rounded-3xl p-5 sm:p-7 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-lift animate-scaleIn relative">
             <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl gradient-cta" />
             
             <div className="flex items-center justify-between mb-5 mt-1">
@@ -996,11 +996,11 @@ export default function PeerInsights() {
       {/* ── Strategy Detail Modal ── */}
       {selectedCard && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
           style={{ background: 'rgba(93,64,55,0.45)', backdropFilter: 'blur(8px)' }}
           onClick={e => { if (e.target === e.currentTarget) setSelectedCard(null) }}
         >
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="bg-white rounded-[2rem] sm:rounded-3xl w-full max-w-lg shadow-lift animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh]">
             <div className="absolute top-0 inset-x-0 h-1.5 rounded-t-3xl gradient-cta" />
 
             {/* Modal Header */}
