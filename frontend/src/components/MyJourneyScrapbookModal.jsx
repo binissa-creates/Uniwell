@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Share2, Download, Plus,
   Camera, Heart, Check, Sparkles, Image as ImageIcon, Lock, Eye,
-  Crop, Sliders
+  Crop, Sliders, Flower2, Stamp, Sun, Layers, Edit3, BookOpen, RotateCcw,
+  Sprout, Leaf, Package
 } from 'lucide-react'
 import ReflectionCapsuleModal from './ReflectionCapsuleModal'
 import PhotoCropAdjustModal from './PhotoCropAdjustModal'
@@ -58,12 +59,12 @@ function PageIntro({ page, onBegin, reducedMotion }) {
 
       {/* Swaying Sunflower */}
       <div
-        className={`w-28 h-28 rounded-full bg-[#F6C945]/15 border-2 border-[#F6C945]/30 flex items-center justify-center text-6xl shadow-sm ${
+        className={`w-28 h-28 rounded-full bg-[#F6C945]/15 border-2 border-[#F6C945]/30 flex items-center justify-center p-2 shadow-sm ${
           reducedMotion ? '' : 'animate-bloom-pulse'
         }`}
         aria-hidden="true"
       >
-        🌻
+        <img src="/stickers/sunflower_trio.png" alt="Sunflower" className="w-20 h-20 object-contain drop-shadow-md" />
       </div>
 
       <div className="space-y-3 relative z-10">
@@ -111,7 +112,9 @@ function PageBeginning({ page, reducedMotion }) {
             <img src={page.photoUrl} alt="The beginning" className="w-full h-full object-cover" />
           ) : (
             <div className="flex flex-col items-center justify-center p-4 text-center">
-              <span className="text-4xl mb-2">🌱</span>
+              <div className="w-12 h-12 rounded-full bg-[#8C6218]/10 flex items-center justify-center mb-2">
+                <Sprout className="w-6 h-6 text-[#8C6218]" />
+              </div>
               <span className="text-[11px] font-bold text-warm/60">First Step</span>
             </div>
           )}
@@ -219,7 +222,9 @@ function PageCoping({ page, reducedMotion }) {
         <WashiTape color="sage" style={{ top: '-10px', left: '30px', transform: 'rotate(-5deg)' }} />
 
         <div className="w-full py-6 rounded bg-[#EAF5EE] flex flex-col items-center justify-center mb-3">
-          <span className="text-4xl mb-1">🌿</span>
+          <div className="w-12 h-12 rounded-full bg-[#2D6B47]/15 flex items-center justify-center mb-2">
+            <Leaf className="w-6 h-6 text-[#2D6B47]" />
+          </div>
           <span className="text-[10px] font-black uppercase tracking-wider text-[#2D6B47]">{page.category}</span>
         </div>
 
@@ -281,8 +286,8 @@ function PageCapsule({ page, onOpenCapsule, reducedMotion }) {
         <WashiTape color="cream" style={{ top: '-10px', right: '30px', transform: 'rotate(-3deg)' }} />
 
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center text-xl">
-            📦
+          <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center">
+            <Package className="w-5 h-5 text-[#8C6218]" />
           </div>
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-[#755b00]">Reflection Capsule</p>
@@ -386,8 +391,8 @@ function PageFar({ page, onAddMemory, onEditMemory, reducedMotion }) {
 // PAGE H: CLOSING MESSAGE
 function PageClosing({ page, onProceedToShare, reducedMotion }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6 relative">
-      <div className="text-5xl" aria-hidden="true">🌻</div>
+    <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-5 relative">
+      <img src="/stickers/sunflower_trio.png" alt="Sunflower" className="w-20 h-20 object-contain drop-shadow-md mx-auto" />
 
       <div className="space-y-3">
         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F6C945]">
@@ -429,18 +434,42 @@ function PageClosing({ page, onProceedToShare, reducedMotion }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
+  const defaultJournalQuote = scrapbookData?.pages?.find(p => p.type === 'JOURNAL_MEMORY')?.excerpt ||
+    "\"I realized that my growth lately is blooming. Also, I'm very proud of myself since I have been clean for many months now. I hope this continues.\""
+
   const [includeMemory, setIncludeMemory] = useState(true)
   const [includeJournal, setIncludeJournal] = useState(true)
   const [includeCoping, setIncludeCoping] = useState(true)
   const [includeMoodStreak, setIncludeMoodStreak] = useState(true)
-  const [includeStickers, setIncludeStickers] = useState(true)
+
+  // Aesthetic Accents & Stickers
+  const [includeBotanicals, setIncludeBotanicals] = useState(true)
+  const [includeWashiTapes, setIncludeWashiTapes] = useState(true)
+  const [includeSunDoodle, setIncludeSunDoodle] = useState(true)
+  const [includeVintageStamp, setIncludeVintageStamp] = useState(true)
+  const [includeStars, setIncludeStars] = useState(true)
+
+  // Custom Editable Text & Motto
+  const [customReflection, setCustomReflection] = useState(defaultJournalQuote)
+  const [customNote, setCustomNote] = useState('Sunflower always make me smile')
+  const [activeTab, setActiveTab] = useState('stickers') // 'stickers' | 'text' | 'cards'
+
+  // Interactive Aesthetic Stickers Collection (User-provided)
+  const [userStickers, setUserStickers] = useState([
+    { id: 'sunflower_trio', name: 'Painted Sunflower Trio', preview: '/stickers/sunflower_trio.png', enabled: true, position: 'bottom-left', size: 165 },
+    { id: 'sleeping_cat', name: 'Cozy Sleeping Kitten', preview: '/stickers/sleeping_cat.png', enabled: true, position: 'bottom-right', size: 145 },
+    { id: 'star_god_is_good', name: 'Golden Star "God is Good"', preview: '/stickers/star_god_is_good.png', enabled: true, position: 'center', size: 95 },
+    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.jpg', enabled: false, position: 'top-left', size: 140 },
+    { id: 'daffodils_bouquet', name: 'Watercolor Daffodils', preview: '/stickers/daffodils_bouquet.png', enabled: false, position: 'top-right', size: 140 },
+  ])
+
   const [shareState, setShareState] = useState('idle') // idle | generating | success | error
   const [previewReady, setPreviewReady] = useState(false)
 
   const canvasRef = useRef(null)
   const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare
 
-  // Update live preview whenever options or data change
+  // Update live preview whenever options or custom text change
   useEffect(() => {
     let cancelled = false
     async function updatePreview() {
@@ -451,7 +480,15 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           includeJournal,
           includeCoping,
           includeMoodStreak,
-          includeStickers,
+          includeStickers: true,
+          includeBotanicals,
+          includeWashiTapes,
+          includeSunDoodle,
+          includeVintageStamp,
+          includeStars,
+          customReflection,
+          customNote,
+          stickers: userStickers,
         })
         if (!cancelled) setPreviewReady(true)
       } catch (err) {
@@ -462,20 +499,41 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     return () => {
       cancelled = true
     }
-  }, [scrapbookData, includeMemory, includeJournal, includeCoping, includeMoodStreak, includeStickers])
+  }, [
+    scrapbookData,
+    includeMemory,
+    includeJournal,
+    includeCoping,
+    includeMoodStreak,
+    includeBotanicals,
+    includeWashiTapes,
+    includeSunDoodle,
+    includeVintageStamp,
+    includeStars,
+    customReflection,
+    customNote,
+    userStickers,
+  ])
 
   const handleExport = useCallback(async (downloadOnly = false) => {
     if (!canvasRef.current) return
     setShareState('generating')
 
     try {
-      // Re-render at crisp 1080x1920 to guarantee latest options
       await renderScrapbookCollage(canvasRef.current, scrapbookData, {
         includeMemory,
         includeJournal,
         includeCoping,
         includeMoodStreak,
-        includeStickers,
+        includeStickers: true,
+        includeBotanicals,
+        includeWashiTapes,
+        includeSunDoodle,
+        includeVintageStamp,
+        includeStars,
+        customReflection,
+        customNote,
+        stickers: userStickers,
       })
 
       canvasRef.current.toBlob(async (blob) => {
@@ -503,7 +561,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
-              title: 'My Journey Scrapbook 🌻',
+              title: 'My Journey Scrapbook',
               text: 'Weekly Bloom — Growing with every day at UniWell.',
             })
             setShareState('success')
@@ -525,12 +583,27 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
       console.error('[handleExport error]', err)
       setShareState('error')
     }
-  }, [scrapbookData, includeMemory, includeJournal, includeCoping, includeMoodStreak, includeStickers, canShare])
+  }, [
+    scrapbookData,
+    includeMemory,
+    includeJournal,
+    includeCoping,
+    includeMoodStreak,
+    includeBotanicals,
+    includeWashiTapes,
+    includeSunDoodle,
+    includeVintageStamp,
+    includeStars,
+    customReflection,
+    customNote,
+    userStickers,
+    canShare,
+  ])
 
   return (
     <div className="flex flex-col h-full overflow-y-auto px-4 sm:px-6 py-4 text-center custom-scrollbar">
       {/* Header */}
-      <div className="space-y-1 mb-3">
+      <div className="space-y-1 mb-2">
         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F6C945]">
           Story Generator · 1080 × 1920 (9:16)
         </p>
@@ -538,7 +611,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           My Journey Scrapbook
         </h2>
         <p className="text-[11px] text-white/60 font-medium">
-          Real memories, journal reflections, and coping moments compiled for full-screen sharing.
+          Customize your reflection words, stickers, and layout for full-screen sharing.
         </p>
       </div>
 
@@ -552,7 +625,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
         />
         {!previewReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-[#F6C945] text-xs font-bold gap-2">
-            <span className="animate-spin text-xl">🌻</span>
+            <span className="animate-spin text-xl text-[#F6C945]">✦</span>
             <span>Assembling your scrapbook…</span>
           </div>
         )}
@@ -562,62 +635,284 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
         </div>
       </div>
 
-      {/* Checklist Options */}
-      <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-2 text-left my-2 rounded-xl shadow-md">
-        <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
-          Customize Your Content
-        </p>
+      {/* Customizer Tabs Navigation */}
+      <div className="w-full max-w-xs mx-auto flex items-center justify-center gap-1.5 p-1 rounded-xl bg-white/10 backdrop-blur-md my-2 border border-white/10">
+        <button
+          type="button"
+          onClick={() => setActiveTab('text')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
+            activeTab === 'text'
+              ? 'bg-[#F6C945] text-[#3D291D] shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>Words & Motto</span>
+        </button>
 
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeMemory}
-            onChange={e => setIncludeMemory(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-          />
-          <span>📸 Photo Memories (HuHa Therapy, Drawings)</span>
-        </label>
+        <button
+          type="button"
+          onClick={() => setActiveTab('stickers')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
+            activeTab === 'stickers'
+              ? 'bg-[#F6C945] text-[#3D291D] shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Flower2 className="w-3.5 h-3.5" />
+          <span>Stickers & Stamp</span>
+        </button>
 
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeJournal}
-            onChange={e => setIncludeJournal(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-          />
-          <span>📖 Shared Journal Reflection & Words</span>
-        </label>
-
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeCoping}
-            onChange={e => setIncludeCoping(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-          />
-          <span>🌿 Favorite Coping Strategy Card</span>
-        </label>
-
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeMoodStreak}
-            onChange={e => setIncludeMoodStreak(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-          />
-          <span>🌻 Mood Entries & Care Streak</span>
-        </label>
-
-        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeStickers}
-            onChange={e => setIncludeStickers(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-          />
-          <span>🐟 Cute Goldfish, Stars & Washi Tape</span>
-        </label>
+        <button
+          type="button"
+          onClick={() => setActiveTab('cards')}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
+            activeTab === 'cards'
+              ? 'bg-[#F6C945] text-[#3D291D] shadow-sm'
+              : 'text-white/70 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>Cards</span>
+        </button>
       </div>
+
+      {/* TAB 1: WORDS & MOTTO */}
+      {activeTab === 'text' && (
+        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-3 text-left my-2 rounded-xl shadow-md animate-fadeIn">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-black uppercase tracking-wider text-warm/70">
+                Reflection Words
+              </label>
+              <button
+                type="button"
+                onClick={() => setCustomReflection(defaultJournalQuote)}
+                className="text-[9px] font-bold text-[#8C6218] hover:underline flex items-center gap-1"
+                title="Reset to your journal entry"
+              >
+                <RotateCcw className="w-2.5 h-2.5" /> Reset
+              </button>
+            </div>
+            <textarea
+              value={customReflection}
+              onChange={e => setCustomReflection(e.target.value)}
+              rows={3}
+              placeholder="What thoughts or reflections made an impact on you this week?"
+              className="w-full px-2.5 py-2 text-xs rounded-lg border border-warm/20 bg-white/70 text-warm focus:outline-none focus:ring-1 focus:ring-[#F6C945] font-serif italic resize-none leading-relaxed"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-wider text-warm/70 block mb-1">
+              Bottom Paper Note Motto
+            </label>
+            <input
+              type="text"
+              value={customNote}
+              onChange={e => setCustomNote(e.target.value)}
+              placeholder="e.g. Sunflower always make me smile"
+              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-warm/20 bg-white/70 text-warm focus:outline-none focus:ring-1 focus:ring-[#F6C945] font-sans font-medium"
+            />
+            <p className="text-[9px] text-warm/50 mt-1">
+              Displays on the bottom torn kraft paper card.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: STICKERS & STAMP */}
+      {activeTab === 'stickers' && (
+        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-3 text-left my-2 rounded-xl shadow-md animate-fadeIn max-h-[280px] overflow-y-auto custom-scrollbar">
+          {/* Section 1: User Die-Cut Stickers */}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1.5">
+              Choose Stickers & Placement
+            </p>
+
+            <div className="space-y-2">
+              {userStickers.map(st => (
+                <div
+                  key={st.id}
+                  className={`p-2 rounded-lg border transition-all ${
+                    st.enabled
+                      ? 'bg-white border-[#F6C945]/50 shadow-sm'
+                      : 'bg-black/5 border-transparent opacity-65'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer flex-1 select-none">
+                      <div className="w-8 h-8 rounded bg-[#FFFDF9] border border-warm/15 p-0.5 flex items-center justify-center shrink-0">
+                        <img src={st.preview} alt={st.name} className="w-full h-full object-contain" />
+                      </div>
+                      <span className="text-[11px] font-bold text-warm leading-tight">{st.name}</span>
+                    </label>
+
+                    <input
+                      type="checkbox"
+                      checked={st.enabled}
+                      onChange={e => {
+                        const checked = e.target.checked
+                        setUserStickers(prev =>
+                          prev.map(item => (item.id === st.id ? { ...item, enabled: checked } : item))
+                        )
+                      }}
+                      className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer ml-2"
+                    />
+                  </div>
+
+                  {st.enabled && (
+                    <div className="mt-2 pt-2 border-t border-warm/10 flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-bold text-warm/60 uppercase tracking-wider">Position</span>
+                      <select
+                        value={st.position}
+                        onChange={e => {
+                          const newPos = e.target.value
+                          setUserStickers(prev =>
+                            prev.map(item => (item.id === st.id ? { ...item, position: newPos } : item))
+                          )
+                        }}
+                        className="text-[10px] font-bold text-[#755B00] bg-warm/5 px-2 py-1 rounded-md border border-warm/15 focus:outline-none cursor-pointer"
+                      >
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="center">Center Accent</option>
+                        <option value="top-left">Top Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="mid-left">Middle Left</option>
+                        <option value="mid-right">Middle Right</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 2: Botanical Accents & Seals */}
+          <div className="pt-2 border-t border-warm/15 space-y-1.5">
+            <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
+              Accents & Seals
+            </p>
+
+            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
+              <div className="flex items-center gap-2">
+                <Stamp className="w-3.5 h-3.5 text-amber-800" />
+                <span>Vintage Sanctuary Ink Stamp</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={includeVintageStamp}
+                onChange={e => setIncludeVintageStamp(e.target.checked)}
+                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
+              <div className="flex items-center gap-2">
+                <Layers className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Yellow Polka & Sage Washi Tapes</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={includeWashiTapes}
+                onChange={e => setIncludeWashiTapes(e.target.checked)}
+                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
+              <div className="flex items-center gap-2">
+                <Flower2 className="w-3.5 h-3.5 text-amber-600" />
+                <span>Pressed Chamomile Daisies</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={includeBotanicals}
+                onChange={e => setIncludeBotanicals(e.target.checked)}
+                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
+              <div className="flex items-center gap-2">
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                <span>Sun Doodle & Contour Stars</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={includeSunDoodle && includeStars}
+                onChange={e => {
+                  setIncludeSunDoodle(e.target.checked)
+                  setIncludeStars(e.target.checked)
+                }}
+                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+              />
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: CARDS & LAYOUT */}
+      {activeTab === 'cards' && (
+        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-2 text-left my-2 rounded-xl shadow-md animate-fadeIn">
+          <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
+            Content Sections
+          </p>
+
+          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
+            <div className="flex items-center gap-2.5">
+              <Camera className="w-4 h-4 text-[#755B00]" />
+              <span>Photo Memories (Polaroid Frames)</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={includeMemory}
+              onChange={e => setIncludeMemory(e.target.checked)}
+              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
+            <div className="flex items-center gap-2.5">
+              <BookOpen className="w-4 h-4 text-[#755B00]" />
+              <span>Shared Journal Reflection Card</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={includeJournal}
+              onChange={e => setIncludeJournal(e.target.checked)}
+              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
+            <div className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <span>Favorite Coping Strategy Card</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={includeCoping}
+              onChange={e => setIncludeCoping(e.target.checked)}
+              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+            />
+          </label>
+
+          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
+            <div className="flex items-center gap-2.5">
+              <Heart className="w-4 h-4 text-amber-500" />
+              <span>Mood Entries & Care Streak</span>
+            </div>
+            <input
+              type="checkbox"
+              checked={includeMoodStreak}
+              onChange={e => setIncludeMoodStreak(e.target.checked)}
+              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+            />
+          </label>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="w-full max-w-xs mx-auto space-y-2 mt-2 pb-4">
@@ -1095,7 +1390,9 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
             ${rm ? '' : 'animate-scaleIn'}
           `}
           style={{
-            background: 'linear-gradient(170deg, #3E2A1A 0%, #5D4037 40%, #2D4A2D 100%)',
+            backgroundImage: 'linear-gradient(rgba(24, 16, 9, 0.52), rgba(18, 12, 6, 0.65)), url("/sunflower_story_bg.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
             borderRadius: window.innerWidth >= 640 ? '2.5rem' : '0',
             boxShadow: '0 32px 80px -16px rgba(0,0,0,0.5)',
             aspectRatio: window.innerWidth >= 640 ? '9/16' : 'auto',
