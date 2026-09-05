@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Share2, Download, Plus,
-  Camera, Heart, Check, Sparkles, Image as ImageIcon, Lock, Eye
+  Camera, Heart, Check, Sparkles, Image as ImageIcon, Lock, Eye,
+  Crop, Sliders
 } from 'lucide-react'
 import ReflectionCapsuleModal from './ReflectionCapsuleModal'
+import PhotoCropAdjustModal from './PhotoCropAdjustModal'
 import { saveJourneyMemory } from '../lib/journeyScrapbook'
+import { renderScrapbookCollage } from '../lib/scrapbookCollageEngine'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponents & Decorative Scrapbook Accents
@@ -311,7 +314,7 @@ function PageCapsule({ page, onOpenCapsule, reducedMotion }) {
 }
 
 // PAGE G: LOOK HOW FAR YOU'VE COME
-function PageFar({ page, onAddMemory, reducedMotion }) {
+function PageFar({ page, onAddMemory, onEditMemory, reducedMotion }) {
   const memories = page.memories || []
 
   return (
@@ -330,14 +333,19 @@ function PageFar({ page, onAddMemory, reducedMotion }) {
           memories.map((m, idx) => (
             <div
               key={m.id || idx}
-              className={`polaroid-frame p-2 text-left ${idx % 2 === 0 ? 'tilt-left' : 'tilt-right'}`}
+              onClick={() => onEditMemory?.(m)}
+              className={`polaroid-frame p-2 text-left cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all ${idx % 2 === 0 ? 'tilt-left' : 'tilt-right'}`}
+              title="Click to edit memory or adjust photo crop"
             >
-              <div className="w-full h-20 rounded bg-[#FFF8F6] overflow-hidden flex items-center justify-center mb-1.5">
+              <div className="w-full h-20 rounded bg-[#FFF8F6] overflow-hidden flex items-center justify-center mb-1.5 relative group">
                 {m.photoUrl ? (
                   <img src={m.photoUrl} alt="Memory" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-2xl">{m.emoji || '🌻'}</span>
                 )}
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-opacity">
+                  <span>Edit Crop</span>
+                </div>
               </div>
               <p className="text-[10px] font-bold text-warm truncate">{m.title || 'Memory'}</p>
             </div>
@@ -416,134 +424,73 @@ function PageClosing({ page, onProceedToShare, reducedMotion }) {
 // Share Customizer & 1080x1920 Scrapbook Canvas Generator
 // ─────────────────────────────────────────────────────────────────────────────
 
-function PageShareCustomizer({ scrapbookData, onClose }) {
-  const [includeMemory, setIncludeMemory] = useState(true)
-  const [includeWin, setIncludeWin] = useState(true)
-  const [includeStreak, setIncludeStreak] = useState(true)
-  const [includeCoping, setIncludeCoping] = useState(true)
-  const [shareState, setShareState] = useState('idle') // idle | generating | success | error
+// ─────────────────────────────────────────────────────────────────────────────
+// Share Customizer & 1080x1920 Open-Spiral Scrapbook Canvas Generator
+// ─────────────────────────────────────────────────────────────────────────────
 
+function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
+  const [includeMemory, setIncludeMemory] = useState(true)
+  const [includeJournal, setIncludeJournal] = useState(true)
+  const [includeCoping, setIncludeCoping] = useState(true)
+  const [includeMoodStreak, setIncludeMoodStreak] = useState(true)
+  const [includeStickers, setIncludeStickers] = useState(true)
+  const [shareState, setShareState] = useState('idle') // idle | generating | success | error
+  const [previewReady, setPreviewReady] = useState(false)
+
+  const canvasRef = useRef(null)
   const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare
 
-  const handleGenerateCanvas = useCallback(async (downloadOnly = false) => {
+  // Update live preview whenever options or data change
+  useEffect(() => {
+    let cancelled = false
+    async function updatePreview() {
+      if (!canvasRef.current) return
+      try {
+        await renderScrapbookCollage(canvasRef.current, scrapbookData, {
+          includeMemory,
+          includeJournal,
+          includeCoping,
+          includeMoodStreak,
+          includeStickers,
+        })
+        if (!cancelled) setPreviewReady(true)
+      } catch (err) {
+        console.error('[renderScrapbookCollage preview error]', err)
+      }
+    }
+    updatePreview()
+    return () => {
+      cancelled = true
+    }
+  }, [scrapbookData, includeMemory, includeJournal, includeCoping, includeMoodStreak, includeStickers])
+
+  const handleExport = useCallback(async (downloadOnly = false) => {
+    if (!canvasRef.current) return
     setShareState('generating')
+
     try {
-      const canvas = document.createElement('canvas')
-      canvas.width = 1080
-      canvas.height = 1920
-      const ctx = canvas.getContext('2d')
-      if (!ctx) throw new Error('Failed to create canvas context')
+      // Re-render at crisp 1080x1920 to guarantee latest options
+      await renderScrapbookCollage(canvasRef.current, scrapbookData, {
+        includeMemory,
+        includeJournal,
+        includeCoping,
+        includeMoodStreak,
+        includeStickers,
+      })
 
-      // Background: warm linen paper palette
-      const grad = ctx.createLinearGradient(0, 0, 0, 1920)
-      grad.addColorStop(0, '#2D1F17')
-      grad.addColorStop(0.35, '#3E2A1A')
-      grad.addColorStop(0.7, '#5D4037')
-      grad.addColorStop(1, '#233825')
-      ctx.fillStyle = grad
-      ctx.fillRect(0, 0, 1080, 1920)
-
-      // Ambient radial blooms
-      const glowTop = ctx.createRadialGradient(540, 480, 0, 540, 480, 500)
-      glowTop.addColorStop(0, 'rgba(246, 201, 69, 0.18)')
-      glowTop.addColorStop(1, 'rgba(246, 201, 69, 0)')
-      ctx.fillStyle = glowTop
-      ctx.fillRect(0, 0, 1080, 1920)
-
-      // Scrapbook Header Banner
-      ctx.textAlign = 'center'
-      ctx.fillStyle = '#F6C945'
-      ctx.font = '900 24px "Plus Jakarta Sans", sans-serif'
-      ctx.fillText('UNIWELL SCRAPBOOK 🌻', 540, 240)
-
-      ctx.fillStyle = '#FFFFFF'
-      ctx.font = '900 56px "Plus Jakarta Sans", sans-serif'
-      ctx.fillText('My Journey in Bloom', 540, 320)
-
-      // Center Polaroid Card
-      const polaroidX = 180
-      const polaroidY = 400
-      const polaroidW = 720
-      const polaroidH = 880
-
-      // Polaroid Paper Shadow
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)'
-      ctx.fillRect(polaroidX + 12, polaroidY + 14, polaroidW, polaroidH)
-
-      // Polaroid Body
-      ctx.fillStyle = '#FFFDF9'
-      ctx.fillRect(polaroidX, polaroidY, polaroidW, polaroidH)
-
-      // Washi tape on top center
-      ctx.fillStyle = 'rgba(246, 201, 69, 0.75)'
-      ctx.fillRect(polaroidX + 260, polaroidY - 20, 200, 44)
-
-      // Photo inside Polaroid
-      ctx.fillStyle = '#FFF8F6'
-      ctx.fillRect(polaroidX + 36, polaroidY + 44, polaroidW - 72, 540)
-
-      // Sunflower illustration inside photo
-      ctx.font = '140px sans-serif'
-      ctx.fillText('🌻', 540, 750)
-
-      // Polaroid Caption Area
-      ctx.fillStyle = '#5D4037'
-      ctx.font = 'italic 700 36px "Playfair Display", Georgia, serif'
-      ctx.fillText('"A collection of small moments."', 540, 1080)
-
-      ctx.fillStyle = 'rgba(93, 64, 55, 0.6)'
-      ctx.font = '600 24px "Plus Jakarta Sans", sans-serif'
-      ctx.fillText('Small steps still count.', 540, 1140)
-
-      // Selected Momento Badges
-      let badgeY = 1380
-      if (includeStreak && scrapbookData?.stats?.bestStreak > 0) {
-        ctx.fillStyle = 'rgba(246, 201, 69, 0.15)'
-        ctx.strokeStyle = '#F6C945'
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.roundRect(240, badgeY, 600, 70, 20)
-        ctx.fill()
-        ctx.stroke()
-
-        ctx.fillStyle = '#FFF3D0'
-        ctx.font = '800 24px "Plus Jakarta Sans", sans-serif'
-        ctx.fillText(`🌻 ${scrapbookData.stats.bestStreak} Days Care Streak`, 540, badgeY + 44)
-        badgeY += 95
-      }
-
-      if (includeWin) {
-        ctx.fillStyle = 'rgba(176, 207, 173, 0.15)'
-        ctx.strokeStyle = '#B0CFAD'
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.roundRect(240, badgeY, 600, 70, 20)
-        ctx.fill()
-        ctx.stroke()
-
-        ctx.fillStyle = '#EAF5EE'
-        ctx.font = '800 24px "Plus Jakarta Sans", sans-serif'
-        ctx.fillText('✦ Nurturing My Own Bloom ✦', 540, badgeY + 44)
-        badgeY += 95
-      }
-
-      // Footer
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.35)'
-      ctx.font = '700 20px "Plus Jakarta Sans", sans-serif'
-      ctx.fillText('UniWell Campus Sanctuary · Private Wellness Story', 540, 1780)
-
-      // Output
-      canvas.toBlob(async (blob) => {
+      canvasRef.current.toBlob(async (blob) => {
         if (!blob) {
           setShareState('error')
           return
         }
 
+        const fileName = 'my-journey-scrapbook-1080x1920.png'
+
         if (downloadOnly || !canShare) {
           const url = URL.createObjectURL(blob)
           const a = document.createElement('a')
           a.href = url
-          a.download = 'my-journey-scrapbook.png'
+          a.download = fileName
           a.click()
           setTimeout(() => URL.revokeObjectURL(url), 3000)
           setShareState('success')
@@ -551,20 +498,20 @@ function PageShareCustomizer({ scrapbookData, onClose }) {
         }
 
         // Web Share API
-        const file = new File([blob], 'my-journey-scrapbook.png', { type: 'image/png' })
+        const file = new File([blob], fileName, { type: 'image/png' })
         try {
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({
               files: [file],
               title: 'My Journey Scrapbook 🌻',
-              text: 'Keep nurturing your bloom. — UniWell',
+              text: 'Weekly Bloom — Growing with every day at UniWell.',
             })
             setShareState('success')
           } else {
             const url = URL.createObjectURL(blob)
             const a = document.createElement('a')
             a.href = url
-            a.download = 'my-journey-scrapbook.png'
+            a.download = fileName
             a.click()
             setTimeout(() => URL.revokeObjectURL(url), 3000)
             setShareState('success')
@@ -575,126 +522,181 @@ function PageShareCustomizer({ scrapbookData, onClose }) {
         }
       }, 'image/png')
     } catch (err) {
-      console.error('[handleGenerateCanvas error]', err)
+      console.error('[handleExport error]', err)
       setShareState('error')
     }
-  }, [includeMemory, includeWin, includeStreak, includeCoping, scrapbookData, canShare])
+  }, [scrapbookData, includeMemory, includeJournal, includeCoping, includeMoodStreak, includeStickers, canShare])
 
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center px-6 gap-5 relative">
-      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F6C945]">
-        Customize Your Story
-      </p>
+    <div className="flex flex-col h-full overflow-y-auto px-4 sm:px-6 py-4 text-center custom-scrollbar">
+      {/* Header */}
+      <div className="space-y-1 mb-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F6C945]">
+          Story Generator · 1080 × 1920 (9:16)
+        </p>
+        <h2 className="font-jakarta font-black text-xl sm:text-2xl text-white">
+          My Journey Scrapbook
+        </h2>
+        <p className="text-[11px] text-white/60 font-medium">
+          Real memories, journal reflections, and coping moments compiled for full-screen sharing.
+        </p>
+      </div>
 
-      <h2 className="font-jakarta font-black text-2xl text-white">
-        What should be in your story?
-      </h2>
+      {/* Live 9:16 Visual Preview Canvas */}
+      <div className="relative w-full max-w-[260px] sm:max-w-[290px] aspect-[9/16] mx-auto my-2 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 bg-[#265321] shrink-0">
+        <canvas
+          ref={canvasRef}
+          width={1080}
+          height={1920}
+          className="w-full h-full object-contain"
+        />
+        {!previewReady && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-[#F6C945] text-xs font-bold gap-2">
+            <span className="animate-spin text-xl">🌻</span>
+            <span>Assembling your scrapbook…</span>
+          </div>
+        )}
+        <div className="absolute bottom-2 left-2 right-2 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[9px] font-bold text-white/80 flex items-center justify-between">
+          <span>1080 × 1920 px (9:16 Story)</span>
+          <span className="text-[#F6C945]">✦ Live Preview</span>
+        </div>
+      </div>
 
-      {/* Checklist options */}
-      <div className="w-full max-w-xs scrapbook-paper p-4 space-y-2.5 text-left">
-        <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-warm">
+      {/* Checklist Options */}
+      <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-2 text-left my-2 rounded-xl shadow-md">
+        <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
+          Customize Your Content
+        </p>
+
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
           <input
             type="checkbox"
             checked={includeMemory}
             onChange={e => setIncludeMemory(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0"
+            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
           />
-          <span>A favorite memory</span>
+          <span>📸 Photo Memories (HuHa Therapy, Drawings)</span>
         </label>
 
-        <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-warm">
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
           <input
             type="checkbox"
-            checked={includeWin}
-            onChange={e => setIncludeWin(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0"
+            checked={includeJournal}
+            onChange={e => setIncludeJournal(e.target.checked)}
+            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
           />
-          <span>A little win</span>
+          <span>📖 Shared Journal Reflection & Words</span>
         </label>
 
-        <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-warm">
-          <input
-            type="checkbox"
-            checked={includeStreak}
-            onChange={e => setIncludeStreak(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0"
-          />
-          <span>My care streak</span>
-        </label>
-
-        <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-warm">
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
           <input
             type="checkbox"
             checked={includeCoping}
             onChange={e => setIncludeCoping(e.target.checked)}
-            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0"
+            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
           />
-          <span>A coping moment</span>
+          <span>🌿 Favorite Coping Strategy Card</span>
         </label>
 
-        <div className="pt-2 border-t border-warm/10 flex items-center gap-1.5 text-[10px] text-warm/60 font-semibold">
-          <Lock size={10} />
-          <span>Private journal text is never included.</span>
-        </div>
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
+          <input
+            type="checkbox"
+            checked={includeMoodStreak}
+            onChange={e => setIncludeMoodStreak(e.target.checked)}
+            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+          />
+          <span>🌻 Mood Entries & Care Streak</span>
+        </label>
+
+        <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-warm">
+          <input
+            type="checkbox"
+            checked={includeStickers}
+            onChange={e => setIncludeStickers(e.target.checked)}
+            className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
+          />
+          <span>🐟 Cute Goldfish, Stars & Washi Tape</span>
+        </label>
       </div>
 
-      {/* Action buttons */}
-      {shareState === 'error' ? (
-        <div className="space-y-2">
-          <p className="text-xs text-white/60">We couldn't prepare your story just yet.</p>
-          <div className="flex gap-2 justify-center">
-            <button
-              type="button"
-              onClick={() => handleGenerateCanvas(true)}
-              className="px-4 py-2 rounded-xl bg-white/20 text-white text-xs font-bold"
-            >
-              Try Save
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-white/10 text-white/60 text-xs font-bold"
-            >
-              Close
-            </button>
+      {/* Action Buttons */}
+      <div className="w-full max-w-xs mx-auto space-y-2 mt-2 pb-4">
+        {shareState === 'error' ? (
+          <div className="space-y-2">
+            <p className="text-xs text-rose-300 font-semibold">We couldn't compile the image just yet.</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                onClick={() => handleExport(true)}
+                className="px-4 py-2 rounded-xl bg-white/20 text-white text-xs font-bold hover:bg-white/30"
+              >
+                Try Download
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl bg-white/10 text-white/60 text-xs font-bold"
+              >
+                Close
+              </button>
+            </div>
           </div>
-        </div>
-      ) : shareState === 'success' ? (
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-[#B0CFAD]">✓ Scrapbook story ready!</p>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-white/20 text-white text-xs font-bold"
-          >
-            Done
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2.5 w-full max-w-xs">
-          {canShare && (
+        ) : shareState === 'success' ? (
+          <div className="space-y-2 py-2">
+            <p className="text-xs font-bold text-[#B0CFAD]">✓ Scrapbook story saved at 1080×1920!</p>
+            <div className="flex gap-2 justify-center">
+              <button
+                type="button"
+                onClick={() => handleExport(true)}
+                className="px-4 py-2 rounded-xl bg-white/20 text-white text-xs font-bold hover:bg-white/30"
+              >
+                Download Again
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 rounded-xl bg-[#F6C945] text-[#3E3006] text-xs font-black"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               disabled={shareState === 'generating'}
-              onClick={() => handleGenerateCanvas(false)}
+              onClick={() => handleExport(true)}
               className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl bg-[#F6C945] text-[#3E3006] font-black text-xs uppercase tracking-widest hover:brightness-105 active:scale-[0.98] transition-all shadow-lg disabled:opacity-60"
             >
-              <Share2 size={14} />
-              {shareState === 'generating' ? 'Assembling Story…' : 'Share My Journey'}
+              <Download size={15} />
+              {shareState === 'generating' ? 'Exporting 1080×1920 PNG…' : 'Save Scrapbook (1080×1920 PNG)'}
             </button>
-          )}
 
-          <button
-            type="button"
-            disabled={shareState === 'generating'}
-            onClick={() => handleGenerateCanvas(true)}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-black text-xs uppercase tracking-widest border border-white/20 transition-all disabled:opacity-60"
-          >
-            <Download size={14} />
-            {shareState === 'generating' ? 'Assembling Story…' : 'Save My Story'}
-          </button>
-        </div>
-      )}
+            {canShare && (
+              <button
+                type="button"
+                disabled={shareState === 'generating'}
+                onClick={() => handleExport(false)}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-black text-xs uppercase tracking-widest border border-white/20 transition-all disabled:opacity-60"
+              >
+                <Share2 size={14} />
+                Share Story
+              </button>
+            )}
+
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-[11px] font-bold text-white/50 hover:text-white pt-1 transition-colors"
+              >
+                ← Back to Scrapbook Pages
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -703,12 +705,33 @@ function PageShareCustomizer({ scrapbookData, onClose }) {
 // Add Memory Modal (In-Scrapbook Photo & Reflection Creator)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
+function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded, editingMemory = null }) {
   const [title, setTitle] = useState('')
   const [note, setNote] = useState('')
   const [photoUrl, setPhotoUrl] = useState(null)
+  const [rawPhotoSrc, setRawPhotoSrc] = useState(null)
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false)
   const [visibility, setVisibility] = useState('journey') // 'private' | 'journey' | 'shareable'
   const fileInputRef = useRef(null)
+
+  // Populate fields if editing an existing memory
+  useEffect(() => {
+    if (isOpen) {
+      if (editingMemory) {
+        setTitle(editingMemory.title || '')
+        setNote(editingMemory.note || '')
+        setPhotoUrl(editingMemory.photoUrl || null)
+        setRawPhotoSrc(editingMemory.photoUrl || null)
+        setVisibility(editingMemory.visibility || 'journey')
+      } else {
+        setTitle('')
+        setNote('')
+        setPhotoUrl(null)
+        setRawPhotoSrc(null)
+        setVisibility('journey')
+      }
+    }
+  }, [isOpen, editingMemory])
 
   if (!isOpen) return null
 
@@ -717,9 +740,16 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
     if (!file) return
     const reader = new FileReader()
     reader.onload = () => {
-      setPhotoUrl(reader.result)
+      setRawPhotoSrc(reader.result)
+      setIsCropModalOpen(true)
     }
     reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const handleCropApplied = (croppedDataUrl) => {
+    setPhotoUrl(croppedDataUrl)
+    setIsCropModalOpen(false)
   }
 
   const handleSave = (e) => {
@@ -727,12 +757,13 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
     if (!title.trim() && !note.trim() && !photoUrl) return
 
     saveJourneyMemory(userId, {
-      sourceType: 'custom',
+      id: editingMemory?.id,
+      sourceType: editingMemory?.sourceType || 'custom',
       title: title.trim() || 'A quiet moment',
       note: note.trim(),
       photoUrl,
       visibility,
-      emoji: '🌻',
+      emoji: editingMemory?.emoji || '🌻',
     })
 
     onMemoryAdded?.()
@@ -740,42 +771,93 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#FFFDF9] rounded-3xl w-full max-w-sm p-5 border border-warm/15 shadow-2xl relative">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-warm/40 hover:text-warm"
-        >
-          <X size={18} />
-        </button>
+    <>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+        <div className="bg-[#FFFDF9] rounded-3xl w-full max-w-sm p-5 border border-warm/15 shadow-2xl relative">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 text-warm/40 hover:text-warm"
+          >
+            <X size={18} />
+          </button>
 
-        <h3 className="font-jakarta font-bold text-warm text-base mb-1">Add to Your Scrapbook 🌻</h3>
-        <p className="text-[11px] text-warm/60 mb-4">Attach a photo or a quiet memory to your journey.</p>
+          <h3 className="font-jakarta font-bold text-warm text-base mb-1">Add to Your Scrapbook 🌻</h3>
+          <p className="text-[11px] text-warm/60 mb-4">Attach a photo or a quiet memory to your journey.</p>
 
-        <form onSubmit={handleSave} className="space-y-3">
-          {photoUrl ? (
-            <div className="relative w-full h-36 rounded-xl overflow-hidden border border-warm/15">
-              <img src={photoUrl} alt="Preview" className="w-full h-full object-cover" />
+          <form onSubmit={handleSave} className="space-y-3">
+            {photoUrl ? (
+              <div className="space-y-1.5">
+                <div
+                  onClick={() => setIsCropModalOpen(true)}
+                  className="relative w-full h-44 rounded-2xl overflow-hidden border border-warm/20 bg-black group cursor-pointer shadow-sm hover:border-[#F6C945] transition-all"
+                  title="Click to adjust framing, zoom or crop"
+                >
+                  <img
+                    src={photoUrl}
+                    alt="Adjusted memory"
+                    className="w-full h-full object-contain bg-black/90"
+                  />
+
+                  {/* Top-right Controls Overlay */}
+                  <div className="absolute top-2 right-2 flex items-center gap-1.5 z-10">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsCropModalOpen(true)
+                      }}
+                      className="px-2.5 py-1 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1 shadow-sm transition-all"
+                    >
+                      <Crop size={11} />
+                      <span>Adjust & Crop</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        fileInputRef.current?.click()
+                      }}
+                      className="px-2 py-1 rounded-xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-white text-[11px] font-bold shadow-sm transition-all"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  {/* Bottom Tap Hint */}
+                  <div className="absolute bottom-2 left-2 right-2 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[10px] text-white/90 font-medium flex items-center justify-between pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity">
+                    <span className="flex items-center gap-1">
+                      <Sliders size={10} className="text-[#F6C945]" />
+                      <span>Tap to reposition, zoom or rotate</span>
+                    </span>
+                    <span className="text-[#F6C945] font-bold text-[9px] uppercase">Edit</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => setPhotoUrl(null)}
-                className="absolute top-2 right-2 p-1 rounded-lg bg-black/50 text-white text-xs"
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const file = e.dataTransfer?.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = () => {
+                    setRawPhotoSrc(reader.result)
+                    setIsCropModalOpen(true)
+                  }
+                  reader.readAsDataURL(file)
+                }}
+                className="w-full py-6 rounded-2xl border-2 border-dashed border-warm/20 hover:border-[#F6C945] flex flex-col items-center justify-center gap-1.5 transition-colors bg-[#FFF8F6]"
               >
-                Change
+                <Camera size={20} className="text-[#755b00]" />
+                <span className="text-xs font-bold text-warm">Attach a Photo</span>
+                <span className="text-[10px] text-warm/40">Customizable position, zoom & crop</span>
               </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-6 rounded-2xl border-2 border-dashed border-warm/20 hover:border-[#F6C945] flex flex-col items-center justify-center gap-1.5 transition-colors bg-[#FFF8F6]"
-            >
-              <Camera size={20} className="text-[#755b00]" />
-              <span className="text-xs font-bold text-warm">Attach a Photo</span>
-              <span className="text-[10px] text-warm/40">Optional · Private by default</span>
-            </button>
-          )}
+            )}
 
           <input
             type="file"
@@ -849,7 +931,17 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded }) {
         </form>
       </div>
     </div>
-  )
+
+    {/* Interactive Photo Crop & Position Adjuster */}
+    <PhotoCropAdjustModal
+      isOpen={isCropModalOpen}
+      imageSrc={rawPhotoSrc || photoUrl}
+      onClose={() => setIsCropModalOpen(false)}
+      onApplyCrop={handleCropApplied}
+      initialAspectRatio="1:1"
+    />
+  </>
+)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -860,6 +952,7 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
   const [activePageIndex, setActivePageIndex] = useState(0)
   const [isCapsuleOpen, setIsCapsuleOpen] = useState(false)
   const [isAddMemoryOpen, setIsAddMemoryOpen] = useState(false)
+  const [editingMemory, setEditingMemory] = useState(null)
   const [isShareMode, setIsShareMode] = useState(false)
   const reducedMotion = useRef(false)
 
@@ -929,6 +1022,7 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
         <PageShareCustomizer
           scrapbookData={scrapbookData}
           onClose={onClose}
+          onBack={() => setIsShareMode(false)}
         />
       )
     }
@@ -958,7 +1052,14 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
         return (
           <PageFar
             page={currentPage}
-            onAddMemory={() => setIsAddMemoryOpen(true)}
+            onAddMemory={() => {
+              setEditingMemory(null)
+              setIsAddMemoryOpen(true)
+            }}
+            onEditMemory={(m) => {
+              setEditingMemory(m)
+              setIsAddMemoryOpen(true)
+            }}
             reducedMotion={rm}
           />
         )
@@ -1070,11 +1171,15 @@ export default function MyJourneyScrapbookModal({ isOpen, onClose, scrapbookData
         onRefresh={onRefresh}
       />
 
-      {/* Add Memory Modal */}
+      {/* Add / Edit Memory Modal */}
       <AddMemoryModal
         isOpen={isAddMemoryOpen}
-        onClose={() => setIsAddMemoryOpen(false)}
+        onClose={() => {
+          setIsAddMemoryOpen(false)
+          setEditingMemory(null)
+        }}
         userId={userId}
+        editingMemory={editingMemory}
         onMemoryAdded={() => onRefresh?.()}
       />
     </>
