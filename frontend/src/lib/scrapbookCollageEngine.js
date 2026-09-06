@@ -128,6 +128,29 @@ function drawStickerImage(ctx, img, x, y, size, angleDeg = 0) {
   ctx.restore()
 }
 
+function drawImageCover(ctx, img, x, y, width, height) {
+  if (!img) return
+
+  const sourceWidth = img.naturalWidth || img.width
+  const sourceHeight = img.naturalHeight || img.height
+  if (!sourceWidth || !sourceHeight) return
+
+  const sourceRatio = sourceWidth / sourceHeight
+  const targetRatio = width / height
+  let cropWidth = sourceWidth
+  let cropHeight = sourceHeight
+
+  if (sourceRatio > targetRatio) {
+    cropWidth = sourceHeight * targetRatio
+  } else {
+    cropHeight = sourceWidth / targetRatio
+  }
+
+  const cropX = (sourceWidth - cropWidth) / 2
+  const cropY = (sourceHeight - cropHeight) / 2
+  ctx.drawImage(img, cropX, cropY, cropWidth, cropHeight, x, y, width, height)
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Decorative Torn Paper Deckle Edges
 // ─────────────────────────────────────────────────────────────────────────────
@@ -813,7 +836,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
 
   // Preload user photos and user's authentic aesthetic stickers
   const [
-    bgImg, img1, img2, img3,
+    bgImg, img1, img2, img3, img4,
     rawSunflowerTrio,
     rawHeartSunflower,
     rawSleepingCat,
@@ -824,6 +847,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
     photoUrls[0] ? loadImage(photoUrls[0]) : null,
     photoUrls[1] ? loadImage(photoUrls[1]) : null,
     photoUrls[2] ? loadImage(photoUrls[2]) : null,
+    photoUrls[3] ? loadImage(photoUrls[3]) : null,
     loadImage('/stickers/sunflower_trio.png'),
     loadImage('/stickers/heart_sunflower.png'),
     loadImage('/stickers/sleeping_cat.png'),
@@ -841,7 +865,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
   }
 
   const stickersList = options.stickers || [
-    { id: 'heart_sunflower', enabled: true, position: 'top-left', size: 140 },
+    { id: 'heart_sunflower', enabled: true, position: 'bottom-left', size: 110 },
     { id: 'sunflower_trio', enabled: false, position: 'bottom-left', size: 165 },
     { id: 'sleeping_cat', enabled: true, position: 'bottom-right', size: 145 },
     { id: 'star_god_is_good', enabled: true, position: 'center', size: 95 },
@@ -999,7 +1023,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
     ctx.beginPath()
     ctx.roundRect(-p1W / 2 + p1Border, -p1H / 2 + p1Border, p1InnerW, p1InnerH, 4)
     ctx.clip()
-    ctx.drawImage(img1, -p1W / 2 + p1Border, -p1H / 2 + p1Border, p1InnerW, p1InnerH)
+    drawImageCover(ctx, img1, -p1W / 2 + p1Border, -p1H / 2 + p1Border, p1InnerW, p1InnerH)
     ctx.restore()
   } else {
     ctx.fillStyle = '#FFF8F0'
@@ -1050,7 +1074,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
     ctx.beginPath()
     ctx.roundRect(-p2W / 2 + p2Border, -p2H / 2 + p2Border, p2InnerW, p2InnerH, 4)
     ctx.clip()
-    ctx.drawImage(img2, -p2W / 2 + p2Border, -p2H / 2 + p2Border, p2InnerW, p2InnerH)
+    drawImageCover(ctx, img2, -p2W / 2 + p2Border, -p2H / 2 + p2Border, p2InnerW, p2InnerH)
     ctx.restore()
   } else {
     ctx.fillStyle = '#F4F9F4'
@@ -1106,7 +1130,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
     ctx.beginPath()
     ctx.roundRect(-p3W / 2 + p3Border, -p3H / 2 + p3Border, p3InnerW, p3InnerH, 4)
     ctx.clip()
-    ctx.drawImage(img3, -p3W / 2 + p3Border, -p3H / 2 + p3Border, p3InnerW, p3InnerH)
+    drawImageCover(ctx, img3, -p3W / 2 + p3Border, -p3H / 2 + p3Border, p3InnerW, p3InnerH)
     ctx.restore()
   } else {
     ctx.fillStyle = '#FFFBF0'
@@ -1125,6 +1149,55 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
   // Kraft Tape on Photo 3
   if (showWashi) {
     drawKraftTape(ctx, p3X - 50, p3Y - 175, 95, 26, -6)
+  }
+
+  const mem4 = curatedMemories[3] || {}
+  const p4X = 300
+  const p4Y = paperY + 1385
+  const p4W = 330
+  const p4H = 270
+  const p4PhotoH = 190
+
+  ctx.save()
+  ctx.translate(p4X, p4Y)
+  ctx.rotate((2.2 * Math.PI) / 180)
+
+  ctx.shadowColor = 'rgba(40, 25, 10, 0.22)'
+  ctx.shadowBlur = 16
+  ctx.shadowOffsetY = 6
+
+  ctx.fillStyle = '#FFFFFF'
+  ctx.beginPath()
+  ctx.roundRect(-p4W / 2, -p4H / 2, p4W, p4H, 8)
+  ctx.fill()
+  ctx.shadowColor = 'transparent'
+
+  const p4Border = 14
+  const p4InnerW = p4W - p4Border * 2
+  const p4InnerH = p4PhotoH
+
+  if (img4) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.roundRect(-p4W / 2 + p4Border, -p4H / 2 + p4Border, p4InnerW, p4InnerH, 4)
+    ctx.clip()
+    drawImageCover(ctx, img4, -p4W / 2 + p4Border, -p4H / 2 + p4Border, p4InnerW, p4InnerH)
+    ctx.restore()
+  } else {
+    ctx.fillStyle = '#FFF8F0'
+    ctx.fillRect(-p4W / 2 + p4Border, -p4H / 2 + p4Border, p4InnerW, p4InnerH)
+    drawBotanicalLeafEmblem(ctx, 0, -p4H / 2 + p4Border + p4InnerH / 2, 22)
+  }
+
+  ctx.fillStyle = '#4A3325'
+  ctx.font = 'italic 600 16px "Playfair Display", Georgia, serif'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(mem4.title || 'Another Little Joy', 0, p4H / 2 - 28)
+  ctx.restore()
+
+  if (showWashi) {
+    drawYellowPolkaDotTape(ctx, p4X - 92, p4Y - 122, 92, 25, -8)
   }
 
   // ─────────────────────────────────────────────────────────────────────────

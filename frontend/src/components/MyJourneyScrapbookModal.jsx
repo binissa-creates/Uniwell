@@ -456,7 +456,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
 
   // Interactive Aesthetic Stickers Collection (User-provided)
   const [userStickers, setUserStickers] = useState([
-    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.png', enabled: true, position: 'top-left', size: 140 },
+    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.png', enabled: true, position: 'bottom-left', size: 110 },
     { id: 'sunflower_trio', name: 'Painted Sunflower Trio', preview: '/stickers/sunflower_trio.png', enabled: false, position: 'bottom-left', size: 165 },
     { id: 'sleeping_cat', name: 'Cozy Sleeping Kitten', preview: '/stickers/sleeping_cat.png', enabled: true, position: 'bottom-right', size: 145 },
     { id: 'star_god_is_good', name: 'Golden Star "God is Good"', preview: '/stickers/star_god_is_good.png', enabled: true, position: 'center', size: 95 },
