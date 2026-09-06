@@ -55,7 +55,13 @@ export function saveJourneyMemory(userId, memory) {
       date: memory.date || new Date().toISOString(),
     }
 
-    const existingIndex = memories.findIndex(m => m.id === id || (memory.sourceType && memory.sourceId && m.sourceType === memory.sourceType && String(m.sourceId) === String(memory.sourceId)))
+    // Only dedup by sourceType+sourceId when sourceId is explicitly provided
+    // (prevents custom entries without a sourceId from overwriting each other)
+    const existingIndex = memories.findIndex(m =>
+      m.id === id ||
+      (memory.sourceType && memory.sourceId !== undefined && memory.sourceId !== null &&
+        m.sourceType === memory.sourceType && String(m.sourceId) === String(memory.sourceId))
+    )
     if (existingIndex >= 0) {
       memories[existingIndex] = { ...memories[existingIndex], ...updatedMemory }
     } else {
@@ -399,7 +405,7 @@ export async function buildJourneyScrapbook(userId) {
         eyebrow: 'LOOK HOW FAR YOU\'VE COME',
         title: 'Moments to Remember',
         caption: 'These are small moments and quiet reflections you chose to remember along the way.',
-        memories: curatedMemories.slice(0, 3),
+        memories: curatedMemories.slice(0, 4),
         totalCheckIns: moodLogs.length,
         totalJournals: journals.length,
       })

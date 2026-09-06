@@ -4,8 +4,13 @@ import fs from 'fs'
 import path from 'path'
 
 // Copy user uploaded sunflower background and inspo assets to public folder
-const uploadedDir = 'C:/Users/Administrator/.gemini/antigravity-ide/brain/73f08141-6332-49f3-85d2-0dd94e1d7cfa/.user_uploaded'
+const uploadedDirs = [
+  'C:/Users/Administrator/.gemini/antigravity-ide/brain/9c38ac5c-1f14-4cb1-9788-88f0cb5228ac/.user_uploaded',
+  'C:/Users/Administrator/.gemini/antigravity-ide/brain/73f08141-6332-49f3-85d2-0dd94e1d7cfa/.user_uploaded',
+]
+
 const copyMap = {
+  'media_1788681934350.png': 'stickers/heart_sunflower.png',
   'media_1788626830119.jpg': 'sunflower_story_bg.jpg',
   'media_1788626429184.jpg': 'scrapbook_inspo_1.jpg',
   'media_1788626463030.jpg': 'scrapbook_inspo_2.jpg',
@@ -21,12 +26,14 @@ try {
   const stickersDir = path.join(publicDir, 'stickers')
   if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true })
   if (!fs.existsSync(stickersDir)) fs.mkdirSync(stickersDir, { recursive: true })
-  for (const [srcName, destName] of Object.entries(copyMap)) {
-    const srcPath = path.join(uploadedDir, srcName)
-    const destPath = path.join(publicDir, destName)
-    if (fs.existsSync(srcPath)) {
-      fs.copyFileSync(srcPath, destPath)
-      console.log(`[Vite Hook] Copied ${srcName} -> public/${destName}`)
+  for (const uploadedDir of uploadedDirs) {
+    if (!fs.existsSync(uploadedDir)) continue
+    for (const [srcName, destName] of Object.entries(copyMap)) {
+      const srcPath = path.join(uploadedDir, srcName)
+      const destPath = path.join(publicDir, destName)
+      if (fs.existsSync(srcPath)) {
+        fs.copyFileSync(srcPath, destPath)
+      }
     }
   }
 } catch (e) {

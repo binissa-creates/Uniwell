@@ -825,7 +825,7 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
     photoUrls[1] ? loadImage(photoUrls[1]) : null,
     photoUrls[2] ? loadImage(photoUrls[2]) : null,
     loadImage('/stickers/sunflower_trio.png'),
-    loadImage('/stickers/heart_sunflower.jpg'),
+    loadImage('/stickers/heart_sunflower.png'),
     loadImage('/stickers/sleeping_cat.png'),
     loadImage('/stickers/star_god_is_good.png'),
     loadImage('/stickers/daffodils_bouquet.png'),
@@ -833,18 +833,18 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
 
   // Transparentize stickers with die-cut contours
   const stickerImages = {
-    sunflower_trio: makeStickerTransparent(rawSunflowerTrio),
     heart_sunflower: makeStickerTransparent(rawHeartSunflower),
+    sunflower_trio: makeStickerTransparent(rawSunflowerTrio),
     sleeping_cat: makeStickerTransparent(rawSleepingCat),
     star_god_is_good: makeStickerTransparent(rawStarGodIsGood),
     daffodils_bouquet: makeStickerTransparent(rawDaffodils),
   }
 
   const stickersList = options.stickers || [
-    { id: 'sunflower_trio', enabled: true, position: 'bottom-left', size: 165 },
+    { id: 'heart_sunflower', enabled: true, position: 'top-left', size: 140 },
+    { id: 'sunflower_trio', enabled: false, position: 'bottom-left', size: 165 },
     { id: 'sleeping_cat', enabled: true, position: 'bottom-right', size: 145 },
     { id: 'star_god_is_good', enabled: true, position: 'center', size: 95 },
-    { id: 'heart_sunflower', enabled: false, position: 'top-left', size: 140 },
     { id: 'daffodils_bouquet', enabled: false, position: 'top-right', size: 140 },
   ]
 

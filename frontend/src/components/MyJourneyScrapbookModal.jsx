@@ -57,14 +57,14 @@ function PageIntro({ page, onBegin, reducedMotion }) {
       <WashiTape color="yellow" style={{ top: '8%', left: '15%', transform: 'rotate(-8deg)' }} />
       <WashiTape color="sage" style={{ top: '10%', right: '15%', transform: 'rotate(6deg)' }} />
 
-      {/* Swaying Sunflower */}
+      {/* Swaying Heart Sunflower */}
       <div
         className={`w-28 h-28 rounded-full bg-[#F6C945]/15 border-2 border-[#F6C945]/30 flex items-center justify-center p-2 shadow-sm ${
           reducedMotion ? '' : 'animate-bloom-pulse'
         }`}
         aria-hidden="true"
       >
-        <img src="/stickers/sunflower_trio.png" alt="Sunflower" className="w-20 h-20 object-contain drop-shadow-md" />
+        <img src="/stickers/heart_sunflower.png" alt="Heart Sunflower" className="w-20 h-20 object-contain drop-shadow-md" />
       </div>
 
       <div className="space-y-3 relative z-10">
@@ -392,7 +392,7 @@ function PageFar({ page, onAddMemory, onEditMemory, reducedMotion }) {
 function PageClosing({ page, onProceedToShare, reducedMotion }) {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-5 relative">
-      <img src="/stickers/sunflower_trio.png" alt="Sunflower" className="w-20 h-20 object-contain drop-shadow-md mx-auto" />
+      <img src="/stickers/heart_sunflower.png" alt="Heart Sunflower" className="w-20 h-20 object-contain drop-shadow-md mx-auto" />
 
       <div className="space-y-3">
         <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[#F6C945]">
@@ -456,10 +456,10 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
 
   // Interactive Aesthetic Stickers Collection (User-provided)
   const [userStickers, setUserStickers] = useState([
-    { id: 'sunflower_trio', name: 'Painted Sunflower Trio', preview: '/stickers/sunflower_trio.png', enabled: true, position: 'bottom-left', size: 165 },
+    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.png', enabled: true, position: 'top-left', size: 140 },
+    { id: 'sunflower_trio', name: 'Painted Sunflower Trio', preview: '/stickers/sunflower_trio.png', enabled: false, position: 'bottom-left', size: 165 },
     { id: 'sleeping_cat', name: 'Cozy Sleeping Kitten', preview: '/stickers/sleeping_cat.png', enabled: true, position: 'bottom-right', size: 145 },
     { id: 'star_god_is_good', name: 'Golden Star "God is Good"', preview: '/stickers/star_god_is_good.png', enabled: true, position: 'center', size: 95 },
-    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.jpg', enabled: false, position: 'top-left', size: 140 },
     { id: 'daffodils_bouquet', name: 'Watercolor Daffodils', preview: '/stickers/daffodils_bouquet.png', enabled: false, position: 'top-right', size: 140 },
   ])
 
