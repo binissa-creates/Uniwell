@@ -54,19 +54,19 @@ function PromptPicker({ value, onChange }) {
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-[120] flex items-end justify-center bg-[#3a2b25]/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          className="fixed inset-0 z-[120] flex items-end justify-center bg-[#3a2b25]/55 p-0 backdrop-blur-md sm:items-center sm:p-4"
           role="presentation"
           onMouseDown={event => {
             if (event.target === event.currentTarget) setIsOpen(false)
           }}
         >
           <div
-            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl animate-slideUp sm:max-h-[min(680px,88vh)] sm:rounded-[2rem]"
+            className="flex h-[min(88dvh,680px)] w-full max-w-xl min-h-0 flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl animate-slideUp sm:h-[min(680px,88dvh)] sm:rounded-[2rem]"
             role="dialog"
             aria-modal="true"
             aria-label="Choose a reflection prompt"
           >
-            <div className="flex items-center justify-between border-b border-warm/10 px-5 pb-3 pt-5 sm:px-6">
+            <div className="flex shrink-0 items-center justify-between border-b border-warm/10 px-5 pb-3 pt-5 sm:px-6">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8C6218]">Reflection library</p>
                 <h3 className="mt-1 font-jakarta text-lg font-extrabold text-warm">Choose a prompt</h3>
@@ -81,7 +81,7 @@ function PromptPicker({ value, onChange }) {
               </button>
             </div>
 
-            <div className="border-b border-warm/10 px-5 py-3 sm:px-6">
+            <div className="shrink-0 border-b border-warm/10 px-5 py-3 sm:px-6">
               <label className="relative block">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm/40" />
                 <input
@@ -95,7 +95,7 @@ function PromptPicker({ value, onChange }) {
               </label>
             </div>
 
-            <div className="overflow-y-auto px-3 py-2 sm:px-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 sm:px-4">
               {visibleGroups.length > 0 ? visibleGroups.map(group => (
                 <section key={group.label} className="py-2">
                   <h4 className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-warm/45">
@@ -129,7 +129,7 @@ function PromptPicker({ value, onChange }) {
               )}
             </div>
 
-            <div className="border-t border-warm/10 bg-[#FFFDF9] px-5 py-3 sm:px-6">
+            <div className="shrink-0 border-t border-warm/10 bg-[#FFFDF9] px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-3">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
