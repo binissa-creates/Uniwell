@@ -1153,10 +1153,10 @@ export async function renderScrapbookCollage(canvas, scrapbookData, options = {}
 
   const mem4 = curatedMemories[3] || {}
   const p4X = 300
-  const p4Y = paperY + 1385
+  const p4Y = paperY + 1415
   const p4W = 330
-  const p4H = 270
-  const p4PhotoH = 190
+  const p4H = 240
+  const p4PhotoH = 160
 
   ctx.save()
   ctx.translate(p4X, p4Y)

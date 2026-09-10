@@ -6,8 +6,144 @@ import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS } from '../lib/data'
 import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
 import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
-import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera } from 'lucide-react'
+import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera, Search, Check } from 'lucide-react'
 
+const PROMPT_GROUPS = [
+  {
+    label: 'Daily Check-In',
+    prompts: JOURNAL_PROMPTS.slice(0, 7),
+  },
+  {
+    label: 'Self-Understanding',
+    prompts: JOURNAL_PROMPTS.slice(7, 12),
+  },
+  {
+    label: 'Childhood & Healing',
+    prompts: JOURNAL_PROMPTS.slice(12),
+  },
+]
+
+function PromptPicker({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const normalizedSearch = searchTerm.trim().toLowerCase()
+
+  const visibleGroups = PROMPT_GROUPS.map(group => ({
+    ...group,
+    prompts: group.prompts.filter(prompt => prompt.toLowerCase().includes(normalizedSearch)),
+  })).filter(group => group.prompts.length > 0)
+
+  const handleSelect = (nextPrompt) => {
+    onChange(nextPrompt)
+    setIsOpen(false)
+    setSearchTerm('')
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="w-full min-h-[44px] flex items-center justify-between gap-3 rounded-xl bg-[#FDF9F2] px-3 py-2 text-left text-xs font-bold text-warm border border-[#F6C945]/30 hover:border-[#F6C945] focus:outline-none focus:ring-2 focus:ring-[#F6C945]/30 transition-all"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+      >
+        <span className="min-w-0 truncate">{value || 'Choose a reflection prompt'}</span>
+        <ChevronDown size={15} className="shrink-0 text-[#755b00]" />
+      </button>
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[120] flex items-end justify-center bg-[#3a2b25]/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+          role="presentation"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setIsOpen(false)
+          }}
+        >
+          <div
+            className="flex max-h-[88vh] w-full max-w-xl flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl animate-slideUp sm:max-h-[min(680px,88vh)] sm:rounded-[2rem]"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Choose a reflection prompt"
+          >
+            <div className="flex items-center justify-between border-b border-warm/10 px-5 pb-3 pt-5 sm:px-6">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8C6218]">Reflection library</p>
+                <h3 className="mt-1 font-jakarta text-lg font-extrabold text-warm">Choose a prompt</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FDF9F2] text-warm/50 transition-colors hover:text-warm"
+                aria-label="Close prompt picker"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className="border-b border-warm/10 px-5 py-3 sm:px-6">
+              <label className="relative block">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm/40" />
+                <input
+                  autoFocus
+                  type="search"
+                  value={searchTerm}
+                  onChange={event => setSearchTerm(event.target.value)}
+                  placeholder="Search prompts"
+                  className="w-full rounded-xl border border-warm/10 bg-[#FDF9F2] py-2.5 pl-9 pr-3 text-sm text-warm outline-none transition-all placeholder:text-warm/35 focus:border-[#F6C945] focus:ring-2 focus:ring-[#F6C945]/20"
+                />
+              </label>
+            </div>
+
+            <div className="overflow-y-auto px-3 py-2 sm:px-4">
+              {visibleGroups.length > 0 ? visibleGroups.map(group => (
+                <section key={group.label} className="py-2">
+                  <h4 className="px-2 pb-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-warm/45">
+                    {group.label}
+                  </h4>
+                  <div className="space-y-1">
+                    {group.prompts.map(item => {
+                      const selected = item === value
+                      return (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => handleSelect(item)}
+                          className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-sm leading-snug transition-colors ${
+                            selected ? 'bg-[#FFF3C4] text-[#5D4037]' : 'text-warm/80 hover:bg-[#FDF9F2]'
+                          }`}
+                        >
+                          <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                            selected ? 'border-[#C79D00] bg-[#F6C945] text-[#4A3215]' : 'border-warm/25'
+                          }`}>
+                            {selected && <Check size={11} strokeWidth={3} />}
+                          </span>
+                          <span>{item}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              )) : (
+                <p className="px-3 py-10 text-center text-sm font-medium text-warm/50">No prompts found.</p>
+              )}
+            </div>
+
+            <div className="border-t border-warm/10 bg-[#FFFDF9] px-5 py-3 sm:px-6">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="w-full rounded-xl bg-[#F6C945] py-3 text-xs font-black uppercase tracking-widest text-[#3E3006] shadow-sm transition-all hover:brightness-105"
+              >
+                Use Selected Prompt
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 export default function Journal() {
   const [entries, setEntries] = useState([])
@@ -214,18 +350,7 @@ export default function Journal() {
 
                 {/* Prompt/Title Select */}
                 {entryMode === 'prompt' ? (
-                  <div className="relative">
-                    <select
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      className="w-full appearance-none rounded-xl bg-[#FDF9F2] pl-3 pr-8 py-2 text-xs font-bold text-warm border border-[#F6C945]/30 focus:border-[#F6C945] outline-none transition-all cursor-pointer truncate"
-                    >
-                      {JOURNAL_PROMPTS.map((p, idx) => (
-                        <option key={idx} value={p}>{p}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-warm/50 pointer-events-none" />
-                  </div>
+                  <PromptPicker value={prompt} onChange={setPrompt} />
                 ) : (
                   <input
                     type="text"
@@ -493,15 +618,7 @@ export default function Journal() {
               </div>
 
               {entryMode === 'prompt' ? (
-                <select
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full rounded-xl bg-[#FDF9F2] px-3 py-2 text-xs font-bold text-warm border border-warm/10 outline-none"
-                >
-                  {JOURNAL_PROMPTS.map((p, idx) => (
-                    <option key={idx} value={p}>{p}</option>
-                  ))}
-                </select>
+                <PromptPicker value={prompt} onChange={setPrompt} />
               ) : (
                 <input
                   type="text"
