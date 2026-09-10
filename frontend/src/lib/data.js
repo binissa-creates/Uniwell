@@ -68,6 +68,17 @@ export const JOURNAL_PROMPTS = [
   'What is one thing you want to let go of today?',
   'Who made a positive impact on you this week?',
   'What would you tell your past self from a month ago?',
+  'Who are you when you are not performing for the people inside your mind?',
+  'What is one value you want your daily choices to reflect more?',
+  'When do you feel the most connected to yourself?',
+  'What would it look like to treat yourself the way you treat the people you love?',
+  'What is your definition of success?',
+  "Are you living by someone else's definition of success?",
+  'What did I love to do as a kid?',
+  'What childhood memory still affects me?',
+  'What were your childhood fears?',
+  'What version of me did I hide to be accepted?',
+  'If I could go back and hold my younger self, what would I say to soothe them?',
 ]
 
 export const DAILY_QUOTES = [

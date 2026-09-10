@@ -464,8 +464,8 @@ export default function MoodTracker() {
       <SupportModal isOpen={isSupportModalOpen} onClose={() => setIsSupportModalOpen(false)} />
       {showSupportPrompt && (
         <SupportPrompt
-          onAccept={() => { setShowSupportPrompt(false); setIsSupportModalOpen(true) }}
-          onDismiss={() => setShowSupportPrompt(false)}
+          onViewSupport={() => { setShowSupportPrompt(false); setIsSupportModalOpen(true) }}
+          onClose={() => setShowSupportPrompt(false)}
         />
       )}
       <MoodAnimationOverlay
