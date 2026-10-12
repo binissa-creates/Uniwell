@@ -84,7 +84,7 @@ export default function Dashboard() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-36 sm:pb-24 relative z-10 page-enter">
 
         {/* ── Page Greeting Header ── */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-5">
           <span className="inline-block text-[11px] font-black uppercase tracking-widest text-[#755b00] bg-[#f6c945]/20 px-3.5 py-1 rounded-full mb-3 shadow-sm border border-[#F6C945]/30">
             {greeting}, {firstName}
           </span>
@@ -101,9 +101,9 @@ export default function Dashboard() {
         </div>
 
         {/* ── HERO: 3D Gamified Sunflower Card ── */}
-        <div className="max-w-2xl mx-auto mb-10">
-          <div className="p-[2.5px] rounded-[2.8rem] bg-gradient-to-b from-[#F6C945]/70 via-[#FFF3D0]/60 to-[#81B29A]/50 shadow-[0_20px_50px_-12px_rgba(246,201,69,0.28)] transition-all hover:shadow-[0_25px_60px_-10px_rgba(246,201,69,0.38)]">
-            <div className="bg-white/95 backdrop-blur-xl rounded-[2.65rem] overflow-hidden p-2.5 sm:p-3.5 transition-all">
+        <div className="max-w-3xl mx-auto mb-7">
+          <div className="p-px rounded-[1.9rem] bg-gradient-to-br from-[#F6C945]/45 via-[#F4EBD5]/40 to-[#81B29A]/45 shadow-[0_12px_32px_-18px_rgba(93,64,55,0.24)] transition-shadow hover:shadow-[0_16px_36px_-16px_rgba(93,64,55,0.3)]">
+            <div className="bg-white/95 backdrop-blur-xl rounded-[1.85rem] overflow-hidden p-2 transition-all">
               <SunflowerProgress
                 streak={streakMetrics.currentStreak}
                 totalDays={streakMetrics.totalDays}
@@ -114,18 +114,21 @@ export default function Dashboard() {
               />
 
               {/* Gamified Watering Action Button */}
-              <div className="px-3 pb-3 pt-2">
+              <div className="px-2 pb-2 pt-1.5">
                 {!streakMetrics.loggedToday ? (
                   <Link
                     to="/mood"
-                    className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-gradient-to-r from-[#F6C945] via-[#FFD152] to-[#ECA800] hover:brightness-105 text-[#3E3006] font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all shadow-[0_10px_25px_-5px_rgba(246,201,69,0.5)] active:scale-[0.98] text-center"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#F6C945] via-[#FFD152] to-[#ECA800] hover:brightness-105 text-[#3E3006] font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all shadow-[0_8px_20px_-6px_rgba(246,201,69,0.45)] active:scale-[0.98] text-center"
                   >
                     <Droplet size={14} className="text-[#3E3006] flex-shrink-0" fill="currentColor" />
                     <span>Water Your Sunflower · Log Today</span>
                   </Link>
                 ) : (
-                  <div className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-[#2D6B47] font-extrabold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm text-center">
-                    <span>Watered today! Your sunflower feels cared for</span>
+                  <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-center shadow-sm">
+                    <span className="font-jakarta text-[11px] sm:text-xs font-extrabold leading-snug">
+                      <span className="font-playfair italic font-bold text-[#6B5A10]">Watered today!</span>
+                      <span className="text-[#2D6B47]"> Your sunflower feels cared for</span>
+                    </span>
                   </div>
                 )}
               </div>

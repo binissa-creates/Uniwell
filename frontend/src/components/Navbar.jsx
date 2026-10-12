@@ -5,7 +5,7 @@ import {
   LayoutDashboard, SmilePlus, BookOpen, Users, LogOut,
   ShieldCheck, ClipboardList, GraduationCap, ChevronDown,
   FileBarChart2, Stethoscope, Bell, Settings, HelpCircle,
-  MoreHorizontal, UserCircle, Heart,
+  MoreHorizontal, UserCircle, Heart, X,
 } from 'lucide-react'
 
 const studentLinks = [
@@ -45,6 +45,9 @@ export default function Navbar() {
   const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
+  const [logoutPending, setLogoutPending] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
   const desktopMoreRef = useRef(null)
   const mobileMoreRef = useRef(null)
 
@@ -86,7 +89,32 @@ export default function Navbar() {
   // Close overflow menu on navigation.
   useEffect(() => { setMoreOpen(false) }, [location.pathname])
 
-  const handleLogout = async () => { await signOut(); navigate('/login') }
+  useEffect(() => {
+    if (!logoutConfirmOpen) return
+    const onKeyDown = event => {
+      if (event.key === 'Escape' && !logoutPending) setLogoutConfirmOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [logoutConfirmOpen, logoutPending])
+
+  const handleLogout = () => {
+    setLogoutError('')
+    setLogoutConfirmOpen(true)
+  }
+
+  const confirmLogout = async () => {
+    setLogoutPending(true)
+    setLogoutError('')
+    try {
+      await signOut()
+      navigate('/login')
+    } catch (error) {
+      console.error('[Navbar] Sign out failed:', error)
+      setLogoutError('We could not sign you out. Please try again.')
+      setLogoutPending(false)
+    }
+  }
 
   return (
     <>
@@ -127,9 +155,12 @@ export default function Navbar() {
           )}
 
           <button
+            type="button"
             onClick={handleLogout}
             className="w-9 h-9 rounded-full bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 transition-all shadow-xs"
             title="Sign Out"
+            aria-label="Sign out"
+            aria-haspopup="dialog"
           >
             <LogOut size={16} />
           </button>
@@ -260,9 +291,12 @@ export default function Navbar() {
             )}
 
             <button
+              type="button"
               onClick={handleLogout}
               className="w-10 h-10 rounded-full bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm"
-              title="Sign Out">
+              title="Sign Out"
+              aria-label="Sign out"
+              aria-haspopup="dialog">
               <LogOut size={18} />
             </button>
           </div>
@@ -324,6 +358,73 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      {logoutConfirmOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#3a2b25]/60 p-4 backdrop-blur-md animate-fadeIn"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget && !logoutPending) setLogoutConfirmOpen(false)
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="logout-confirm-title"
+            aria-describedby="logout-confirm-description"
+            className="relative w-full max-w-sm overflow-hidden rounded-[2rem] border border-white/70 bg-[#FDF9F2] p-6 shadow-lift animate-scaleIn sm:p-7"
+            onMouseDown={event => event.stopPropagation()}
+          >
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-[#F6C945]" />
+            <button
+              type="button"
+              onClick={() => setLogoutConfirmOpen(false)}
+              disabled={logoutPending}
+              aria-label="Cancel sign out"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[#3a2b25]/50 shadow-sm transition-colors hover:text-[#3a2b25] disabled:opacity-50"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F6C945]/20 text-[#6B5A10]">
+              <LogOut size={22} />
+            </div>
+            <p className="mb-1 text-[10px] font-black uppercase tracking-[0.25em] text-[#AA8E7E]">
+              UniWell
+            </p>
+            <h2 id="logout-confirm-title" className="font-jakarta text-xl font-black text-[#3a2b25]">
+              Are you sure you want to log out?
+            </h2>
+            <p id="logout-confirm-description" className="mt-2 text-sm leading-relaxed text-[#3a2b25]/65">
+              You can sign back in whenever you’re ready.
+            </p>
+
+            {logoutError && (
+              <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
+                {logoutError}
+              </p>
+            )}
+
+            <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setLogoutConfirmOpen(false)}
+                disabled={logoutPending}
+                className="rounded-xl border border-[#AA8E7E]/20 bg-white px-4 py-2.5 text-xs font-bold text-[#5D4037] transition-colors hover:bg-[#FDF9F2] disabled:opacity-50"
+              >
+                Stay logged in
+              </button>
+              <button
+                type="button"
+                onClick={confirmLogout}
+                disabled={logoutPending}
+                className="rounded-xl bg-[#F6C945] px-4 py-2.5 text-xs font-black text-[#3E3006] shadow-sm transition-all hover:brightness-105 disabled:cursor-wait disabled:opacity-60"
+              >
+                {logoutPending ? 'Logging out…' : 'Yes, log out'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </>
   )
 }

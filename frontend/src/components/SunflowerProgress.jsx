@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Info, X, Sun, Droplets, Flame, Sparkles, Heart, Leaf, BookOpen, Check } from 'lucide-react';
+import { Info, X, Sun, Flame, Sparkles } from 'lucide-react';
 
 /**
  * UniWell Gamified Sunflower Sanctuary
@@ -46,9 +46,11 @@ const BLOOM_STATES = {
     badgeBg: '#FEF9E7',
     badgeText: '#755B00',
     badgeBorder: '#F6C945',
-    glowColor: 'rgba(246, 201, 69, 0.40)',
-    cardBg: 'linear-gradient(180deg, #FFFDF2 0%, #FFF8E4 50%, #FDF1CE 100%)',
-    aura: '#F6C945',
+    glowColor: 'rgba(255, 190, 35, 0.62)',
+    animation: 'thrivingBloom 3s ease-in-out infinite',
+    auraAnimation: 'radiantAura 2.6s ease-in-out infinite',
+    petalAnimation: 'petalBreathe 3.2s ease-in-out infinite',
+    flowerFilter: 'saturate(1.4) brightness(1.12)',
   },
   blooming: {
     title: 'Blooming',
@@ -58,9 +60,11 @@ const BLOOM_STATES = {
     badgeBg: '#EAF5EE',
     badgeText: '#2D6B47',
     badgeBorder: '#81B29A',
-    glowColor: 'rgba(129, 178, 154, 0.30)',
-    cardBg: 'linear-gradient(180deg, #F8FDF9 0%, #ECF8F0 50%, #DCF2E4 100%)',
-    aura: '#81B29A',
+    glowColor: 'rgba(246, 201, 69, 0.5)',
+    animation: 'bloomingSway 3.5s ease-in-out infinite',
+    auraAnimation: 'radiantAura 3.2s ease-in-out infinite',
+    petalAnimation: 'petalBreathe 4s ease-in-out infinite',
+    flowerFilter: 'saturate(1.3) brightness(1.08)',
   },
   glowing: {
     title: 'Glowing',
@@ -70,9 +74,11 @@ const BLOOM_STATES = {
     badgeBg: '#FFF8E7',
     badgeText: '#856404',
     badgeBorder: '#F6C945',
-    glowColor: 'rgba(246, 201, 69, 0.25)',
-    cardBg: 'linear-gradient(180deg, #FFFDF5 0%, #FFF5DF 50%, #FCEBCA 100%)',
-    aura: '#E9C46A',
+    glowColor: 'rgba(255, 198, 58, 0.52)',
+    animation: 'glowingLift 3s ease-in-out infinite',
+    auraAnimation: 'radiantAura 3s ease-in-out infinite',
+    petalAnimation: 'petalBreathe 4.5s ease-in-out infinite',
+    flowerFilter: 'saturate(1.28) brightness(1.08)',
   },
   needs_care: {
     title: 'Needs a Little Care',
@@ -82,9 +88,11 @@ const BLOOM_STATES = {
     badgeBg: '#FFF9EE',
     badgeText: '#755B00',
     badgeBorder: '#E9C46A',
-    glowColor: 'rgba(233, 196, 106, 0.20)',
-    cardBg: 'linear-gradient(180deg, #FFFDF7 0%, #FFF4E2 50%, #FCE8CF 100%)',
-    aura: '#E9C46A',
+    glowColor: 'rgba(233, 196, 106, 0.18)',
+    animation: 'gentleCareTilt 4.8s ease-in-out infinite',
+    auraAnimation: 'tenderAura 4.8s ease-in-out infinite',
+    petalAnimation: 'petalBreathe 7s ease-in-out infinite',
+    flowerFilter: 'saturate(0.82) brightness(0.98)',
   },
   resting: {
     title: 'Resting',
@@ -95,8 +103,10 @@ const BLOOM_STATES = {
     badgeText: '#5D4037',
     badgeBorder: '#D1C5AE',
     glowColor: 'rgba(176, 207, 173, 0.25)',
-    cardBg: 'linear-gradient(180deg, #FBF9F5 0%, #F5EFE6 50%, #EFE7DA 100%)',
-    aura: '#B0CFAD',
+    animation: 'restingSway 7s ease-in-out infinite',
+    auraAnimation: 'restingAura 6s ease-in-out infinite',
+    petalAnimation: 'petalBreathe 8s ease-in-out infinite',
+    flowerFilter: 'saturate(0.72) brightness(0.94)',
   },
 };
 
@@ -184,22 +194,66 @@ export default function SunflowerProgress({
     }
   }, [activeCareType]);
 
-  const size = centerHero ? 180 : 90;
+  useEffect(() => {
+    if (!showGuideModal) return undefined;
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setShowGuideModal(false);
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [showGuideModal]);
+
+  const size = centerHero ? 196 : 90;
 
   return (
     <div className="relative w-full overflow-hidden select-none">
       <style>{`
-        @keyframes gentleSwayOrganic {
-          0%, 100% { transform: rotate(-1deg); }
-          50% { transform: rotate(1.2deg); }
+        @keyframes thrivingBloom {
+          0%, 100% { transform: rotate(-2.5deg) translateY(0) scale(1); }
+          30% { transform: rotate(1.5deg) translateY(-9px) scale(1.075); }
+          65% { transform: rotate(2.5deg) translateY(-4px) scale(1.04); }
         }
-        @keyframes gentleBreatheScale {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.02); }
+        @keyframes bloomingSway {
+          0%, 100% { transform: rotate(-2.8deg) translateY(0) scale(1); }
+          50% { transform: rotate(2.8deg) translateY(-5px) scale(1.055); }
         }
-        @keyframes softGlowPulse {
-          0%, 100% { opacity: 0.35; transform: scale(0.96); }
-          50% { opacity: 0.65; transform: scale(1.06); }
+        @keyframes glowingLift {
+          0%, 100% { transform: translateY(2px) scale(1); }
+          50% { transform: translateY(-9px) scale(1.065); }
+        }
+        @keyframes gentleCareTilt {
+          0%, 100% { transform: rotate(-1.8deg) translateY(0); }
+          50% { transform: rotate(1.2deg) translateY(-2px); }
+        }
+        @keyframes restingSway {
+          0%, 100% { transform: rotate(-0.8deg) translateY(1px); }
+          50% { transform: rotate(0.8deg) translateY(-1px); }
+        }
+        @keyframes radiantAura {
+          0%, 100% { opacity: 0.62; transform: scale(0.86); }
+          50% { opacity: 1; transform: scale(1.18); }
+        }
+        @keyframes gardenAura {
+          0%, 100% { opacity: 0.3; transform: scale(0.92); }
+          50% { opacity: 0.7; transform: scale(1.08); }
+        }
+        @keyframes tenderAura {
+          0%, 100% { opacity: 0.22; transform: scale(0.94); }
+          50% { opacity: 0.52; transform: scale(1.05); }
+        }
+        @keyframes restingAura {
+          0%, 100% { opacity: 0.2; transform: scale(0.96); }
+          50% { opacity: 0.4; transform: scale(1.03); }
+        }
+        @keyframes petalBreathe {
+          0%, 100% { transform: scale(0.985); }
+          50% { transform: scale(1.055); }
+        }
+        @keyframes sparkleDrift {
+          0%, 100% { opacity: 0.15; transform: translateY(4px) scale(0.7) rotate(0deg); }
+          50% { opacity: 1; transform: translateY(-7px) scale(1.15) rotate(35deg); }
         }
         @keyframes softEyeBlink {
           0%, 92%, 98%, 100% { transform: scaleY(1); }
@@ -210,11 +264,11 @@ export default function SunflowerProgress({
           30% { opacity: 0.85; }
           100% { opacity: 0; transform: translateY(35px) scale(1); }
         }
-        @keyframes gentleCareSway {
-          0% { transform: rotate(0deg) scale(1); }
-          30% { transform: rotate(-2deg) scale(1.04); }
-          70% { transform: rotate(2deg) scale(1.03); }
-          100% { transform: rotate(0deg) scale(1); }
+        @keyframes careDance {
+          0%, 100% { transform: rotate(0deg) scale(1); }
+          25% { transform: rotate(-5deg) translateY(-7px) scale(1.06); }
+          55% { transform: rotate(4deg) translateY(-3px) scale(1.035); }
+          80% { transform: rotate(-2deg) translateY(-5px) scale(1.05); }
         }
         @keyframes sunWarmthRise {
           0% { opacity: 0; transform: translateY(10px) scale(0.6); }
@@ -230,43 +284,23 @@ export default function SunflowerProgress({
         }
       `}</style>
 
-      {/* ── Soft Ambient Card Environment (Solar Pulse Design) ── */}
+      {/* ── Soft Botanical Card Environment ── */}
       <div
-        className="absolute inset-0 rounded-[2.4rem] transition-colors duration-1000 pointer-events-none"
-        style={{ background: stateCfg.cardBg }}
+        className="absolute inset-0 rounded-[1.8rem] pointer-events-none"
+        style={{ background: 'linear-gradient(120deg, #FFFDF8 0%, #FFFCF5 58%, #F2F7F1 100%)' }}
       >
-        {/* Soft Radial Center Sun Halo */}
         <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none transition-all duration-1000 blur-[45px]"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none blur-[52px]"
           style={{ background: stateCfg.glowColor }}
         />
-
-        {/* Delicate Glasshouse Arch Accent */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-40" viewBox="0 0 400 480" preserveAspectRatio="none">
-          <path
-            d="M 40 480 L 40 160 C 40 70, 360 70, 360 160 L 360 480"
-            fill="none"
-            stroke={stateCfg.aura}
-            strokeWidth="1.2"
-            strokeDasharray="4 4"
-            opacity="0.5"
-          />
-        </svg>
-
-        {/* Soft Garden Meadow Hills Base */}
-        <div className="absolute bottom-0 inset-x-0 h-28 pointer-events-none overflow-hidden opacity-50">
-          <svg viewBox="0 0 500 100" preserveAspectRatio="none" className="w-full h-full">
-            <path d="M-10 100 Q 140 45 280 65 T 510 50 L 510 100 Z" fill="#B0CFAD" opacity="0.4" />
-            <path d="M-10 100 Q 120 60 260 70 T 510 65 L 510 100 Z" fill="#81B29A" opacity="0.45" />
-          </svg>
-        </div>
+        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#81B29A]/10 blur-3xl" />
       </div>
 
       {/* ── CARD CONTENT HIERARCHY ── */}
-      <div className="relative z-10 p-5 sm:p-7 flex flex-col items-center">
+      <div className="relative z-10 p-4 sm:p-5 flex flex-col items-center">
 
         {/* ── Top Header: Bloom Status Pill & Guide Trigger ── */}
-        <div className="w-full flex items-center justify-between gap-2 mb-3">
+        <div className="w-full flex items-center justify-between gap-2 mb-1">
           <div
             className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md transition-colors"
             style={{
@@ -290,64 +324,89 @@ export default function SunflowerProgress({
         </div>
 
         {/* ── INTERACTIVE FULLY-BLOOMED SUNFLOWER ── */}
-        <div
-          className="relative flex items-center justify-center cursor-pointer select-none group my-1"
-          style={{ width: size + 40, height: size + 40 }}
-          onClick={() => triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻')}
-          title="Click to give your sunflower a gentle moment of care 🌻"
-          role="button"
-          tabIndex={0}
-          aria-label="Interactive Sunflower Companion. Click to nurture."
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻');
-            }
-          }}
-        >
-          {/* Ambient Breathing Solar Aura */}
+        <div className="flex flex-col items-center justify-center">
           <div
-            className="absolute inset-2 rounded-full pointer-events-none transition-all duration-1000"
-            style={{
-              background: `radial-gradient(circle, ${stateCfg.glowColor} 0%, rgba(246,201,69,0.06) 65%, transparent 80%)`,
-              animation: 'softGlowPulse 4.5s ease-in-out infinite',
-              filter: 'blur(12px)',
+            className="relative flex items-center justify-center cursor-pointer select-none group my-0.5"
+            style={{ width: size + 56, height: size + 56 }}
+            onClick={() => triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻')}
+            title="Click to give your sunflower a gentle moment of care 🌻"
+            role="button"
+            tabIndex={0}
+            aria-label="Interactive Sunflower Companion. Click to nurture."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻');
+              }
             }}
-          />
-
-          {/* Gentle Care Particles (Water droplets / Sun warmth) */}
-          {gentleParticles.map((p) => (
+          >
+            {/* Ambient Breathing Solar Aura */}
             <div
-              key={p.id}
-              className="absolute pointer-events-none z-30"
+              className="absolute inset-0 rounded-full pointer-events-none transition-all duration-1000"
               style={{
-                left: `${p.x}%`,
-                top: `${p.y}%`,
-                animation: p.type === 'water' ? 'waterDropFloat 1.8s ease-in forwards' : 'sunWarmthRise 2s ease-out forwards',
+                background: `radial-gradient(circle, ${stateCfg.glowColor} 0%, rgba(246,201,69,0.18) 42%, transparent 74%)`,
+                animation: stateCfg.auraAnimation,
+                filter: 'blur(18px)',
               }}
-            >
-              {p.type === 'water' ? (
-                <div className="w-2.5 h-3.5 rounded-full bg-[#64B5F6]/80 shadow-sm border border-white/60" />
-              ) : (
-                <Sparkles size={16} className="text-[#F6C945] opacity-75" />
-              )}
-            </div>
-          ))}
+            />
 
-          {/* Calming Care Feedback Bubble */}
-          {careMessage && (
-            <div className="absolute -top-7 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-lg border border-[#F6C945]/40 text-xs font-bold text-[#5D4037] z-40 animate-scaleIn flex items-center gap-1.5 whitespace-nowrap">
-              <span>{careMessage}</span>
-              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-b border-r border-[#F6C945]/40" />
-            </div>
-          )}
+            {['glowing', 'blooming', 'thriving'].includes(bloomStateKey) && (
+              <>
+                {[
+                  { top: '12%', left: '22%', delay: '0s', size: 14 },
+                  { top: '22%', right: '14%', delay: '0.8s', size: 11 },
+                  { bottom: '28%', left: '13%', delay: '1.4s', size: 12 },
+                  { bottom: '22%', right: '15%', delay: '0.4s', size: 15 },
+                ].map((sparkle, index) => (
+                  <Sparkles
+                    key={`bloom-sparkle-${index}`}
+                    aria-hidden="true"
+                    className="absolute text-[#E9A900] drop-shadow-sm pointer-events-none"
+                    size={sparkle.size}
+                    style={{
+                      top: sparkle.top,
+                      right: sparkle.right,
+                      bottom: sparkle.bottom,
+                      left: sparkle.left,
+                      animation: `sparkleDrift ${2.2 + index * 0.25}s ease-in-out ${sparkle.delay} infinite`,
+                    }}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* Gentle Care Particles (Water droplets / Sun warmth) */}
+            {gentleParticles.map((p) => (
+              <div
+                key={p.id}
+                className="absolute pointer-events-none z-30"
+                style={{
+                  left: `${p.x}%`,
+                  top: `${p.y}%`,
+                  animation: p.type === 'water' ? 'waterDropFloat 1.8s ease-in forwards' : 'sunWarmthRise 2s ease-out forwards',
+                }}
+              >
+                {p.type === 'water' ? (
+                  <div className="w-2.5 h-3.5 rounded-full bg-[#64B5F6]/80 shadow-sm border border-white/60" />
+                ) : (
+                  <Sparkles size={16} className="text-[#F6C945] opacity-75" />
+                )}
+              </div>
+            ))}
+
+            {/* Calming Care Feedback Bubble */}
+            {careMessage && (
+              <div className="absolute -top-7 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-2xl shadow-lg border border-[#F6C945]/40 text-xs font-bold text-[#5D4037] z-40 animate-scaleIn flex items-center gap-1.5 whitespace-nowrap">
+                <span>{careMessage}</span>
+                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-b border-r border-[#F6C945]/40" />
+              </div>
+            )}
 
           {/* ── Always Fully-Bloomed 3D Sunflower Graphic ── */}
           <div
             className="relative z-10 transition-transform duration-500 group-hover:scale-105"
             style={{
-              animation: isCaring
-                ? 'gentleCareSway 1.8s ease-in-out'
-                : 'gentleSwayOrganic 7s ease-in-out infinite',
+              animation: isCaring ? 'careDance 1.8s ease-in-out' : stateCfg.animation,
               transformOrigin: '50% 85%',
             }}
           >
@@ -355,7 +414,8 @@ export default function SunflowerProgress({
               viewBox="0 0 200 200"
               width={size + 20}
               height={size + 20}
-              className="overflow-visible filter drop-shadow-md"
+              className="overflow-visible"
+              style={{ filter: `${stateCfg.flowerFilter} drop-shadow(0 10px 14px rgba(93,64,55,0.22))` }}
             >
               <defs>
                 {/* 3D Front Petals Gradient */}
@@ -432,7 +492,7 @@ export default function SunflowerProgress({
               </g>
 
               {/* ── Back Layer of Fully-Bloomed Petals (14 Petals) ── */}
-              <g filter="url(#carePetalShadow)" style={{ transformOrigin: '100px 95px', animation: 'gentleBreatheScale 6s ease-in-out infinite' }}>
+              <g filter="url(#carePetalShadow)" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: stateCfg.petalAnimation }}>
                 {Array.from({ length: 14 }).map((_, i) => {
                   const angle = (i * 360) / 14 + 12.8;
                   return (
@@ -450,7 +510,7 @@ export default function SunflowerProgress({
               </g>
 
               {/* ── Front Layer of Fully-Bloomed Golden Petals (14 Petals) ── */}
-              <g filter="url(#carePetalShadow)" style={{ transformOrigin: '100px 95px' }}>
+              <g filter="url(#carePetalShadow)" style={{ transformBox: 'fill-box', transformOrigin: 'center', animation: stateCfg.petalAnimation }}>
                 {Array.from({ length: 14 }).map((_, i) => {
                   const angle = (i * 360) / 14;
                   return (
@@ -546,97 +606,8 @@ export default function SunflowerProgress({
               </g>
             </svg>
           </div>
-        </div>
-
-        {/* ── Subtitle / Gentle Affirmation ── */}
-        <p className="text-xs text-[#5D4037]/75 font-medium text-center max-w-sm mx-auto mb-4 leading-relaxed">
-          {stateCfg.subtitle}
-        </p>
-
-        {/* ── 3. CURRENT CARE STREAK ── */}
-        <div className="w-full max-w-md bg-white/85 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-white shadow-sm mb-3.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755B00]">
-                <Flame size={18} />
-              </div>
-              <div>
-                <h3 className="font-jakarta font-extrabold text-sm sm:text-base text-[#3A2B25] leading-tight">
-                  {streak} Day Care Streak
-                </h3>
-                <p className="text-[11px] text-[#5D4037]/65 font-medium">
-                  {streak > 0
-                    ? `You've cared for your bloom for ${streak} day${streak > 1 ? 's' : ''}.`
-                    : 'A new day to gently care for your well-being.'}
-                </p>
-              </div>
-            </div>
-
-            <span className="text-xs font-black text-[#755B00] bg-[#FFF8E7] border border-[#F6C945]/40 px-2.5 py-1 rounded-xl whitespace-nowrap">
-              {streak}d
-            </span>
           </div>
 
-          {/* ── 4. NEXT CARE MILESTONE (Replaces competitive Best Record) ── */}
-          <div className="mt-3 pt-2.5 border-t border-[#5D4037]/10">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] font-semibold text-[#5D4037]/70 mb-1.5">
-              <span className="flex items-center gap-1">
-                <Sparkles size={12} className="text-[#F6C945] flex-shrink-0" />
-                <span>Next Milestone: <strong className="text-[#5D4037] font-bold">{nextMilestone.label}</strong></span>
-              </span>
-              <span className="text-[10px] sm:text-[11px] text-[#5D4037]/70 sm:text-right">
-                {nextMilestone.daysLeft > 0
-                  ? `${nextMilestone.daysLeft} day${nextMilestone.daysLeft > 1 ? 's' : ''} of care to go`
-                  : 'Milestone reached!'}
-              </span>
-            </div>
-
-            {/* Gentle Progress Bar */}
-            <div className="h-2 w-full bg-[#5D4037]/10 rounded-full overflow-hidden p-0.5">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${Math.max(8, nextMilestone.progress)}%`,
-                  background: 'linear-gradient(90deg, #F6C945 0%, #81B29A 100%)',
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* ── 5. YOUR CARE JOURNEY (Compact 3-Pill Section) ── */}
-        <div className="w-full max-w-md bg-white/70 backdrop-blur-md rounded-2xl p-3 border border-white/60 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-1 mb-2 px-1">
-            <span className="text-[10px] font-black uppercase tracking-wider text-[#5D4037]/50">
-              Your Care Journey
-            </span>
-            <span className="text-[10px] text-[#5D4037]/60 font-medium whitespace-nowrap">
-              {totalDays} total day{totalDays === 1 ? '' : 's'} nurtured
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {/* Mood Check-ins */}
-            <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/90 border border-[#5D4037]/10 shadow-sm text-center">
-              <span className="text-base mb-0.5">💧</span>
-              <span className="text-xs font-black text-[#3A2B25]">{careCounts.moods || totalDays}</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#5D4037]/60">Check-ins</span>
-            </div>
-
-            {/* Journal Reflections */}
-            <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/90 border border-[#5D4037]/10 shadow-sm text-center">
-              <span className="text-base mb-0.5">🌿</span>
-              <span className="text-xs font-black text-[#3A2B25]">{careCounts.journals || 0}</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#5D4037]/60">Reflections</span>
-            </div>
-
-            {/* Wellness Resources */}
-            <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/90 border border-[#5D4037]/10 shadow-sm text-center">
-              <span className="text-base mb-0.5">☀️</span>
-              <span className="text-xs font-black text-[#3A2B25]">{careCounts.resources || 0}</span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-[#5D4037]/60">Resources</span>
-            </div>
-          </div>
         </div>
 
       </div>
@@ -651,7 +622,7 @@ export default function SunflowerProgress({
           aria-labelledby="guide-modal-title"
         >
           <div
-            className="bg-[#FFFDF9] rounded-3xl w-full max-w-md shadow-2xl animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh] border border-[#5D4037]/15"
+            className="bg-[#FFFDF9] rounded-3xl w-full max-w-lg shadow-2xl animate-scaleIn relative overflow-hidden flex flex-col max-h-[85vh] border border-[#5D4037]/15"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-[#5D4037]/10">
@@ -660,7 +631,7 @@ export default function SunflowerProgress({
                   <Sun className="w-4 h-4" />
                 </div>
                 <h3 id="guide-modal-title" className="font-jakarta font-bold text-[#3A2B25] text-base">
-                  Your Sunflower Companion
+                  Your Bloom & Care Journey
                 </h3>
               </div>
               <button
@@ -673,6 +644,83 @@ export default function SunflowerProgress({
             </div>
 
             <div className="px-6 py-5 overflow-y-auto space-y-4 custom-scrollbar">
+              <section className="rounded-2xl bg-gradient-to-br from-[#FFF8E7] via-[#FFFCF6] to-[#EDF6EF] border border-[#E9C46A]/45 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-white/90 border border-[#F6C945]/30 flex items-center justify-center text-[#755B00] shadow-sm">
+                      <Flame size={19} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#755B00]/70">Current care streak</p>
+                      <p className="font-jakarta text-lg font-extrabold text-[#3A2B25] leading-tight">
+                        {streak} day{streak === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className="px-2.5 py-1 rounded-full text-[10px] font-bold border"
+                    style={{
+                      background: stateCfg.badgeBg,
+                      color: stateCfg.badgeText,
+                      borderColor: `${stateCfg.badgeBorder}80`,
+                    }}
+                  >
+                    {stateCfg.badge}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#5D4037]/70 mt-2">{stateCfg.subtitle}</p>
+
+                <div className="mt-3 pt-3 border-t border-[#5D4037]/10">
+                  <div className="flex items-center justify-between gap-2 text-[11px] mb-1.5">
+                    <span className="flex items-center gap-1 font-semibold text-[#5D4037]/75">
+                      <Sparkles size={12} className="text-[#D99A00]" />
+                      Next: <strong className="text-[#3A2B25]">{nextMilestone.label}</strong>
+                    </span>
+                    <span className="text-[#5D4037]/65 text-right">
+                      {nextMilestone.daysLeft > 0
+                        ? `${nextMilestone.daysLeft} day${nextMilestone.daysLeft === 1 ? '' : 's'} to go`
+                        : 'Milestone reached!'}
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 rounded-full bg-white/90 overflow-hidden"
+                    role="progressbar"
+                    aria-label="Progress to next care milestone"
+                    aria-valuenow={nextMilestone.progress}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{
+                        width: `${Math.max(8, nextMilestone.progress)}%`,
+                        background: 'linear-gradient(90deg, #F6C945 0%, #81B29A 100%)',
+                      }}
+                    />
+                  </div>
+                </div>
+              </section>
+
+              <section>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <h4 className="text-[10px] font-black uppercase tracking-wider text-[#5D4037]/60">Your care journey</h4>
+                  <span className="text-[10px] text-[#5D4037]/55">{totalDays} total days nurtured</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { icon: '💧', value: careCounts.moods || totalDays, label: 'Check-ins' },
+                    { icon: '🌿', value: careCounts.journals || 0, label: 'Reflections' },
+                    { icon: '☀️', value: careCounts.resources || 0, label: 'Resources' },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-xl bg-white border border-[#5D4037]/10 p-2.5 text-center shadow-sm">
+                      <span className="text-base" aria-hidden="true">{item.icon}</span>
+                      <p className="text-xs font-black text-[#3A2B25]">{item.value}</p>
+                      <p className="text-[9px] font-bold uppercase tracking-wide text-[#5D4037]/55">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
               <div className="p-3.5 rounded-2xl bg-[#FFF9EE] border border-[#F6C945]/40 text-xs text-[#5D4037]/85 leading-relaxed font-medium">
                 <p className="font-bold text-[#755B00] mb-1">"Your bloom is already here. Take care of it."</p>
                 Your sunflower is a living symbol of your well-being. It is already fully bloomed because your inherent worth is always present. Your daily actions are how you care for and nurture it.
