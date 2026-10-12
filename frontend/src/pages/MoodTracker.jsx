@@ -301,7 +301,6 @@ export default function MoodTracker() {
               <div className="flex-1 flex flex-col min-h-0">
                 {history.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center py-16 text-center">
-                    <p className="text-3xl mb-2 opacity-40">🌱</p>
                     <p className="text-xs font-bold text-warm/50">No mood entries logged yet.</p>
                     <p className="text-[11px] text-warm/40 mt-1">Select your radiance on the left to start!</p>
                   </div>
@@ -453,7 +452,7 @@ export default function MoodTracker() {
                 }`}
               >
                 <Star size={13} fill={isSavedToJourney(user?.id, 'mood', selectedEntry.id) ? '#F6C945' : 'none'} className={isSavedToJourney(user?.id, 'mood', selectedEntry.id) ? 'text-[#F6C945]' : ''} />
-                <span>{isSavedToJourney(user?.id, 'mood', selectedEntry.id) ? 'Saved in My Journey 🌻' : 'Save to My Journey'}</span>
+                <span>{isSavedToJourney(user?.id, 'mood', selectedEntry.id) ? 'Saved in My Journey' : 'Save to My Journey'}</span>
               </button>
             </div>
           </div>

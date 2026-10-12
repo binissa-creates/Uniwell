@@ -7,28 +7,22 @@ export default function ForgotPassword() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
     setLoading(true)
 
     try {
-      // Get the current domain for the reset URL
       const redirectUrl = `${window.location.origin}/reset-password`
-      
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       })
-
-      if (resetError) throw resetError
-
-      setSubmitted(true)
-    } catch (err) {
-      setError(err?.message || 'Failed to send reset email. Please try again.')
+      if (error) console.error('[ForgotPassword] Reset request failed:', error)
+    } catch (requestError) {
+      console.error('[ForgotPassword] Reset request failed:', requestError)
     } finally {
+      setSubmitted(true)
       setLoading(false)
     }
   }
@@ -101,16 +95,11 @@ export default function ForgotPassword() {
                 <h2 className="font-jakarta text-3xl font-extrabold text-center text-[#3a2b25] mb-2">Forgot Password?</h2>
                 <p className="text-center text-[#3a2b25]/50 text-sm mb-8">Enter your email and we'll send you a link to reset your password.</p>
 
-                {error && (
-                  <div className="bg-red-50 text-red-600 text-xs rounded-2xl px-5 py-4 mb-8 text-center border border-red-100 animate-scaleIn font-medium">
-                    {error}
-                  </div>
-                )}
-
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Email Address</label>
+                    <label htmlFor="recovery-email" className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Email Address</label>
                     <input
+                      id="recovery-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -145,10 +134,8 @@ export default function ForgotPassword() {
                   </div>
                 </div>
                 <h2 className="font-jakarta text-2xl font-extrabold text-[#3a2b25] mb-3">Check Your Email</h2>
-                <p className="text-[#3a2b25]/60 text-sm mb-2">We've sent a password reset link to:</p>
-                <p className="font-bold text-[#3a2b25] mb-6">{email}</p>
-                <p className="text-[#3a2b25]/50 text-xs mb-8 leading-relaxed">
-                  Click the link in your email to create a new password. If you don't see it, check your spam folder.
+                <p role="status" aria-live="polite" className="text-[#3a2b25]/60 text-sm mb-8 leading-relaxed">
+                  If an account exists, a reset link has been sent.
                 </p>
                 <Link
                   to="/login"

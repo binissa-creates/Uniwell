@@ -54,7 +54,7 @@ Ensure your `.env.local` in the `frontend/` directory contains:
 
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
+VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 These are already required for login to work, so no new variables are needed.

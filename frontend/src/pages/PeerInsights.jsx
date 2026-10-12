@@ -868,7 +868,7 @@ export default function PeerInsights() {
 
             {submitDone ? (
               <div className="flex flex-col items-center py-8 gap-3 text-center">
-                <span className="text-4xl animate-breathe inline-block">🌻</span>
+                <span className="w-16 h-16 rounded-full bg-[#EAF5EE] flex items-center justify-center animate-breathe"><CheckCircle2 size={36} className="text-[#2D6B47]" /></span>
                 <p className="font-jakarta font-bold text-warm text-lg">Submitted for Review!</p>
                 <p className="text-xs text-warm/60 max-w-xs leading-relaxed">
                   Thank you! Your strategy will be visible to the community once reviewed by our moderator.

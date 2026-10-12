@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js'
 
-const KNOWN_ROLES = new Set(['student', 'admin'])
+const KNOWN_ROLES = new Set(['student', 'counselor', 'admin'])
 
 const PORTAL_PATH = {
   student: '/login',
@@ -9,11 +9,12 @@ const PORTAL_PATH = {
 
 const PORTAL_ROLE = {
   student: 'student',
-  staff: 'admin',
+  staff: ['counselor', 'admin'],
 }
 
 const PORTAL_MISMATCH_MESSAGE = {
   student: {
+    counselor: 'Use the unified UniWell login.',
     admin: 'Use Staff & Guidance Portal for Admin Login.',
   },
   staff: {
@@ -28,7 +29,8 @@ const PORTAL_FALLBACK_MESSAGE = {
 
 const ROLE_HOME = {
   student: '/dashboard',
-  admin: '/admin/analytics',
+  counselor: '/staff',
+  admin: '/staff',
 }
 
 function normalizeRole(role) {
@@ -80,12 +82,16 @@ export function getPortalDeniedMessage(portal, role) {
 }
 
 export function roleMatchesPortal(portal, role) {
-  return PORTAL_ROLE[portal] === normalizeRole(role)
+  const expectedRole = PORTAL_ROLE[portal]
+  const normalizedRole = normalizeRole(role)
+  return Array.isArray(expectedRole)
+    ? expectedRole.includes(normalizedRole)
+    : expectedRole === normalizedRole
 }
 
-export function roleCanAccess(allowedRole, role) {
-  const requiredRole = normalizeRole(allowedRole)
+export function roleCanAccess(allowedRoles, role) {
   const currentRole = normalizeRole(role)
+  const requiredRoles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles]
 
-  return Boolean(requiredRole && currentRole && requiredRole === currentRole)
+  return Boolean(currentRole && requiredRoles.map(normalizeRole).includes(currentRole))
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Navbar from '../components/Navbar'
 
 import ReflectionCapsuleModal from '../components/ReflectionCapsuleModal'
@@ -6,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS } from '../lib/data'
 import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
 import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
+import { saveJournalDraft, getJournalDraft, clearJournalDraft } from '../lib/journalDraft'
 import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera, Search, Check } from 'lucide-react'
 
 const PROMPT_GROUPS = [
@@ -52,16 +54,16 @@ function PromptPicker({ value, onChange }) {
         <ChevronDown size={15} className="shrink-0 text-[#755b00]" />
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
-          className="fixed inset-0 z-[120] flex items-end justify-center bg-[#3a2b25]/55 p-0 backdrop-blur-md sm:items-center sm:p-4"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[#3a2b25]/55 p-0 backdrop-blur-md"
           role="presentation"
           onMouseDown={event => {
             if (event.target === event.currentTarget) setIsOpen(false)
           }}
         >
           <div
-            className="flex h-[min(88dvh,680px)] w-full max-w-xl min-h-0 flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFDF9] shadow-2xl animate-slideUp sm:h-[min(680px,88dvh)] sm:rounded-[2rem]"
+            className="flex h-dvh w-full max-w-none min-h-0 flex-col overflow-hidden rounded-none bg-[#FFFDF9] shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Choose a reflection prompt"
@@ -139,7 +141,8 @@ function PromptPicker({ value, onChange }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )
@@ -164,6 +167,9 @@ export default function Journal() {
   const [journeyVersion, setJourneyVersion] = useState(0)
   const [photoUrl, setPhotoUrl] = useState(null)
   const photoInputRef = useRef(null)
+  const [draftSaved, setDraftSaved] = useState(false)
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false)
+  const draftInitializedRef = useRef(false)
 
   const loadData = useCallback(async () => {
     const params = new URLSearchParams(window.location.search)
@@ -178,6 +184,29 @@ export default function Journal() {
         return
       }
       setUserId(auth.user.id)
+
+      // Restore saved draft from local storage if available
+      if (!draftInitializedRef.current) {
+        const savedDraft = getJournalDraft(auth.user.id)
+        if (savedDraft) {
+          if (savedDraft.content) {
+            setContent(savedDraft.content)
+            setCharCount(savedDraft.content.length)
+          }
+          if (savedDraft.entryMode) {
+            setEntryMode(savedDraft.entryMode)
+          }
+          if (savedDraft.customTitle) {
+            setCustomTitle(savedDraft.customTitle)
+          }
+          if (savedDraft.prompt) {
+            setPrompt(savedDraft.prompt)
+          }
+          setHasRestoredDraft(true)
+          setDraftSaved(true)
+        }
+        draftInitializedRef.current = true
+      }
 
       const [{ data, error }, capsuleRes] = await Promise.all([
         supabase
@@ -202,6 +231,42 @@ export default function Journal() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  // Auto-save draft to local storage as the user types
+  useEffect(() => {
+    if (!draftInitializedRef.current) return
+    if (content.trim() || customTitle.trim()) {
+      saveJournalDraft(userId, { content, prompt, entryMode, customTitle })
+      setDraftSaved(true)
+    } else {
+      clearJournalDraft(userId)
+      setDraftSaved(false)
+      setHasRestoredDraft(false)
+    }
+  }, [content, prompt, entryMode, customTitle, userId])
+
+  // Ensure draft is saved if user navigates to another site or closes tab
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (content.trim() || customTitle.trim()) {
+        saveJournalDraft(userId, { content, prompt, entryMode, customTitle })
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [content, prompt, entryMode, customTitle, userId])
+
+  const handleDiscardDraft = () => {
+    if (content.trim() || customTitle.trim()) {
+      if (!window.confirm('Discard your unsaved reflection draft?')) return
+    }
+    clearJournalDraft(userId)
+    setContent('')
+    setCustomTitle('')
+    setCharCount(0)
+    setDraftSaved(false)
+    setHasRestoredDraft(false)
+  }
 
   const handleContentChange = (e) => {
     setContent(e.target.value)
@@ -233,9 +298,13 @@ export default function Journal() {
       // Optimistically prepend to the list immediately
       if (inserted) setEntries(prev => [inserted, ...prev])
 
+      // Clear draft on successful save
+      clearJournalDraft(auth.user.id)
       setContent('')
       setCustomTitle('')
       setCharCount(0)
+      setDraftSaved(false)
+      setHasRestoredDraft(false)
       setSuccess(true)
       setShowMobileCompose(false)
       loadData()
@@ -328,7 +397,41 @@ export default function Journal() {
                       <p className="text-[10px] font-bold text-warm/40 uppercase tracking-wider">{new Date().toLocaleDateString(undefined, { weekday: 'long' })}</p>
                     </div>
                   </div>
+                  {/* Draft Saved Status Pill */}
+                  {(content.trim() || customTitle.trim()) && (
+                    <div className="flex items-center gap-2 animate-fadeIn">
+                      <span className="text-[10px] font-bold text-[#2D6B47] bg-[#EAF5EE] px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-[#81B29A]/30 shadow-xs">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#2D6B47] animate-pulse" />
+                        <span>Saved locally</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleDiscardDraft}
+                        className="text-[10px] font-bold text-warm/40 hover:text-red-500 uppercase tracking-wider transition-colors px-1 py-0.5 rounded"
+                        title="Discard draft"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {hasRestoredDraft && (
+                  <div className="bg-[#FFF9EE] border border-[#F6C945]/40 rounded-xl px-3 py-2 flex items-center justify-between gap-2 animate-fadeIn text-[11px] text-[#755b00] font-semibold">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={13} className="text-[#F6C945] shrink-0" />
+                      <span>Restored your unfinished reflection from earlier.</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHasRestoredDraft(false)}
+                      className="text-warm/40 hover:text-warm text-xs px-1"
+                      title="Dismiss notice"
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                )}
 
                 {/* Mode Selector */}
                 <div className="flex bg-[#FDF9F2] p-1 rounded-xl border border-warm/10">
@@ -481,7 +584,6 @@ export default function Journal() {
               {/* Scrollable Entries */}
               {entries.length === 0 ? (
                 <div className="text-center py-14 px-4">
-                  <p className="text-4xl mb-2">📖</p>
                   <p className="font-jakarta font-bold text-warm text-base mb-0.5">Your sanctuary is ready</p>
                   <p className="text-xs text-warm/50 max-w-sm mx-auto">Write your first reflection to cultivate your timeline of growth.</p>
                 </div>
@@ -594,9 +696,26 @@ export default function Journal() {
                 <PenLine size={16} className="text-[#755b00]" />
                 <h2 className="font-jakarta font-bold text-warm text-base">Write Reflection</h2>
               </div>
-              <button onClick={() => setShowMobileCompose(false)} className="p-1.5 rounded-xl text-warm/40 hover:text-warm">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                {(content.trim() || customTitle.trim()) && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-bold text-[#2D6B47] bg-[#EAF5EE] px-2 py-0.5 rounded-full flex items-center gap-1 border border-[#81B29A]/30">
+                      <span className="w-1 h-1 rounded-full bg-[#2D6B47] animate-pulse" />
+                      Saved
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDiscardDraft}
+                      className="text-[9px] font-bold text-warm/40 hover:text-red-500 uppercase px-1 py-0.5"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+                <button onClick={() => setShowMobileCompose(false)} className="p-1.5 rounded-xl text-warm/40 hover:text-warm">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -709,7 +828,7 @@ export default function Journal() {
                   }`}
                 >
                   <Star size={12} fill={isSavedToJourney(userId, 'journal', selectedEntry.id) ? '#F6C945' : 'none'} className={isSavedToJourney(userId, 'journal', selectedEntry.id) ? 'text-[#F6C945]' : ''} />
-                  <span>{isSavedToJourney(userId, 'journal', selectedEntry.id) ? 'Saved in My Journey 🌻' : 'Save to My Journey'}</span>
+                  <span>{isSavedToJourney(userId, 'journal', selectedEntry.id) ? 'Saved in My Journey' : 'Save to My Journey'}</span>
                 </button>
                 <button
                   onClick={(e) => handleToggleShare(selectedEntry, e)}

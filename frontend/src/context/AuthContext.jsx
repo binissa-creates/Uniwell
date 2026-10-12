@@ -11,19 +11,50 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [profileLoading, setProfileLoading] = useState(false)
   const [portalValidation, setPortalValidation] = useState(null)
 
   useEffect(() => {
     let active = true
+    let receivedAuthEvent = false
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+      receivedAuthEvent = true
+      setSession(next ?? null)
+      setProfile(current => {
+        // If current profile belongs to the next user, keep it without re-locking the screen
+        if (current?.id === next?.user?.id && current) {
+          setProfileLoading(false)
+          return current
+        }
+        setProfileLoading(Boolean(next?.user?.id))
+        return null
+      })
+      setAuthLoading(false)
+    })
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
-      setSession(data.session ?? null)
-    })
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next ?? null)
+      if (!receivedAuthEvent) {
+        setSession(data.session ?? null)
+        setProfile(current => {
+          if (current?.id === data.session?.user?.id && current) {
+            setProfileLoading(false)
+            return current
+          }
+          setProfileLoading(Boolean(data.session?.user?.id))
+          return null
+        })
+      }
+      setAuthLoading(false)
+    }).catch(error => {
+      console.error('[AuthContext] Could not restore session:', error)
+      if (active) {
+        if (!receivedAuthEvent) setSession(null)
+        setProfileLoading(false)
+        setAuthLoading(false)
+      }
     })
 
     return () => {
@@ -36,52 +67,91 @@ export function AuthProvider({ children }) {
     let active = true
     if (!session?.user?.id) {
       setProfile(null)
-      setLoading(false)
+      setProfileLoading(false)
       return
     }
-    setLoading(true)
-    supabase
-      .from('profiles')
+
+    // If profile is already valid for this session user, do not lock screen
+    if (profile?.id === session.user.id) {
+      setProfileLoading(false)
+      return
+    }
+
+    setProfileLoading(true)
+
+    // Safety timeout: GUARANTEES profile loading never hangs indefinitely
+    const safetyTimer = setTimeout(() => {
+      if (!active) return
+      console.warn('[AuthContext] Profile load exceeded 3s timeout — unblocking with session fallback')
+      const fallbackRole = session.user.email?.toLowerCase().includes('admin') ? 'admin' : 'student'
+      setProfile(prev => prev || {
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
+        full_name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
+        role: session.user.user_metadata?.role || fallbackRole,
+        status: 'active',
+      })
+      setProfileLoading(false)
+    }, 3000)
+
+    // Query columns that actually exist in the profiles table
+    supabase.from('profiles')
       .select('id, name, student_id, course, year_level, role, created_at')
       .eq('id', session.user.id)
       .maybeSingle()
-      .then(async ({ data }) => {
+      .then(({ data, error }) => {
+        clearTimeout(safetyTimer)
         if (!active) return
 
-        // SELF-HEALING: If profile is missing but user is logged in, create it from metadata.
-        if (!data && session.user) {
-          console.warn('Profile missing for user. Attempting to heal...')
-          const meta = session.user.user_metadata || {}
-          const { data: healed, error: healError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              name: meta.name || splitEmail(session.user.email),
-              student_id: meta.student_id || session.user.id.substring(0, 8),
-              course: meta.course || 'Unspecified',
-              year_level: meta.year_level || 1,
-              role: meta.role || 'student'
-            })
-            .select()
-            .maybeSingle()
-
-          if (!healError && healed) {
-            setProfile(healed)
-          } else {
-            console.error('Heal failed:', healError)
-            setProfile(null)
-          }
-        } else {
-          setProfile(data ?? null)
+        if (!error && data) {
+          // Full profile loaded cleanly
+          setProfile({
+            ...data,
+            full_name: data.name,
+            status: 'active',
+          })
+          setProfileLoading(false)
+          return
         }
-        setLoading(false)
+
+        if (error) console.warn('[AuthContext] profiles fetch failed, trying get_my_role RPC:', error?.message)
+        return supabase.rpc('get_my_role').then(({ data: rpcRole }) => {
+          if (!active) return
+          clearTimeout(safetyTimer)
+          const fallbackRole = rpcRole || (session.user.email?.toLowerCase().includes('admin') ? 'admin' : 'student')
+          const minimalProfile = {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : session.user.email?.split('@')[0] || 'Student'),
+            full_name: session.user.user_metadata?.full_name || (fallbackRole === 'admin' ? 'Guidance' : session.user.email?.split('@')[0] || 'Student'),
+            role: fallbackRole,
+            status: 'active',
+          }
+          console.log('[AuthContext] Loaded profile via fallback:', minimalProfile)
+          setProfile(minimalProfile)
+          setProfileLoading(false)
+        })
+      })
+      .catch(error => {
+        clearTimeout(safetyTimer)
+        if (!active) return
+        console.error('[AuthContext] Could not load profile:', error)
+        const fallbackRole = session.user.email?.toLowerCase().includes('admin') ? 'admin' : 'student'
+        setProfile({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
+          full_name: session.user.user_metadata?.full_name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
+          role: fallbackRole,
+          status: 'active',
+        })
+        setProfileLoading(false)
       })
 
-    function splitEmail(email) {
-      return email ? email.split('@')[0] : 'User'
-    }
     return () => {
       active = false
+      clearTimeout(safetyTimer)
     }
   }, [session?.user?.id])
 
@@ -89,6 +159,31 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setSession(null)
     setProfile(null)
+    setProfileLoading(false)
+  }
+
+  const refreshProfile = async () => {
+    const userId = session?.user?.id
+    if (!userId) return null
+
+    setProfileLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name, student_id, course, year_level, role, created_at')
+        .eq('id', userId)
+        .maybeSingle()
+      if (error) throw error
+
+      const nextProfile = data ? { ...data, full_name: data.name, status: 'active' } : null
+      setProfile(nextProfile)
+      return nextProfile
+    } catch (error) {
+      console.warn('[refreshProfile] failed:', error)
+      return null
+    } finally {
+      setProfileLoading(false)
+    }
   }
 
   const beginPortalValidation = (portal) => {
@@ -104,8 +199,13 @@ export function AuthProvider({ children }) {
       id: session.user.id,
       email: session.user.email,
       ...(profile ?? {}),
+      name: (profile?.role === 'admin' && (!profile?.name || profile?.name?.includes('@')))
+        ? 'Guidance'
+        : (profile?.name || profile?.full_name || ''),
     }
     : null
+
+  const loading = authLoading || profileLoading
 
   return (
     <AuthContext.Provider
@@ -115,6 +215,7 @@ export function AuthProvider({ children }) {
         profile,
         loading,
         signOut,
+        refreshProfile,
         portalValidation,
         beginPortalValidation,
         endPortalValidation,

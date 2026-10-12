@@ -1,8 +1,8 @@
-import test from 'node:test'
+import { test } from 'vitest'
 import assert from 'node:assert/strict'
 
 process.env.VITE_SUPABASE_URL = 'https://example.supabase.co'
-process.env.VITE_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test'
+process.env.VITE_SUPABASE_ANON_KEY = 'test-anon-key'
 
 const {
   fetchProfileRole,
@@ -14,9 +14,10 @@ const {
   roleMatchesPortal,
 } = await import('../src/lib/portalAccess.js')
 
-test('getHomeForRole maps known roles to their landing pages', () => {
+test('getHomeForRole maps student and staff roles to their landing pages', () => {
   assert.equal(getHomeForRole('student'), '/dashboard')
-  assert.equal(getHomeForRole('admin'), '/admin/analytics')
+  assert.equal(getHomeForRole('counselor'), '/staff')
+  assert.equal(getHomeForRole('admin'), '/staff')
   assert.equal(getHomeForRole('unknown'), '/login')
   assert.equal(getHomeForRole(null), '/login')
 })
@@ -24,6 +25,7 @@ test('getHomeForRole maps known roles to their landing pages', () => {
 test('roleMatchesPortal only allows the matching portal for each role', () => {
   assert.equal(roleMatchesPortal('student', 'student'), true)
   assert.equal(roleMatchesPortal('student', 'admin'), false)
+  assert.equal(roleMatchesPortal('staff', 'counselor'), true)
   assert.equal(roleMatchesPortal('staff', 'admin'), true)
   assert.equal(roleMatchesPortal('staff', 'student'), false)
   assert.equal(roleMatchesPortal('staff', null), false)
@@ -32,6 +34,8 @@ test('roleMatchesPortal only allows the matching portal for each role', () => {
 test('roleCanAccess only allows protected routes for the required role', () => {
   assert.equal(roleCanAccess('student', 'student'), true)
   assert.equal(roleCanAccess('student', 'admin'), false)
+  assert.equal(roleCanAccess(['counselor', 'admin'], 'counselor'), true)
+  assert.equal(roleCanAccess(['counselor', 'admin'], 'student'), false)
   assert.equal(roleCanAccess('admin', 'admin'), true)
   assert.equal(roleCanAccess('admin', 'student'), false)
   assert.equal(roleCanAccess('admin', null), false)

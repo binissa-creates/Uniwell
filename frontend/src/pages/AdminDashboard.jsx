@@ -202,10 +202,10 @@ export default function AdminDashboard() {
   const handleAction = async (id, status) => {
     setActing(id)
     try {
-      const { error } = await supabase
-        .from('coping_strategies')
-        .update({ status })
-        .eq('id', id)
+      const { error } = await supabase.rpc('moderate_coping_strategy', {
+        p_strategy_id: id,
+        p_status: status,
+      })
       if (error) throw error
       setPending((prev) => prev.filter((i) => i.id !== id))
     } catch (err) {
@@ -557,7 +557,6 @@ export default function AdminDashboard() {
               {recentLowLogs.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
                   style={{ borderColor: `${WARM_TAN}40` }}>
-                  <p className="text-2xl mb-1">✨</p>
                   <p className="text-[10px] font-black uppercase" style={{ color: WARM_TAN }}>
                     No low mood entries
                   </p>
@@ -640,7 +639,6 @@ export default function AdminDashboard() {
               {pendingItems.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
                   style={{ borderColor: `${WARM_TAN}40` }}>
-                  <p className="text-2xl mb-1">✨</p>
                   <p className="text-[10px] font-black uppercase" style={{ color: WARM_TAN }}>
                     All caught up
                   </p>
@@ -686,8 +684,10 @@ export default function AdminDashboard() {
 
         {/* Footer */}
         <div className="flex items-center justify-center gap-3 py-10">
-          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-sm bg-white"
-            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>🌻</div>
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-white"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+            <Sparkles size={14} style={{ color: WARM_GOLD }} />
+          </div>
           <span className="text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: WARM_TAN }}>
             © 2026 UniWell · University Wellness Council
           </span>

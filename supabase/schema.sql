@@ -519,12 +519,6 @@ $$;
 grant execute on function public.admin_analytics(integer, integer, text) to authenticated;
 
 -- ── Bootstrap notes ──────────────────────────────────────────────────────────
--- 1. Create your admin account in the Supabase dashboard:
---      Authentication -> Users -> "Add user" (email + password, "Auto Confirm User" ON).
--- 2. Then fill in the profile row and flip the role:
---      update public.profiles
---         set name = 'Guidance Admin', student_id = 'ADMIN-001',
---             course = 'Administration', year_level = 1, role = 'admin'
---       where id = (select id from auth.users where email = 'admin@uniwell.edu.ph');
---    (The row was created automatically by handle_new_user; you're just
---     filling in fields that were defaulted.)
+-- This file is the legacy baseline schema for an empty project. Apply the
+-- migrations in supabase/migrations/ before enabling the unified auth flow.
+-- After migrations, bootstrap the first admin with supabase/seed_first_admin.sql.

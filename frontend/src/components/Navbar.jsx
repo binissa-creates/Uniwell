@@ -24,8 +24,13 @@ const adminPrimary = [
 
 // Overflow menu — everything the old sidebar exposed.
 const adminSecondary = [
+  { to: '/staff/manage', icon: Users, label: 'Manage Staff' },
   { to: '/admin/settings', icon: Settings, label: 'Settings' },
   { to: '/admin/help', icon: HelpCircle, label: 'Help' },
+]
+
+const counselorPrimary = [
+  { to: '/staff', icon: Stethoscope, label: 'Staff Hub' },
 ]
 
 function isActivePath(to, pathname) {
@@ -34,6 +39,8 @@ function isActivePath(to, pathname) {
 
 export default function Navbar() {
   const { user, signOut, isAdmin } = useAuth()
+  const isStudent = user?.role === 'student'
+  const isStaff = user?.role === 'counselor' || isAdmin
   const location = useLocation()
   const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
@@ -41,8 +48,13 @@ export default function Navbar() {
   const desktopMoreRef = useRef(null)
   const mobileMoreRef = useRef(null)
 
-  const primaryLinks = isAdmin ? adminPrimary : studentLinks
-  const firstName = user?.name?.split(' ')[0] || ''
+  const primaryLinks = isAdmin ? adminPrimary : isStaff ? counselorPrimary : studentLinks
+  const displayName = (isAdmin || user?.role === 'admin')
+    ? 'Guidance'
+    : (user?.name && !user.name.includes('@')
+        ? user.name.split(' ')[0]
+        : (isStaff ? 'Staff' : 'Student'))
+  const avatarLetter = (displayName || 'U').charAt(0).toUpperCase()
 
   const overflowActive = isAdmin && adminSecondary.some(
     (i) => !i.divider && isActivePath(i.to, location.pathname)
@@ -80,7 +92,7 @@ export default function Navbar() {
     <>
       {/* Mobile Top Header: Full width frosted bar so content cleanly scrolls underneath */}
       <header className="md:hidden fixed top-0 inset-x-0 h-16 bg-[#FDF9F2]/95 backdrop-blur-md border-b border-[#AA8E7E]/15 z-40 px-4 flex items-center justify-between shadow-xs">
-        <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2 group flex-shrink-0">
+        <Link to={isStaff ? '/staff' : '/dashboard'} className="flex items-center gap-2 group flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center border border-[#AA8E7E]/10 group-hover:rotate-12 transition-transform">
             <span className="text-lg">🌻</span>
           </div>
@@ -90,23 +102,23 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           {user && (
             <>
-              {!isAdmin ? (
+              {isStudent ? (
                 <Link
                   to="/profile"
-                  className="w-9 h-9 rounded-xl overflow-hidden shadow-sm border border-white transform active:scale-95 cursor-pointer"
+                  className="w-9 h-9 rounded-full overflow-hidden shadow-sm border border-white transform active:scale-95 cursor-pointer"
                   title="My Profile"
                 >
                   <div className="w-full h-full gradient-cta flex items-center justify-center">
                     <span className="text-xs font-black text-[#3E3006]">
-                      {firstName.charAt(0).toUpperCase()}
+                      {avatarLetter}
                     </span>
                   </div>
                 </Link>
               ) : (
-                <div className="w-9 h-9 rounded-xl overflow-hidden shadow-sm border border-white">
+                <div className="w-9 h-9 rounded-full overflow-hidden shadow-sm border border-white">
                   <div className="w-full h-full gradient-cta flex items-center justify-center">
                     <span className="text-xs font-black text-[#3E3006]">
-                      {firstName.charAt(0).toUpperCase()}
+                      {avatarLetter}
                     </span>
                   </div>
                 </div>
@@ -116,7 +128,7 @@ export default function Navbar() {
 
           <button
             onClick={handleLogout}
-            className="w-9 h-9 rounded-xl bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 transition-all shadow-xs"
+            className="w-9 h-9 rounded-full bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 transition-all shadow-xs"
             title="Sign Out"
           >
             <LogOut size={16} />
@@ -129,7 +141,7 @@ export default function Navbar() {
         <div className={`max-w-6xl mx-auto h-16 flex items-center justify-between gap-4 px-6 rounded-3xl transition-all duration-500 ${scrolled ? 'glass shadow-lift border border-white/50 py-2' : 'bg-transparent py-4 border border-transparent'}`}>
 
           {/* Logo */}
-          <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2.5 group flex-shrink-0">
+          <Link to={isStaff ? '/staff' : '/dashboard'} className="flex items-center gap-2.5 group flex-shrink-0">
             <div className="w-10 h-10 rounded-2xl bg-white shadow-suncast flex items-center justify-center group-hover:rotate-12 transition-transform duration-500 border border-[#AA8E7E]/5">
               <span className="text-xl group-hover:scale-110 transition-transform">🌻</span>
             </div>
@@ -221,25 +233,25 @@ export default function Navbar() {
             {user && (
               <div className="flex items-center gap-3 pl-3 border-l border-[#AA8E7E]/10">
                 <div className="hidden sm:flex flex-col items-end leading-none">
-                  <p className="text-[11px] font-black font-jakarta text-[#3a2b25] uppercase tracking-wide">{firstName}</p>
-                  <p className="text-[9px] text-[#AA8E7E] font-bold mt-0.5 tracking-widest uppercase">{user?.role}</p>
+                  <p className="text-[11px] font-black font-jakarta text-[#3a2b25] uppercase tracking-wide">{displayName}</p>
+                  <p className="text-[9px] text-[#AA8E7E] font-bold mt-0.5 tracking-widest uppercase">{user?.role || (isAdmin ? 'admin' : '')}</p>
                 </div>
                 {/* Avatar — links to profile for students */}
-                {!isAdmin ? (
+                {isStudent ? (
                   <Link to="/profile"
-                    className="w-10 h-10 rounded-2xl overflow-hidden shadow-suncast border-2 border-white transform transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                    className="w-10 h-10 rounded-full overflow-hidden shadow-suncast border-2 border-white transform transition-transform hover:scale-105 active:scale-95 cursor-pointer"
                     title="My Profile">
                     <div className="w-full h-full gradient-cta flex items-center justify-center">
                       <span className="text-sm font-black text-[#3E3006]">
-                        {firstName.charAt(0).toUpperCase()}
+                        {avatarLetter}
                       </span>
                     </div>
                   </Link>
                 ) : (
-                  <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-suncast border-2 border-white">
+                  <div className="w-10 h-10 rounded-full overflow-hidden shadow-suncast border-2 border-white">
                     <div className="w-full h-full gradient-cta flex items-center justify-center">
                       <span className="text-sm font-black text-[#3E3006]">
-                        {firstName.charAt(0).toUpperCase()}
+                        {avatarLetter}
                       </span>
                     </div>
                   </div>
@@ -249,7 +261,7 @@ export default function Navbar() {
 
             <button
               onClick={handleLogout}
-              className="w-10 h-10 rounded-2xl bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm"
+              className="w-10 h-10 rounded-full bg-white border border-[#AA8E7E]/10 flex items-center justify-center text-[#AA8E7E] hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm"
               title="Sign Out">
               <LogOut size={18} />
             </button>

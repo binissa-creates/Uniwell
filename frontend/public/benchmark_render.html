@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Benchmark Dynamic SVG Render</title>
+</head>
+<body>
+  <h1>Benchmarking Dynamic SVG to Canvas</h1>
+  <div id="status">Starting benchmark...</div>
+  <canvas id="c" width="1080" height="1920" style="width: 270px; height: 480px; border: 1px solid #ccc;"></canvas>
+
+  <script>
+    async function run() {
+      const status = document.getElementById('status');
+      const t0 = performance.now();
+      status.innerText = 'Fetching test_dynamic.svg...';
+      const img = new Image();
+      img.onload = () => {
+        const t1 = performance.now();
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 1080, 1920);
+        const t2 = performance.now();
+        status.innerText = `DONE! Image load: ${(t1 - t0).toFixed(0)}ms, Draw: ${(t2 - t1).toFixed(0)}ms, Total: ${(t2 - t0).toFixed(0)}ms`;
+      };
+      img.onerror = (e) => {
+        status.innerText = 'ERROR loading image: ' + e.message;
+      };
+      img.src = '/test_dynamic.svg';
+    }
+    run();
+  </script>
+</body>
+</html>

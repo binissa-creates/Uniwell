@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [isScrapbookOpen, setIsScrapbookOpen] = useState(false)
   const [scrapbookData, setScrapbookData] = useState(null)
 
-  const firstName = user?.name?.split(' ')[0] || 'Blooming'
+  const firstName = (user?.name && !user.name.includes('@')) ? user.name.split(' ')[0] : 'Blooming'
   const hour = new Date().getHours()
 
   const greeting = (() => {
@@ -86,16 +86,16 @@ export default function Dashboard() {
         {/* ── Page Greeting Header ── */}
         <div className="text-center mb-8">
           <span className="inline-block text-[11px] font-black uppercase tracking-widest text-[#755b00] bg-[#f6c945]/20 px-3.5 py-1 rounded-full mb-3 shadow-sm border border-[#F6C945]/30">
-            {greeting}, {firstName} ✨
+            {greeting}, {firstName}
           </span>
           <h1 className="font-jakarta text-3xl sm:text-4xl font-extrabold text-[#3a2b25] tracking-tight leading-tight">
-            <span className="font-playfair italic text-[#6B5A10]">How are you blooming</span> today? 🌻
+            <span className="font-playfair italic text-[#6B5A10]">How are you blooming</span> today?
           </h1>
           <p className="text-[#3a2b25]/60 text-xs sm:text-sm font-medium max-w-md mx-auto leading-relaxed mt-2">
             {streak >= 7
-              ? `You've cared for your bloom for ${streak} days in a row! 🌟`
+              ? `You've cared for your bloom for ${streak} days in a row!`
               : streak > 0
-              ? `${streak} day care streak — check in today to keep it nourished! 💧`
+              ? `${streak} day care streak — check in today to keep it nourished.`
               : 'Your bloom is already here. Take a gentle moment to care for it today.'}
           </p>
         </div>
@@ -125,7 +125,7 @@ export default function Dashboard() {
                   </Link>
                 ) : (
                   <div className="w-full flex items-center justify-center gap-2 py-3 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-[#2D6B47] font-extrabold text-[11px] sm:text-xs uppercase tracking-wider shadow-sm text-center">
-                    <span className="text-sm flex-shrink-0">🌻</span> <span>Watered today! Your sunflower feels cared for</span>
+                    <span>Watered today! Your sunflower feels cared for</span>
                   </div>
                 )}
               </div>
@@ -149,7 +149,7 @@ export default function Dashboard() {
             <div className="flex-1 bg-white rounded-3xl p-5 shadow-suncast border border-warm/10 flex flex-col justify-between hover:border-[#F6C945]/40 transition-all">
               <RadianceDose />
               <p className="text-[10px] text-warm/40 font-medium text-center mt-3">
-                Tap card above to flip between scripture & motivation ✨
+                Tap card above to flip between scripture & motivation
               </p>
             </div>
           </div>

@@ -8,7 +8,7 @@ import {
 import ReflectionCapsuleModal from './ReflectionCapsuleModal'
 import PhotoCropAdjustModal from './PhotoCropAdjustModal'
 import { saveJourneyMemory } from '../lib/journeyScrapbook'
-import { renderScrapbookCollage } from '../lib/scrapbookCollageEngine'
+import { renderScrapbookTemplate } from '../lib/scrapbookTemplateRenderer'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponents & Decorative Scrapbook Accents
@@ -452,7 +452,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
   // Custom Editable Text & Motto
   const [customReflection, setCustomReflection] = useState(defaultJournalQuote)
   const [customNote, setCustomNote] = useState('Sunflower always make me smile')
-  const [activeTab, setActiveTab] = useState('stickers') // 'stickers' | 'text' | 'cards'
+  const [activeTab, setActiveTab] = useState('cards') // 'text' | 'cards'
 
   // Interactive Aesthetic Stickers Collection (User-provided)
   const [userStickers, setUserStickers] = useState([
@@ -475,7 +475,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     async function updatePreview() {
       if (!canvasRef.current) return
       try {
-        await renderScrapbookCollage(canvasRef.current, scrapbookData, {
+        await renderScrapbookTemplate(canvasRef.current, scrapbookData, {
           includeMemory,
           includeJournal,
           includeCoping,
@@ -520,7 +520,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     setShareState('generating')
 
     try {
-      await renderScrapbookCollage(canvasRef.current, scrapbookData, {
+      await renderScrapbookTemplate(canvasRef.current, scrapbookData, {
         includeMemory,
         includeJournal,
         includeCoping,
@@ -652,19 +652,6 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
 
         <button
           type="button"
-          onClick={() => setActiveTab('stickers')}
-          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
-            activeTab === 'stickers'
-              ? 'bg-[#F6C945] text-[#3D291D] shadow-sm'
-              : 'text-white/70 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Flower2 className="w-3.5 h-3.5" />
-          <span>Stickers & Stamp</span>
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab('cards')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
             activeTab === 'cards'
@@ -703,21 +690,6 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
             />
           </div>
 
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-warm/70 block mb-1">
-              Bottom Paper Note Motto
-            </label>
-            <input
-              type="text"
-              value={customNote}
-              onChange={e => setCustomNote(e.target.value)}
-              placeholder="e.g. Sunflower always make me smile"
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-warm/20 bg-white/70 text-warm focus:outline-none focus:ring-1 focus:ring-[#F6C945] font-sans font-medium"
-            />
-            <p className="text-[9px] text-warm/50 mt-1">
-              Displays on the bottom torn kraft paper card.
-            </p>
-          </div>
         </div>
       )}
 
@@ -1077,7 +1049,7 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded, editingMemory 
             <X size={18} />
           </button>
 
-          <h3 className="font-jakarta font-bold text-warm text-base mb-1">Add to Your Scrapbook 🌻</h3>
+          <h3 className="font-jakarta font-bold text-warm text-base mb-1">Add to Your Scrapbook</h3>
           <p className="text-[11px] text-warm/60 mb-4">Attach a photo or a quiet memory to your journey.</p>
 
           <form onSubmit={handleSave} className="space-y-3">
@@ -1203,7 +1175,7 @@ function AddMemoryModal({ isOpen, onClose, userId, onMemoryAdded, editingMemory 
                   visibility === 'journey' ? 'bg-[#F6C945] text-[#3E3006] border-[#F6C945]' : 'bg-white text-warm/70 border-warm/15'
                 }`}
               >
-                🌻 Journey
+                Journey
               </button>
               <button
                 type="button"

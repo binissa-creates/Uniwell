@@ -214,6 +214,15 @@ export async function buildJourneyScrapbook(userId) {
     const journals = journalsRes.data || []
     const favStrategies = (favsRes.data || []).map(r => r.coping_strategies).filter(Boolean)
     const curatedMemories = getJourneyMemories(userId)
+    const selectedPhotoMemories = curatedMemories.filter(memory => memory.photoUrl).slice(0, 4)
+    const selectedMoodEntries = curatedMemories
+      .filter(memory => memory.sourceType === 'mood')
+      .map(memory => moodLogs.find(mood => String(mood.id) === String(memory.sourceId)) || {
+        ...memory,
+        mood_type: memory.title,
+        logged_at: memory.date,
+      })
+      .slice(0, 3)
 
     // Calculate streaks
     const moodsDesc = [...moodLogs].sort((a, b) => new Date(b.logged_at) - new Date(a.logged_at))
@@ -429,6 +438,8 @@ export async function buildJourneyScrapbook(userId) {
     return {
       pages,
       curatedMemories,
+      selectedPhotoMemories,
+      selectedMoodEntries,
       stats: {
         totalCheckIns: moodLogs.length,
         totalJournals: journals.length,

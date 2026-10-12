@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 
+const RECOVERY_SESSION_KEY = 'uniwell.password-recovery-at'
+const RECOVERY_SESSION_TTL = 15 * 60 * 1000
+
 export default function ResetPassword() {
   const navigate = useNavigate()
   const [password, setPassword] = useState('')
@@ -12,33 +15,74 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [tokenValid, setTokenValid] = useState(true)
+  const [tokenValid, setTokenValid] = useState(false)
   const [checkingToken, setCheckingToken] = useState(true)
 
-  // Check if user has a valid recovery session from email link
   useEffect(() => {
+    let active = true
+    let recoveryEventReceived = false
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        try {
+          sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+        } catch (storageError) {
+          console.warn('[ResetPassword] Could not clear recovery state:', storageError)
+        }
+        return
+      }
+      if (event !== 'PASSWORD_RECOVERY' || !session?.user) return
+      recoveryEventReceived = true
+      try {
+        sessionStorage.setItem(RECOVERY_SESSION_KEY, JSON.stringify({
+          userId: session.user.id,
+          createdAt: Date.now(),
+        }))
+      } catch (storageError) {
+        console.warn('[ResetPassword] Could not persist recovery state:', storageError)
+      }
+      setTokenValid(true)
+      setCheckingToken(false)
+    })
+
     const checkSession = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        
-        if (sessionError || !session?.user) {
-          setTokenValid(false)
-        } else {
-          // Check if this is a recovery session
-          const { data: { user }, error: userError } = await supabase.auth.getUser()
-          if (userError || !user) {
-            setTokenValid(false)
-          }
+        if (!active || recoveryEventReceived) return
+
+        let recoveryRecord = null
+        try {
+          recoveryRecord = JSON.parse(sessionStorage.getItem(RECOVERY_SESSION_KEY) || 'null')
+        } catch (storageError) {
+          console.warn('[ResetPassword] Could not read recovery state:', storageError)
         }
-      } catch (err) {
-        console.error('Error checking session:', err)
-        setTokenValid(false)
+        const recentRecovery = recoveryRecord?.userId === session?.user?.id
+          && Number.isFinite(recoveryRecord?.createdAt)
+          && Date.now() - recoveryRecord.createdAt <= RECOVERY_SESSION_TTL
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+        const queryParams = new URLSearchParams(window.location.search)
+        const recoveryInUrl = hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery'
+
+        if (sessionError || !session?.user || (!recentRecovery && !recoveryInUrl)) {
+          setTokenValid(false)
+          return
+        }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (active && !recoveryEventReceived) setTokenValid(Boolean(user && !userError))
+      } catch (checkError) {
+        console.error('[ResetPassword] Could not verify recovery session:', checkError)
+        if (active && !recoveryEventReceived) setTokenValid(false)
       } finally {
-        setCheckingToken(false)
+        if (active && !recoveryEventReceived) setCheckingToken(false)
       }
     }
 
-    checkSession()
+    void checkSession()
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const handleSubmit = async (e) => {
@@ -51,8 +95,14 @@ export default function ResetPassword() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long')
+    if (
+      password.length < 12
+      || !/[a-z]/.test(password)
+      || !/[A-Z]/.test(password)
+      || !/\d/.test(password)
+      || !/[^A-Za-z0-9]/.test(password)
+    ) {
+      setError('Use at least 12 characters with uppercase, lowercase, a number, and a symbol.')
       return
     }
 
@@ -65,6 +115,13 @@ export default function ResetPassword() {
 
       if (updateError) throw updateError
 
+      try {
+        sessionStorage.removeItem(RECOVERY_SESSION_KEY)
+      } catch (storageError) {
+        console.warn('[ResetPassword] Could not clear recovery state:', storageError)
+      }
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) console.warn('[ResetPassword] Could not clear the recovery session:', signOutError)
       setSuccess(true)
 
       // Redirect to login after 3 seconds
@@ -154,7 +211,9 @@ export default function ResetPassword() {
             </div>
           </div>
           <div className="bg-white/70 backdrop-blur-md rounded-2xl p-5 flex gap-3 flex-1 shadow-sm border border-white/50">
-            <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[#EAF2E6] flex items-center justify-center text-[#2D5A29] text-lg">✨</div>
+            <div className="w-8 h-8 flex-shrink-0 rounded-full bg-[#EAF2E6] flex items-center justify-center text-[#2D5A29]">
+              <CheckCircle size={16} />
+            </div>
             <div>
               <p className="font-jakarta font-bold text-[#3a2b25] text-xs">Fresh<br />Start</p>
               <p className="text-[#3a2b25]/60 text-[10px] mt-1 leading-relaxed pr-2">Begin anew with wellness.</p>
@@ -188,10 +247,12 @@ export default function ResetPassword() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">New Password</label>
+                    <label htmlFor="reset-new-password" className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">New Password</label>
                     <div className="relative">
                       <input
+                        id="reset-new-password"
                         type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -201,19 +262,22 @@ export default function ResetPassword() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         className="absolute right-5 top-1/2 -translate-y-1/2 text-[#B09C8E] hover:text-[#3a2b25] transition-colors p-1"
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    <p className="text-[9px] text-[#3a2b25]/50 ml-1">At least 8 characters</p>
+                    <p className="text-[9px] text-[#3a2b25]/50 ml-1">At least 12 characters with mixed case, a number, and a symbol</p>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Confirm Password</label>
+                    <label htmlFor="reset-confirm-password" className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Confirm Password</label>
                     <div className="relative">
                       <input
+                        id="reset-confirm-password"
                         type={showConfirm ? 'text' : 'password'}
+                        autoComplete="new-password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
@@ -223,6 +287,7 @@ export default function ResetPassword() {
                       <button
                         type="button"
                         onClick={() => setShowConfirm(!showConfirm)}
+                        aria-label={showConfirm ? 'Hide confirmation password' : 'Show confirmation password'}
                         className="absolute right-5 top-1/2 -translate-y-1/2 text-[#B09C8E] hover:text-[#3a2b25] transition-colors p-1"
                       >
                         {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}

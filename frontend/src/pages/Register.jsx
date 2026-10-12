@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle, GraduationCap } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
 import { ACADEMIC_DEPARTMENTS } from '../lib/academicPrograms'
 
 const YEARS = ['1st', '2nd', '3rd', '4th']
@@ -31,8 +31,7 @@ export default function Register() {
     }
     setLoading(true)
     try {
-      // Metadata is forwarded to the handle_new_user() trigger which
-      // creates the matching public.profiles row.
+      // Profile roles are assigned by the database trigger, never by signup metadata.
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -42,7 +41,6 @@ export default function Register() {
             student_id: form.student_id,
             course: form.course,
             year_level: Number(form.year_level),
-            role: 'student',
           },
         },
       })
@@ -119,12 +117,6 @@ export default function Register() {
       {/* ── RIGHT SIDE ── */}
       <div className="flex-1 h-full overflow-y-auto flex flex-col items-center py-8 px-6 lg:px-12 z-10">
         <div className="w-full max-w-[460px] flex flex-col items-center my-auto">
-
-          {/* Toggle pill */}
-          <div className="bg-[#F8EFE5] rounded-full p-1.5 flex gap-1 mb-10 w-max shadow-sm border border-white">
-            <div className="bg-[#F8D272] text-[#4F3F08] px-6 py-2 rounded-full text-xs font-bold shadow-sm">Student Portal</div>
-            <div className="px-6 py-2 rounded-full text-[11px] font-bold text-[#AA8E7E] cursor-pointer hover:bg-white/40 border border-transparent hover:border-[#AA8E7E]/10">Staff & Guidance</div>
-          </div>
 
           {/* Form Card */}
           <div className="bg-white rounded-[2.5rem] w-full p-8 sm:p-10 shadow-[0_20px_50px_-12px_rgba(93,64,55,0.06)] flex flex-col">
@@ -223,14 +215,9 @@ export default function Register() {
 
             <div className="mt-8 pt-6 border-t border-[#AA8E7E]/15 text-center">
               <p className="text-[11px] font-bold text-[#3a2b25]/60 mb-4">Already part of UniWell?</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/login" className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3.5 border border-[#AA8E7E]/20 text-xs font-bold text-[#3a2b25] hover:bg-[#FCF8F4] transition-colors">
-                  <GraduationCap size={15} /> Student Login
-                </Link>
-                <Link to="/login-staff" className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3.5 border border-[#AA8E7E]/20 text-xs font-bold text-[#3a2b25] hover:bg-[#FCF8F4] transition-colors">
-                  <UserCircle size={15} /> Staff Login
-                </Link>
-              </div>
+              <Link to="/login" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#AA8E7E]/20 px-6 py-3.5 text-xs font-bold text-[#3a2b25] transition-colors hover:bg-[#FCF8F4]">
+                <GraduationCap size={15} /> Back to Sign In
+              </Link>
             </div>
           </div>
 

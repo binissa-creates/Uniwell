@@ -2,17 +2,12 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import {
-  fetchProfileRole,
-  getHomeForRole,
-  getPortalDeniedMessage,
-  roleMatchesPortal,
-} from '../lib/portalAccess'
+import { getHomeForRole } from '../lib/portalAccess'
 import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { signOut, beginPortalValidation, endPortalValidation } = useAuth()
+  const { signOut } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -24,37 +19,99 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    beginPortalValidation('student')
 
     let signedIn = false
     try {
+      console.log('[Login] Attempting sign-in for:', form.email)
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: form.email,
         password: form.password,
       })
-      if (signInError) throw signInError
+      if (signInError) {
+        console.error('[Login] signInWithPassword error:', signInError)
+        throw signInError
+      }
+      console.log('[Login] Auth succeeded, user ID:', data.user?.id)
       signedIn = true
 
-      const role = await fetchProfileRole(data?.user?.id)
-      if (!roleMatchesPortal('student', role)) {
+      // Use get_my_role RPC (SECURITY DEFINER — bypasses RLS) as primary method.
+      // Fall back to direct table query if the RPC is unavailable.
+      let role = null
+      let status = null
+
+      const { data: rpcRole, error: rpcError } = await supabase.rpc('get_my_role')
+      console.log('[Login] get_my_role result:', { rpcRole, rpcError })
+
+      if (!rpcError && rpcRole) {
+        role = rpcRole
+        // get_my_role only returns role; fetch status separately (own-row is always readable)
+        const { data: statusRow } = await supabase
+          .from('profiles')
+          .select('status')
+          .eq('id', data.user.id)
+          .maybeSingle()
+        status = statusRow?.status ?? 'active'
+        console.log('[Login] Resolved via RPC — role:', role, 'status:', status)
+      } else {
+        // RPC unavailable — fall back to direct table query
+        console.warn('[Login] get_my_role unavailable, falling back to table query:', rpcError)
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, status')
+          .eq('id', data.user.id)
+          .maybeSingle()
+        console.log('[Login] Profile fetch result:', { profile, profileError })
+
+        if (profileError) {
+          console.error('[Login] Profile fetch error:', profileError?.message, profileError?.code)
+          await signOut()
+          setError(`Sign-in is temporarily unavailable (${profileError?.code ?? 'DB_ERROR'}). Please contact your administrator.`)
+          return
+        }
+        if (!profile) {
+          console.warn('[Login] No profile row found for user:', data.user.id)
+          await signOut()
+          setError('Your account profile was not found. Please contact your administrator.')
+          return
+        }
+        role = profile.role
+        status = profile.status
+        console.log('[Login] Resolved via table — role:', role, 'status:', status)
+      }
+
+      if (status === 'disabled') {
         await signOut()
-        setError(getPortalDeniedMessage('student', role))
+        setError('This account is inactive. Please contact the guidance office.')
         return
       }
 
-      navigate(getHomeForRole(role))
-    } catch (err) {
-      // Always log the full error so it's visible in DevTools during debugging
-      console.error('[Login] handleSubmit error:', err)
-      if (signedIn) await signOut()
-      const msg = err?.message || ''
-      if (msg.includes('querying schema') || msg.includes('infinite recursion')) {
-        setError('Database error: Please run fix_rls_recursion.sql in your Supabase SQL Editor.')
-      } else {
-        setError(msg || 'Login failed. Please try again.')
+      if (status === 'invited') {
+        navigate('/accept-invite')
+        return
       }
+
+      if (status !== 'active' || !['student', 'counselor', 'admin'].includes(role)) {
+        console.warn('[Login] Invalid status/role:', { role, status })
+        await signOut()
+        setError('Invalid email or password.')
+        return
+      }
+
+      // Fire-and-forget audit log — a failed RPC should never block a successful login.
+      if (role === 'counselor' || role === 'admin') {
+        supabase.rpc('log_staff_sign_in').then(({ error: auditError }) => {
+          if (auditError) console.warn('[Login] Staff sign-in audit failed (non-blocking):', auditError)
+        })
+      }
+
+      const destination = getHomeForRole(role)
+      console.log('[Login] Navigating to:', destination)
+      navigate(destination)
+    } catch (err) {
+      console.error('[Login] Sign-in failed:', err)
+      if (signedIn) await signOut()
+      setError('Invalid email or password.')
     } finally {
-      endPortalValidation()
       setLoading(false)
     }
   }
@@ -124,36 +181,30 @@ export default function Login() {
             <span className="font-jakarta font-bold text-[#3a2b25] text-xl tracking-tight">UniWell</span>
           </div>
 
-          {/* Toggle pill */}
-          <div className="bg-white/80 backdrop-blur-md rounded-full p-1.5 flex gap-1 mb-10 w-full shadow-sm border border-white">
-            <div className="flex-1 bg-[#F8D272] text-[#4F3F08] py-3 rounded-full text-xs font-bold shadow-sm text-center">Student Portal</div>
-            <Link to="/login-staff" className="flex-1 py-3 rounded-full text-[11px] font-bold text-[#AA8E7E] cursor-pointer hover:bg-white/40 transition-all text-center">Staff & Guidance</Link>
-          </div>
-
           {/* Form Card */}
           <div className="bg-white rounded-[3rem] w-full p-10 sm:p-12 shadow-lift border border-white/50 relative">
             <h2 className="font-jakarta text-4xl font-extrabold text-center text-[#3a2b25] mb-2">Welcome Back</h2>
             <p className="text-center text-[#3a2b25]/50 text-sm mb-10">Sign in to your wellness sanctuary.</p>
 
             {error && (
-              <div className="bg-red-50 text-red-600 text-xs rounded-2xl px-5 py-4 mb-8 text-center border border-red-100 animate-scaleIn font-medium">
+                <div role="alert" aria-live="polite" className="bg-red-50 text-red-600 text-xs rounded-2xl px-5 py-4 mb-8 text-center border border-red-100 animate-scaleIn font-medium">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Email Address</label>
-                <input type="email" name="email" value={form.email} onChange={handleChange} required placeholder="you@university.edu"
+                <label htmlFor="login-email" className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Email</label>
+                <input id="login-email" type="email" name="email" autoComplete="username" value={form.email} onChange={handleChange} required placeholder="you@university.edu"
                   className="w-full bg-[#FCF8F4] text-[#3a2b25] text-sm px-6 py-4 rounded-2xl outline-none placeholder-[#B09C8E]/40 focus:ring-2 focus:ring-[#F8D272] border border-transparent focus:border-[#F8D272] transition-all" />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Password</label>
+                <label htmlFor="login-password" className="text-[10px] font-bold text-[#B09C8E] uppercase tracking-[0.2em] ml-1">Password</label>
                 <div className="relative">
-                  <input type={showPw ? 'text' : 'password'} name="password" value={form.password} onChange={handleChange} required placeholder="••••••••"
+                  <input id="login-password" type={showPw ? 'text' : 'password'} name="password" autoComplete="current-password" value={form.password} onChange={handleChange} required placeholder="••••••••"
                     className="w-full bg-[#FCF8F4] text-[#3a2b25] text-sm pl-6 pr-14 py-4 rounded-2xl outline-none placeholder-[#B09C8E]/40 focus:ring-2 focus:ring-[#F8D272] border border-transparent focus:border-[#F8D272] transition-all" />
-                  <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#B09C8E] hover:text-[#3a2b25] transition-colors p-1">
+                  <button type="button" onClick={() => setShowPw(!showPw)} aria-label={showPw ? 'Hide password' : 'Show password'} className="absolute right-5 top-1/2 -translate-y-1/2 text-[#B09C8E] hover:text-[#3a2b25] transition-colors p-1">
                     {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
@@ -164,9 +215,10 @@ export default function Login() {
               </div>
 
               <button type="submit" disabled={loading}
-                className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4 transform">
+                aria-busy={loading}
+                className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4 transform disabled:cursor-not-allowed disabled:opacity-70">
                 {loading && <Loader2 size={18} className="animate-spin" />}
-                {loading ? 'Validating...' : 'Sign In'} <ArrowRight size={18} />
+                {loading ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />
               </button>
             </form>
 
@@ -175,6 +227,7 @@ export default function Login() {
               <Link to="/register" className="group w-full flex items-center justify-center gap-3 rounded-2xl py-4 border border-[#AA8E7E]/20 text-xs font-bold text-[#3a2b25] hover:bg-[#FCF8F3] transition-all hover:border-[#F8D272]">
                 <GraduationCap size={18} className="text-[#6B5A10]" /> Create Student Account
               </Link>
+              <p className="mt-5 text-xs text-[#3a2b25]/45">Guidance staff? Use the invitation link sent to your email.</p>
             </div>
           </div>
 

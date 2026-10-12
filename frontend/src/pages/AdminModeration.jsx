@@ -95,18 +95,17 @@ export default function AdminModeration() {
   const handleAction = async (id, status) => {
     setActing({ id, status })
     try {
-      const { error } = await supabase
-        .from('coping_strategies')
-        .update({ status })
-        .eq('id', id)
+      const { error } = await supabase.rpc('moderate_coping_strategy', {
+        p_strategy_id: id,
+        p_status: status,
+      })
       if (error) throw error
+      setEntries((prev) => prev.filter((s) => s.id !== id))
+      if (selectedCard?.id === id) setSelectedCard(null)
     } catch (err) {
       console.error('[AdminModeration] action error:', err)
     }
-    setEntries((prev) => prev.filter((s) => s.id !== id))
     setActing(null)
-    // If card is open in modal, close it too
-    if (selectedCard?.id === id) setSelectedCard(null)
   }
 
 
@@ -281,7 +280,9 @@ export default function AdminModeration() {
               </div>
             ) : !(filteredEntries && filteredEntries.length > 0) ? (
               <div className="bg-white rounded-[2.5rem] p-24 shadow-lift border border-white flex flex-col items-center text-center animate-scaleIn">
-                <div className="w-24 h-24 rounded-full bg-[#EAF2E6] flex items-center justify-center text-5xl mb-8 shadow-inner animate-breathe">✨</div>
+              <div className="w-24 h-24 rounded-full bg-[#EAF2E6] flex items-center justify-center mb-8 shadow-inner animate-breathe">
+                <CheckCircle size={44} className="text-[#2D5A29]" />
+              </div>
                 <h3 className="font-jakarta font-black text-[#3a2b25] text-2xl mb-4">Queue is Pristine</h3>
                 <p className="text-[#3a2b25]/50 text-sm max-w-sm leading-relaxed font-medium">
                   {entries && entries.length > 0 ? "No contributions match this filter." : "All student contributions have been reviewed. Rest and recharge."}

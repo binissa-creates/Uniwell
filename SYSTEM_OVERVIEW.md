@@ -756,7 +756,7 @@ npm run install:all
 
 # Configure Supabase
 cp frontend/.env.example frontend/.env.local
-# Edit with your VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY
+# Edit with your VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
 
 # Run locally
 npm run dev
@@ -802,7 +802,7 @@ Vercel Edge + SPA Rewrite
 | Variable | Value |
 |----------|-------|
 | `VITE_SUPABASE_URL` | `https://project-ref.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key |
 
 ---
 

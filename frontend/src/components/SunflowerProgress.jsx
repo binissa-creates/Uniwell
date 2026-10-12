@@ -40,8 +40,8 @@ function computeBloomState(streak, moodHistory = [], loggedToday = false) {
 const BLOOM_STATES = {
   thriving: {
     title: 'Thriving Radiance',
-    badge: '✨ Thriving Radiance',
-    subtitle: 'Glowing with warmth and steady daily care. 🌻✨',
+    badge: 'Thriving Radiance',
+    subtitle: 'Glowing with warmth and steady daily care.',
     face: 'joyful',
     badgeBg: '#FEF9E7',
     badgeText: '#755B00',
@@ -52,7 +52,7 @@ const BLOOM_STATES = {
   },
   blooming: {
     title: 'Blooming',
-    badge: '🌱 Blooming',
+    badge: 'Blooming',
     subtitle: 'Full of vitality — your mindful care keeps it strong.',
     face: 'happy',
     badgeBg: '#EAF5EE',
@@ -64,7 +64,7 @@ const BLOOM_STATES = {
   },
   glowing: {
     title: 'Glowing',
-    badge: '☀️ Glowing',
+    badge: 'Glowing',
     subtitle: 'Gently glowing with your recent care today.',
     face: 'glowing',
     badgeBg: '#FFF8E7',
@@ -76,8 +76,8 @@ const BLOOM_STATES = {
   },
   needs_care: {
     title: 'Needs a Little Care',
-    badge: '💧 Needs a Little Care',
-    subtitle: 'Your bloom could use a little care today. 🌻',
+    badge: 'Needs a Little Care',
+    subtitle: 'Your bloom could use a little care today.',
     face: 'tender',
     badgeBg: '#FFF9EE',
     badgeText: '#755B00',
@@ -88,8 +88,8 @@ const BLOOM_STATES = {
   },
   resting: {
     title: 'Resting',
-    badge: '🌿 Resting',
-    subtitle: 'Your bloom is still here — give it a moment of care whenever you are ready. 💛',
+    badge: 'Resting',
+    subtitle: 'Your bloom is still here — give it a moment of care whenever you are ready.',
     face: 'resting',
     badgeBg: '#F5F5F0',
     badgeText: '#5D4037',
@@ -101,11 +101,11 @@ const BLOOM_STATES = {
 };
 
 const CARE_MILESTONES = [
-  { target: 3, label: 'Little Acts of Care', desc: 'Starting a gentle daily rhythm 🌱' },
-  { target: 7, label: 'Growing Consistently', desc: 'A full week of intentional self-care 🌻' },
-  { target: 14, label: 'Steady Care', desc: 'Cultivating enduring resilience ✨' },
-  { target: 30, label: 'Deeply Nourished', desc: 'A month of honoring your well-being 💛' },
-  { target: 60, label: 'Dedicated Care', desc: 'A lasting sanctuary of self-compassion ☀️' },
+  { target: 3, label: 'Little Acts of Care', desc: 'Starting a gentle daily rhythm' },
+  { target: 7, label: 'Growing Consistently', desc: 'A full week of intentional self-care' },
+  { target: 14, label: 'Steady Care', desc: 'Cultivating enduring resilience' },
+  { target: 30, label: 'Deeply Nourished', desc: 'A month of honoring your well-being' },
+  { target: 60, label: 'Dedicated Care', desc: 'A lasting sanctuary of self-compassion' },
 ];
 
 function getNextMilestone(streak) {
@@ -573,7 +573,7 @@ export default function SunflowerProgress({
             </div>
 
             <span className="text-xs font-black text-[#755B00] bg-[#FFF8E7] border border-[#F6C945]/40 px-2.5 py-1 rounded-xl whitespace-nowrap">
-              🌻 {streak}d
+              {streak}d
             </span>
           </div>
 
@@ -587,7 +587,7 @@ export default function SunflowerProgress({
               <span className="text-[10px] sm:text-[11px] text-[#5D4037]/70 sm:text-right">
                 {nextMilestone.daysLeft > 0
                   ? `${nextMilestone.daysLeft} day${nextMilestone.daysLeft > 1 ? 's' : ''} of care to go`
-                  : 'Milestone reached! ✨'}
+                  : 'Milestone reached!'}
               </span>
             </div>
 
@@ -674,7 +674,7 @@ export default function SunflowerProgress({
 
             <div className="px-6 py-5 overflow-y-auto space-y-4 custom-scrollbar">
               <div className="p-3.5 rounded-2xl bg-[#FFF9EE] border border-[#F6C945]/40 text-xs text-[#5D4037]/85 leading-relaxed font-medium">
-                <p className="font-bold text-[#755B00] mb-1">🌻 "Your bloom is already here. Take care of it."</p>
+                <p className="font-bold text-[#755B00] mb-1">"Your bloom is already here. Take care of it."</p>
                 Your sunflower is a living symbol of your well-being. It is already fully bloomed because your inherent worth is always present. Your daily actions are how you care for and nurture it.
               </div>
 
@@ -734,7 +734,7 @@ export default function SunflowerProgress({
                 onClick={() => setShowGuideModal(false)}
                 className="px-5 py-2 rounded-xl bg-[#3A2B25] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#5D4037] transition shadow-sm"
               >
-                Continue Caring 🌻
+                Continue Caring
               </button>
             </div>
           </div>

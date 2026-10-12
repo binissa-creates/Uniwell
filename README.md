@@ -1,172 +1,102 @@
 # UniWell
 
-Campus well-being platform — a React SPA that talks directly to Supabase (Auth + Postgres + RLS) and deploys as a single static project on Vercel.
+UniWell is a university student-wellness SPA built with React 18, JavaScript/JSX, Vite, Tailwind CSS, React Router, Lucide, and Recharts. Supabase provides PostgreSQL, Auth, Row-Level Security, and Edge Functions. Vercel hosts the static SPA. There is no custom backend server.
 
-- **Frontend:** React + Vite + Tailwind (in [frontend/](frontend/))
-- **Data + Auth:** Supabase (via [`@supabase/supabase-js`](https://supabase.com/docs/reference/javascript))
-- **Schema + policies:** [supabase/schema.sql](supabase/schema.sql) — one file, run in the Supabase SQL Editor
-- **Backend server:** none. Access control is enforced by Row Level Security (RLS) policies and a small set of RPC functions in Postgres.
+## Architecture and security
 
----
+The browser is untrusted. Frontend route guards improve navigation but do not authorize database access. PostgreSQL RLS, triggers, and security-definer functions enforce data access and trusted role changes. Privileged staff operations run in Supabase Edge Functions using the service-role key; that key must never be included in frontend code, `VITE_` variables, or committed files.
 
-## 1. Architecture at a glance
+- Student, counselor, and admin identities are stored in `public.profiles`; role and status come from the database, not signup metadata.
+- Counselors and admins are onboarded using pending email invitations.
+- Staff lifecycle operations and staff sign-ins write to `public.audit_log`.
+- Journal entries remain private to their author.
+- The Phase 2 migration intentionally leaves existing wellness-table RLS policies unchanged. Review and apply the separate counselor/active-user policy design before production. In particular, define the assignment or consent boundary that controls which students counselors may view.
 
-```
-React (Vite SPA)  ──[HTTPS]──>  Supabase
-                                 ├── Auth        (auth.users, JWT sessions)
-                                 ├── PostgREST   (public.* tables, RLS-gated)
-                                 └── RPCs        (log_mood, toggle_helpful_vote, admin_analytics)
-Hosted on Vercel as static assets. No server-side code to deploy.
-```
+## Wellness RLS proposal (not applied)
 
-- **Auth:** Supabase Auth (email + password). Sign-up stores profile fields (name, student_id, course, year_level, role) in `options.data`; a Postgres trigger copies them into `public.profiles` on insert.
-- **Authorization:** RLS policies check `auth.uid()` (current user) and the `public.is_admin()` helper. Admin-only work (moderation, analytics) is gated by those policies and a `SECURITY DEFINER` analytics RPC.
-- **No bespoke API:** every data call in the frontend is a `supabase.from(...)` query or a `supabase.rpc(...)` invocation.
+The current baseline policies do not consistently require an active profile, and counselors have no student-assignment model. Do not paste a blanket policy rewrite into production. First add and validate an assignment/consent table for counselor-to-student access, then review this target policy matrix on a development project:
 
----
+| Table | Proposed access |
+| --- | --- |
+| `mood_logs` | Active students read/write/delete only their own rows. Active admins may read campus analytics. Active counselors may read only students with a current assignment/consent. |
+| `mood_triggers` | Follow the parent mood log's access rule. Only the active student owner may insert triggers. |
+| `journal_entries` | Active student owner only for read/write/delete. No counselor or admin access. |
+| `coping_strategies` | Active users may read approved rows; students may read their own pending/rejected rows; active admins moderate through `moderate_coping_strategy`. |
+| `helpful_votes`, `strategy_favorites` | Active students manage only their own rows. |
 
-## 2. Supabase setup
+Replace role decisions based only on the cached JWT `app_metadata.role` with `is_active_user()` and `current_role()` checks where appropriate. Keep these proposed policy changes separate until counselor access, existing policy names, and analytics behavior have been reviewed and tested against representative data.
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. **Project Settings → API** — copy:
-   - `Project URL` → `VITE_SUPABASE_URL`
-   - `Project API Keys → publishable/anon key` → `VITE_SUPABASE_PUBLISHABLE_KEY`
-3. **SQL Editor** — run [supabase/schema.sql](supabase/schema.sql) once. This creates:
-   - Enum types (`user_role`, `mood_type`, `trigger_category`, `coping_category`, `coping_status`)
-   - Tables: `profiles`, `mood_logs`, `mood_triggers`, `journal_entries`, `coping_strategies`, `helpful_votes`
-   - RLS policies on every table
-   - RPCs: `log_mood`, `toggle_helpful_vote`, `admin_analytics`, `is_admin`
-   - A trigger that auto-creates a `profiles` row on every `auth.users` insert
-4. **Create admin accounts** — two options:
+## Supabase setup
 
-   **(a) Automated seed script (recommended).** From the repo root:
+1. Create a Supabase project and configure local frontend variables using `frontend/.env.example`:
 
-   ```bash
-   cp .env.example .env           # one-time
-   # then edit .env and paste SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
-   npm install                    # installs @supabase/supabase-js at root
-   npm run seed:admins
+   ```env
+   VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+   VITE_SUPABASE_ANON_KEY=<your-anon-key>
    ```
 
-   This creates `admin@uniwell.edu.ph / Admin@UniWell2024` plus two staff accounts defined in
-   [scripts/seed-admins.js](scripts/seed-admins.js). The script is idempotent — rerun it to
-   reset passwords or refresh profile metadata. To use a different list, either edit
-   `DEFAULT_ADMINS` in the script or drop a `scripts/admins.json` file next to it (array of
-   `{email, password, name, student_id, course, year_level}`).
+2. In the Supabase SQL Editor, run `supabase/schema.sql` on an empty project to create the current baseline tables and policies.
+3. Apply migrations in chronological order. For a project that already ran the baseline schema, apply the migrations to a development project first:
+   - `supabase/migrations/20260425_extend_mood_types.sql`
+   - `supabase/migrations/20260425_strategy_favorites.sql`
+   - `supabase/migrations/20261005_unified_auth_and_staff_invites.sql`
+   - `supabase/migrations/20261005_audit_security_functions.sql`
+4. Do not rerun `schema.sql` after the unified-auth migration; it contains the legacy auth trigger. Review and test each migration against a dev project before production.
+5. Run `supabase/tests/rls_auth_checks.sql` in a development project after replacing both student UUID placeholders. It should confirm a student can read their own profile, cannot read another student's profile, cannot read staff invites or audit logs, and cannot change their own role.
 
-   The `SUPABASE_SERVICE_ROLE_KEY` lives in **Project Settings → API → service_role**. It
-   bypasses RLS — **never** put it in the frontend bundle or commit it. The root `.env` is
-   git-ignored.
+## Bootstrap the first admin
 
-   **(b) Manually via the dashboard.**
-   - **Authentication → Users → Add user**: pick an email + password, check "Auto Confirm User".
-   - Then in the **SQL Editor**:
-     ```sql
-     update public.profiles
-        set name = 'Guidance Admin', student_id = 'ADMIN-001',
-            course = 'Administration', year_level = 1, role = 'admin'
-      where id = (select id from auth.users where email = 'admin@uniwell.edu.ph');
-     ```
-5. **(Optional) Auth settings** — under **Authentication → Providers → Email**, decide whether to require email confirmation. If on, new sign-ups won't have a session until the email link is clicked; `Register.jsx` already handles that path. The seed script uses `email_confirm: true`, so seeded admins can sign in immediately regardless of this setting.
+1. Create the intended first admin user in Supabase Authentication, using the institution-approved confirmation process.
+2. Confirm the account has a `profiles` row.
+3. Open `supabase/seed_first_admin.sql`, replace `REPLACE_WITH_EXISTING_USER_EMAIL@example.edu` with that user's email, then run the script in the SQL Editor.
 
-6. **UniWell Student Accounts* so the admin dashboard shows real analytics:
+The script only promotes an existing user to `admin` and `active`; it does not create a password or contain credentials. Do not use the retired `scripts/seed-admins.mjs` demo seeder.
 
-   To sign in as a seeded student: `student1@uniwell.seed.local` (or `student2`, `3`, …) / `Student@UniWell2024`.
+## Invite staff
 
----
+1. Set Edge Function secrets in the Supabase project. Required values are `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL`; `ALLOWED_STAFF_EMAIL_DOMAIN` is optional. Keep all of these out of frontend environment files and source control.
+2. Deploy the functions:
 
-## 3. Local development
+   ```bash
+   supabase functions deploy invite-staff
+   supabase functions deploy set-staff-status
+   ```
+
+3. Sign in as the active admin and open `/staff/manage` to invite counselors or admins. The invitee follows the email link at `/accept-invite`, confirms their name, and sets a password.
+
+## Password recovery and Auth dashboard checklist
+
+In Supabase Authentication settings:
+
+- Enable Confirm email.
+- Add redirect URLs for `http://localhost:5173/**` and the deployed Vercel domain, including `/accept-invite` and `/reset-password` destinations.
+- Customize the Invite User and Reset Password email templates to use the expected Supabase action links and redirect destinations.
+- Enable CAPTCHA and configure its site/secret keys in the Supabase dashboard.
+- Verify the Edge Function secrets listed above are set for the project.
+
+Forgot-password requests always show the same neutral response. Reset-password requires a Supabase `PASSWORD_RECOVERY` session before it accepts a new password.
+
+## Local development and tests
 
 ```bash
-npm run install:all         # installs frontend deps
-cp frontend/.env.example frontend/.env.local
-# edit frontend/.env.local with your Supabase URL + publishable key
-npm run dev                 # starts Vite on http://127.0.0.1:5173
+npm run install:all
+npm run dev
+npm --prefix frontend test
+npm run build
 ```
 
-`frontend/.env.local`:
+Copy `frontend/.env.example` to `frontend/.env.local` and fill in the project URL and anon key. The anon key is intended for browser use; RLS remains the security boundary.
 
-```env
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-```
+## Deployment
 
-The keys are safe to expose — they're meant for the browser and only work within the limits of your RLS policies.
+Vercel builds `frontend/` and serves `frontend/dist`. The root `vercel.json` contains the SPA rewrite needed for deep links such as `/accept-invite` and `/reset-password`. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel project environment variables, then deploy the project.
 
----
+## Project layout
 
-## 4. Deploy to Vercel
-
-1. Push the repo to GitHub.
-2. Vercel → **Add New Project** → import the repo. [vercel.json](vercel.json) provides:
-   - **Install command:** `npm install --prefix frontend`
-   - **Build command:** `npm --prefix frontend install && npm --prefix frontend run build`
-   - **Output directory:** `frontend/dist`
-   - **SPA rewrite:** everything outside `/assets/*` rewrites to `/index.html` for React Router.
-3. Under **Settings → Environment Variables** add (Production + Preview):
-   | Key | Value |
-   | --- | --- |
-   | `VITE_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-   | `VITE_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` |
-4. **Deploy.**
-
-After deploy:
-- Open the root URL → React app loads.
-- `/login` deep link → SPA rewrite renders `index.html`.
-- Log in with the admin account and confirm the dashboard fetches analytics.
-
----
-
-## 5. Project layout
-
-```
-supabase/
-  schema.sql              # One-shot DB migration (tables + RLS + RPCs + trigger)
-frontend/
-  vite.config.js
-  src/
-    lib/
-      supabase.js         # createClient(url, key)
-      data.js             # shared helpers: mood history, streak, log_mood
-    context/
-      AuthContext.jsx     # session + profile, onAuthStateChange
-    pages/
-      Login.jsx / LoginStaff.jsx / Register.jsx
-      Dashboard.jsx / MoodTracker.jsx / Journal.jsx
-      PeerInsights.jsx
-      AdminDashboard.jsx / AdminModeration.jsx
-    components/
-      Navbar.jsx / MoodEmojiPicker.jsx / SunflowerProgress.jsx
-package.json              # root: thin orchestrator (scripts delegate to frontend)
-vercel.json               # build config + SPA rewrite
-```
-
----
-
-## 6. Security model
-
-- **Publishable key** (what ships in the bundle) — only grants the database access that RLS permits.
-- **RLS rules (high level):**
-  - `profiles` — a user can read their own row; students' public fields are readable by other authenticated users so submitter/admin views work; admins can read all.
-  - `mood_logs`, `mood_triggers` — owned by the student; admins read all (for analytics).
-  - `journal_entries` — strictly private to the owner. Admins do **not** get access.
-  - `coping_strategies` — approved rows readable by everyone authenticated; pending/rejected only visible to the submitter and admins. Only admins can update status.
-  - `helpful_votes` — a student only sees / inserts / deletes their own votes.
-- **RPCs:**
-  - `log_mood(...)` — one-shot transactional insert of a mood log + its triggers (runs as the caller; RLS still applies).
-  - `toggle_helpful_vote(id)` — flips a vote + updates `helpful_count` atomically.
-  - `admin_analytics(days, year_level, course)` — `SECURITY DEFINER`; internally checks `is_admin()` and raises on non-admins.
-
-Do **not** put the Supabase `service_role` key in the frontend. If you need privileged ops later, add a Vercel serverless function that uses it server-side.
-
----
-
-## 7. Troubleshooting
-
-- **`Missing Supabase env vars`** — set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in `frontend/.env.local` (local) and in Vercel's Environment Variables (deployed).
-- **Queries return `[]` unexpectedly** — almost always an RLS issue. Re-run [supabase/schema.sql](supabase/schema.sql) (it's idempotent) and verify you're logged in.
-- **Registration: "Check your email to confirm"** — email confirmation is enabled in Supabase. Either confirm the address, or disable confirmation in **Authentication → Providers → Email** for dev.
-- **`forbidden` from `admin_analytics`** — the calling user doesn't have `profiles.role = 'admin'`. Elevate via the SQL snippet in §2.
-- **Admin sees no pending strategies** — the admin RLS policy matches on `is_admin()`. Confirm `select public.is_admin();` returns `true` while signed in.
-- **Deep links 404 on Vercel** — verify `vercel.json`'s `rewrites` block is present.
-- **`violates foreign key constraint "profiles_id_fkey"` on sign-up** — the `handle_new_user` trigger didn't run. Make sure you ran the full schema script and the trigger `on_auth_user_created` exists.
+- `frontend/src/`: React app, routes, auth context, pages, and Supabase client.
+- `frontend/tests/`: Vitest and React Testing Library auth-flow tests, plus role helper tests.
+- `supabase/schema.sql`: baseline schema for an empty project.
+- `supabase/migrations/`: additive schema and security migrations.
+- `supabase/functions/`: privileged Edge Functions and shared helpers.
+- `supabase/seed_first_admin.sql`: editable first-admin bootstrap.
+- `supabase/tests/rls_auth_checks.sql`: manual development-project RLS checks.

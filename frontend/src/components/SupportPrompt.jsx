@@ -21,7 +21,7 @@ export default function SupportPrompt({ isOpen, onViewSupport, onClose }) {
           </div>
 
           <h3 className="text-white font-jakarta font-bold text-lg leading-snug mb-2">
-            Sending some light your way. 🌻
+            Sending some light your way.
           </h3>
           <p className="text-white/60 text-xs leading-relaxed mb-6">
             It looks like you're having a tough moment. Would you like to see what campus support resources are available?
