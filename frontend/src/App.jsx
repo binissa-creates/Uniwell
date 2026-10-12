@@ -77,13 +77,24 @@ function DeploymentConfigurationScreen() {
           Deployment setup is incomplete
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-[#3a2b25]/70">
-          This site is missing its public Supabase configuration. Add both variables to the Vercel
-          project, enable them for Production, then redeploy.
+          The app needs to know which Supabase project to connect to. Add these two values in your
+          Vercel project settings, then redeploy.
         </p>
-        <ul className="mt-5 list-inside list-disc space-y-2 rounded-xl bg-[#FDF9F2] p-4 font-mono text-xs text-[#3a2b25]">
-          <li>VITE_SUPABASE_URL</li>
-          <li>VITE_SUPABASE_ANON_KEY</li>
-        </ul>
+        <div className="mt-5 space-y-3 rounded-xl bg-[#FDF9F2] p-4 text-xs text-[#3a2b25]">
+          <div>
+            <p className="font-bold">1. Name</p>
+            <p className="mt-1 font-mono">VITE_SUPABASE_URL</p>
+            <p className="mt-1">Value</p>
+            <code className="mt-1 block break-all select-all rounded bg-white p-2">
+              https://bojzzzxvezyrpdzmlrjy.supabase.co
+            </code>
+          </div>
+          <div>
+            <p className="font-bold">2. Name</p>
+            <p className="mt-1 font-mono">VITE_SUPABASE_ANON_KEY</p>
+            <p className="mt-1">Value: the anon/public key you already copied from Supabase.</p>
+          </div>
+        </div>
         <p className="mt-4 text-xs leading-relaxed text-[#3a2b25]/60">
           In Vercel, open Project Settings → Environment Variables. These are browser-side project
           URL and anon-key values; never add a service-role key here.
