@@ -92,7 +92,10 @@ function DeploymentConfigurationScreen() {
           <div>
             <p className="font-bold">2. Name</p>
             <p className="mt-1 font-mono">VITE_SUPABASE_ANON_KEY</p>
-            <p className="mt-1">Value: the anon/public key you already copied from Supabase.</p>
+            <p className="mt-1">
+              Or use <span className="font-mono">VITE_SUPABASE_PUBLISHABLE_KEY</span>. Either name
+              should contain the project’s anon/public key.
+            </p>
           </div>
         </div>
         <p className="mt-4 text-xs leading-relaxed text-[#3a2b25]/60">

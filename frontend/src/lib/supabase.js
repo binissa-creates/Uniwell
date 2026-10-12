@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const env = import.meta.env ?? (typeof process !== 'undefined' ? process.env : {})
 const url = env.VITE_SUPABASE_URL
-const key = env.VITE_SUPABASE_ANON_KEY
+const key = env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 export const hasSupabaseConfig = Boolean(url && key)
 
