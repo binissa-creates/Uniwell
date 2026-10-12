@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   X, ChevronLeft, ChevronRight, Share2, Download, Plus,
-  Camera, Heart, Check, Sparkles, Image as ImageIcon, Lock, Eye,
-  Crop, Sliders, Flower2, Stamp, Sun, Layers, Edit3, BookOpen, RotateCcw,
+  Camera, Crop, Sliders, Layers, Edit3, BookOpen, RotateCcw,
   Sprout, Leaf, Package
 } from 'lucide-react'
 import ReflectionCapsuleModal from './ReflectionCapsuleModal'
 import PhotoCropAdjustModal from './PhotoCropAdjustModal'
 import { saveJourneyMemory } from '../lib/journeyScrapbook'
-import { renderScrapbookTemplate } from '../lib/scrapbookTemplateRenderer'
+import {
+  renderScrapbookTemplate,
+  SCRAPBOOK_LAYER_DEFAULTS,
+  SCRAPBOOK_NOTE_STYLES,
+  SCRAPBOOK_THEMES,
+} from '../lib/scrapbookTemplateRenderer'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponents & Decorative Scrapbook Accents
@@ -435,64 +439,370 @@ function PageClosing({ page, onProceedToShare, reducedMotion }) {
 
 function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
   const defaultJournalQuote = scrapbookData?.pages?.find(p => p.type === 'JOURNAL_MEMORY')?.excerpt ||
-    "\"I realized that my growth lately is blooming. Also, I'm very proud of myself since I have been clean for many months now. I hope this continues.\""
+    ''
+  const copingPage = scrapbookData?.pages?.find(p => p.type === 'COPING_MOMENT')
+  const defaultCopingText = [copingPage?.title, copingPage?.caption].filter(Boolean).join('\n')
+  const photoMemories = (scrapbookData?.selectedPhotoMemories || scrapbookData?.curatedMemories || [])
+    .filter(memory => memory.photoUrl).slice(0, 4)
 
-  const [includeMemory, setIncludeMemory] = useState(true)
-  const [includeJournal, setIncludeJournal] = useState(true)
-  const [includeCoping, setIncludeCoping] = useState(true)
-  const [includeMoodStreak, setIncludeMoodStreak] = useState(true)
-
-  // Aesthetic Accents & Stickers
-  const [includeBotanicals, setIncludeBotanicals] = useState(true)
-  const [includeWashiTapes, setIncludeWashiTapes] = useState(true)
-  const [includeSunDoodle, setIncludeSunDoodle] = useState(true)
-  const [includeVintageStamp, setIncludeVintageStamp] = useState(true)
-  const [includeStars, setIncludeStars] = useState(true)
-
-  // Custom Editable Text & Motto
   const [customReflection, setCustomReflection] = useState(defaultJournalQuote)
-  const [customNote, setCustomNote] = useState('Sunflower always make me smile')
-  const [activeTab, setActiveTab] = useState('cards') // 'text' | 'cards'
-
-  // Interactive Aesthetic Stickers Collection (User-provided)
-  const [userStickers, setUserStickers] = useState([
-    { id: 'heart_sunflower', name: 'Heart Sunflower', preview: '/stickers/heart_sunflower.png', enabled: true, position: 'bottom-left', size: 110 },
-    { id: 'sunflower_trio', name: 'Painted Sunflower Trio', preview: '/stickers/sunflower_trio.png', enabled: false, position: 'bottom-left', size: 165 },
-    { id: 'sleeping_cat', name: 'Cozy Sleeping Kitten', preview: '/stickers/sleeping_cat.png', enabled: true, position: 'bottom-right', size: 145 },
-    { id: 'star_god_is_good', name: 'Golden Star "God is Good"', preview: '/stickers/star_god_is_good.png', enabled: true, position: 'center', size: 95 },
-    { id: 'daffodils_bouquet', name: 'Watercolor Daffodils', preview: '/stickers/daffodils_bouquet.png', enabled: false, position: 'top-right', size: 140 },
-  ])
+  const [customCoping, setCustomCoping] = useState(defaultCopingText)
+  const [layerLayout, setLayerLayout] = useState(() => structuredClone(SCRAPBOOK_LAYER_DEFAULTS))
+  const [selectedLayer, setSelectedLayer] = useState('journal')
+  const [activeTab, setActiveTab] = useState('design')
+  const [photoSources, setPhotoSources] = useState({})
+  const [photoZoom, setPhotoZoom] = useState({})
+  const [layerVisibility, setLayerVisibility] = useState({})
+  const [textColor, setTextColor] = useState('#3d291d')
+  const [theme, setTheme] = useState('original')
+  const [noteStyle, setNoteStyle] = useState('default')
+  const [decorations, setDecorations] = useState([])
+  const [editorError, setEditorError] = useState('')
+  const [history, setHistory] = useState(() => [{
+    layerLayout: structuredClone(SCRAPBOOK_LAYER_DEFAULTS),
+    customReflection: defaultJournalQuote,
+    customCoping: defaultCopingText,
+    photoSources: {},
+    photoZoom: {},
+    layerVisibility: {},
+    textColor: '#3d291d',
+    theme: 'original',
+    noteStyle: 'default',
+    decorations: [],
+  }])
+  const [historyIndex, setHistoryIndex] = useState(0)
 
   const [shareState, setShareState] = useState('idle') // idle | generating | success | error
   const [previewReady, setPreviewReady] = useState(false)
+  const [previewError, setPreviewError] = useState('')
 
   const canvasRef = useRef(null)
+  const editorRef = useRef(null)
+  const photoInputRef = useRef(null)
+  const photoSourcesRef = useRef(photoSources)
+  const photoZoomRef = useRef(photoZoom)
+  const layerVisibilityRef = useRef(layerVisibility)
+  const decorationsRef = useRef(decorations)
+  const textColorRef = useRef(textColor)
+  const themeRef = useRef(theme)
+  const noteStyleRef = useRef(noteStyle)
+  const layerLayoutRef = useRef(layerLayout)
+  const customReflectionRef = useRef(customReflection)
+  const customCopingRef = useRef(customCoping)
+  const historyRef = useRef(history)
+  const historyIndexRef = useRef(0)
+  const dragRef = useRef(null)
   const canShare = typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare
+
+  const saveSnapshot = useCallback((snapshot) => {
+    const nextHistory = [...historyRef.current.slice(0, historyIndexRef.current + 1), snapshot].slice(-30)
+    historyRef.current = nextHistory
+    historyIndexRef.current = nextHistory.length - 1
+    setHistory(nextHistory)
+    setHistoryIndex(nextHistory.length - 1)
+  }, [])
+
+  const applySnapshot = useCallback((snapshot) => {
+    layerLayoutRef.current = snapshot.layerLayout
+    customReflectionRef.current = snapshot.customReflection
+    customCopingRef.current = snapshot.customCoping
+    setLayerLayout(snapshot.layerLayout)
+    setCustomReflection(snapshot.customReflection)
+    setCustomCoping(snapshot.customCoping)
+    photoSourcesRef.current = snapshot.photoSources || {}
+    photoZoomRef.current = snapshot.photoZoom || {}
+    layerVisibilityRef.current = snapshot.layerVisibility || {}
+    decorationsRef.current = snapshot.decorations || []
+    textColorRef.current = snapshot.textColor || '#3d291d'
+    themeRef.current = snapshot.theme || 'original'
+    noteStyleRef.current = snapshot.noteStyle || 'default'
+    setPhotoSources(photoSourcesRef.current)
+    setPhotoZoom(photoZoomRef.current)
+    setLayerVisibility(layerVisibilityRef.current)
+    setDecorations(decorationsRef.current)
+    setTextColor(textColorRef.current)
+    setTheme(themeRef.current)
+    setNoteStyle(noteStyleRef.current)
+  }, [])
+
+  const makeSnapshot = (overrides = {}) => ({
+    layerLayout: overrides.layerLayout || layerLayoutRef.current,
+    customReflection: overrides.customReflection ?? customReflectionRef.current,
+    customCoping: overrides.customCoping ?? customCopingRef.current,
+    photoSources: overrides.photoSources || photoSourcesRef.current,
+    photoZoom: overrides.photoZoom || photoZoomRef.current,
+    layerVisibility: overrides.layerVisibility || layerVisibilityRef.current,
+    textColor: overrides.textColor || textColorRef.current,
+    theme: overrides.theme || themeRef.current,
+    noteStyle: overrides.noteStyle || noteStyleRef.current,
+    decorations: overrides.decorations || decorationsRef.current,
+  })
+
+  const updateText = (field, value) => {
+    if (field === 'customReflection') {
+      customReflectionRef.current = value
+      setCustomReflection(value)
+    } else {
+      customCopingRef.current = value
+      setCustomCoping(value)
+    }
+    saveSnapshot(makeSnapshot({
+      [field]: value,
+    }))
+  }
+
+  const updateDesignOption = (field, value) => {
+    if (field === 'textColor') {
+      textColorRef.current = value
+      setTextColor(value)
+    } else if (field === 'theme') {
+      themeRef.current = value
+      setTheme(value)
+    } else {
+      noteStyleRef.current = value
+      setNoteStyle(value)
+    }
+    saveSnapshot(makeSnapshot({ [field]: value }))
+  }
+
+  const choosePhotoReplacement = (index) => {
+    setSelectedLayer(`photo${index}`)
+    if (photoInputRef.current) {
+      photoInputRef.current.value = ''
+      photoInputRef.current.dataset.photoIndex = String(index)
+      photoInputRef.current.click()
+    }
+  }
+
+  const handlePhotoReplacement = (event) => {
+    const file = event.target.files?.[0]
+    const photoIndex = Number(event.currentTarget.dataset.photoIndex)
+    if (!file || !Number.isInteger(photoIndex) || photoIndex < 0 || photoIndex > 3) return
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setEditorError('Choose a JPG, PNG, or WebP photo.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setEditorError('Choose a photo smaller than 10 MB.')
+      return
+    }
+    setEditorError('')
+    const replacePhoto = async () => {
+      const bitmap = await createImageBitmap(file)
+      try {
+        const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(bitmap.width * scale)
+        canvas.height = Math.round(bitmap.height * scale)
+        const context = canvas.getContext('2d')
+        if (!context) throw new Error('A photo editing canvas could not be created.')
+        context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+        const compressed = await new Promise((resolve, reject) => {
+          canvas.toBlob(blob => {
+            if (blob) resolve(blob)
+            else reject(new Error('The photo could not be prepared for the scrapbook.'))
+          }, 'image/jpeg', 0.88)
+        })
+        const reader = new FileReader()
+        const dataUrl = await new Promise((resolve, reject) => {
+          reader.onerror = () => reject(new Error('This photo could not be read. Please try another file.'))
+          reader.onload = () => typeof reader.result === 'string'
+            ? resolve(reader.result)
+            : reject(new Error('This photo could not be read. Please try another file.'))
+          reader.readAsDataURL(compressed)
+        })
+        const nextSources = { ...photoSourcesRef.current, [photoIndex]: dataUrl }
+        photoSourcesRef.current = nextSources
+        setPhotoSources(nextSources)
+        const nextZoom = { ...photoZoomRef.current, [photoIndex]: 1 }
+        photoZoomRef.current = nextZoom
+        setPhotoZoom(nextZoom)
+        saveSnapshot(makeSnapshot({ photoSources: nextSources, photoZoom: nextZoom }))
+      } finally {
+        bitmap.close()
+      }
+    }
+    replacePhoto().catch(error => {
+      console.error('[scrapbook photo replacement error]', error)
+      setEditorError(error.message || 'This photo could not be prepared. Please try another file.')
+    })
+  }
+
+  const updatePhotoZoom = (index, value) => {
+    const nextZoom = { ...photoZoomRef.current, [index]: Number(value) }
+    photoZoomRef.current = nextZoom
+    setPhotoZoom(nextZoom)
+    saveSnapshot(makeSnapshot({ photoZoom: nextZoom }))
+  }
+
+  const toggleLayerVisibility = (layerId) => {
+    const nextVisibility = {
+      ...layerVisibilityRef.current,
+      [layerId]: layerVisibilityRef.current[layerId] === false,
+    }
+    layerVisibilityRef.current = nextVisibility
+    setLayerVisibility(nextVisibility)
+    saveSnapshot(makeSnapshot({ layerVisibility: nextVisibility }))
+  }
+
+  const addDecoration = (kind, content, color = '#f6c945') => {
+    const id = `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const decoration = {
+      id,
+      kind,
+      content,
+      color,
+      x: 400,
+      y: 900,
+      width: kind === 'tape' ? 190 : 110,
+      height: kind === 'tape' ? 45 : 110,
+    }
+    const nextDecorations = [...decorationsRef.current, decoration]
+    decorationsRef.current = nextDecorations
+    setDecorations(nextDecorations)
+    setSelectedLayer(`decoration:${id}`)
+    saveSnapshot(makeSnapshot({ decorations: nextDecorations }))
+  }
+
+  const removeSelectedDecoration = () => {
+    const decorationId = selectedLayer.slice('decoration:'.length)
+    const nextDecorations = decorationsRef.current.filter(decoration => decoration.id !== decorationId)
+    decorationsRef.current = nextDecorations
+    setDecorations(nextDecorations)
+    setSelectedLayer('journal')
+    saveSnapshot(makeSnapshot({ decorations: nextDecorations }))
+  }
+
+  const handleEditorPointerDown = (event, layerId, mode = 'move') => {
+    if (!editorRef.current) return
+    event.preventDefault()
+    event.stopPropagation()
+    setSelectedLayer(layerId)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const initial = layerId.startsWith('decoration:')
+      ? decorationsRef.current.find(decoration => decoration.id === layerId.slice('decoration:'.length))
+      : layerLayoutRef.current[layerId]
+    if (!initial) return
+    dragRef.current = {
+      layerId,
+      mode,
+      startX: event.clientX,
+      startY: event.clientY,
+      initial: { ...initial },
+    }
+  }
+
+  const handleEditorPointerMove = (event) => {
+    const drag = dragRef.current
+    if (!drag || !editorRef.current) return
+    const bounds = editorRef.current.getBoundingClientRect()
+    const deltaX = (event.clientX - drag.startX) * 1080 / bounds.width
+    const deltaY = (event.clientY - drag.startY) * 1920 / bounds.height
+    const next = { ...drag.initial }
+
+    if (drag.mode === 'resize') {
+      next.width = Math.min(1080 - next.x, Math.max(80, drag.initial.width + deltaX))
+      next.height = Math.min(1920 - next.y, Math.max(60, drag.initial.height + deltaY))
+    } else {
+      next.x = Math.max(0, Math.min(1080 - next.width, drag.initial.x + deltaX))
+      next.y = Math.max(0, Math.min(1920 - next.height, drag.initial.y + deltaY))
+    }
+    if (drag.layerId.startsWith('decoration:')) {
+      const decorationId = drag.layerId.slice('decoration:'.length)
+      const nextDecorations = decorationsRef.current.map(decoration =>
+        decoration.id === decorationId ? { ...decoration, ...next } : decoration,
+      )
+      decorationsRef.current = nextDecorations
+      setDecorations(nextDecorations)
+    } else {
+      const updatedLayout = { ...layerLayoutRef.current, [drag.layerId]: next }
+      layerLayoutRef.current = updatedLayout
+      setLayerLayout(updatedLayout)
+    }
+  }
+
+  const finishEditorPointer = () => {
+    if (!dragRef.current) return
+    dragRef.current = null
+    saveSnapshot(makeSnapshot())
+  }
+
+  const undoEdit = () => {
+    if (historyIndexRef.current <= 0) return
+    const nextIndex = historyIndexRef.current - 1
+    historyIndexRef.current = nextIndex
+    setHistoryIndex(nextIndex)
+    applySnapshot(historyRef.current[nextIndex])
+  }
+
+  const redoEdit = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return
+    const nextIndex = historyIndexRef.current + 1
+    historyIndexRef.current = nextIndex
+    setHistoryIndex(nextIndex)
+    applySnapshot(historyRef.current[nextIndex])
+  }
+
+  const resetEditor = () => {
+    const resetLayout = structuredClone(SCRAPBOOK_LAYER_DEFAULTS)
+    layerLayoutRef.current = resetLayout
+    customReflectionRef.current = defaultJournalQuote
+    customCopingRef.current = defaultCopingText
+    setLayerLayout(resetLayout)
+    setCustomReflection(defaultJournalQuote)
+    setCustomCoping(defaultCopingText)
+    photoSourcesRef.current = {}
+    photoZoomRef.current = {}
+    layerVisibilityRef.current = {}
+    decorationsRef.current = []
+    textColorRef.current = '#3d291d'
+    themeRef.current = 'original'
+    noteStyleRef.current = 'default'
+    setPhotoSources({})
+    setPhotoZoom({})
+    setLayerVisibility({})
+    setDecorations([])
+    setTextColor('#3d291d')
+    setTheme('original')
+    setNoteStyle('default')
+    saveSnapshot({
+      layerLayout: resetLayout,
+      customReflection: defaultJournalQuote,
+      customCoping: defaultCopingText,
+      photoSources: {},
+      photoZoom: {},
+      layerVisibility: {},
+      textColor: '#3d291d',
+      theme: 'original',
+      noteStyle: 'default',
+      decorations: [],
+    })
+  }
 
   // Update live preview whenever options or custom text change
   useEffect(() => {
     let cancelled = false
     async function updatePreview() {
       if (!canvasRef.current) return
+      setPreviewReady(false)
+      setPreviewError('')
       try {
         await renderScrapbookTemplate(canvasRef.current, scrapbookData, {
-          includeMemory,
-          includeJournal,
-          includeCoping,
-          includeMoodStreak,
-          includeStickers: true,
-          includeBotanicals,
-          includeWashiTapes,
-          includeSunDoodle,
-          includeVintageStamp,
-          includeStars,
           customReflection,
-          customNote,
-          stickers: userStickers,
+          customCoping,
+          layerLayout,
+          photoSources,
+          photoZoom,
+          layerVisibility,
+          textColor,
+          theme,
+          noteStyle,
+          decorations,
         })
         if (!cancelled) setPreviewReady(true)
       } catch (err) {
         console.error('[renderScrapbookCollage preview error]', err)
+        if (!cancelled) setPreviewError(err.message || 'The scrapbook preview could not be rendered.')
       }
     }
     updatePreview()
@@ -501,18 +811,16 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     }
   }, [
     scrapbookData,
-    includeMemory,
-    includeJournal,
-    includeCoping,
-    includeMoodStreak,
-    includeBotanicals,
-    includeWashiTapes,
-    includeSunDoodle,
-    includeVintageStamp,
-    includeStars,
     customReflection,
-    customNote,
-    userStickers,
+    customCoping,
+    layerLayout,
+    photoSources,
+    photoZoom,
+    layerVisibility,
+    textColor,
+    theme,
+    noteStyle,
+    decorations,
   ])
 
   const handleExport = useCallback(async (downloadOnly = false) => {
@@ -521,19 +829,16 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
 
     try {
       await renderScrapbookTemplate(canvasRef.current, scrapbookData, {
-        includeMemory,
-        includeJournal,
-        includeCoping,
-        includeMoodStreak,
-        includeStickers: true,
-        includeBotanicals,
-        includeWashiTapes,
-        includeSunDoodle,
-        includeVintageStamp,
-        includeStars,
         customReflection,
-        customNote,
-        stickers: userStickers,
+        customCoping,
+        layerLayout,
+        photoSources,
+        photoZoom,
+        layerVisibility,
+        textColor,
+        theme,
+        noteStyle,
+        decorations,
       })
 
       canvasRef.current.toBlob(async (blob) => {
@@ -585,18 +890,16 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     }
   }, [
     scrapbookData,
-    includeMemory,
-    includeJournal,
-    includeCoping,
-    includeMoodStreak,
-    includeBotanicals,
-    includeWashiTapes,
-    includeSunDoodle,
-    includeVintageStamp,
-    includeStars,
     customReflection,
-    customNote,
-    userStickers,
+    customCoping,
+    layerLayout,
+    photoSources,
+    photoZoom,
+    layerVisibility,
+    textColor,
+    theme,
+    noteStyle,
+    decorations,
     canShare,
   ])
 
@@ -611,27 +914,164 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           My Journey Scrapbook
         </h2>
         <p className="text-[11px] text-white/60 font-medium">
-          Customize your reflection words, stickers, and layout for full-screen sharing.
+          Edit your photos, words, and scrapbook design before sharing.
         </p>
       </div>
 
-      {/* Live 9:16 Visual Preview Canvas */}
-      <div className="relative w-full max-w-[260px] sm:max-w-[290px] aspect-[9/16] mx-auto my-2 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 bg-[#265321] shrink-0">
+      {/* Live 9:16 Visual Preview Canvas and direct-manipulation layer handles */}
+      <div
+        ref={editorRef}
+        className="relative w-full max-w-[260px] sm:max-w-[290px] aspect-[9/16] mx-auto my-2 rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20 bg-[#265321] shrink-0 touch-none"
+        onPointerMove={handleEditorPointerMove}
+        onPointerUp={finishEditorPointer}
+        onPointerCancel={finishEditorPointer}
+      >
         <canvas
           ref={canvasRef}
           width={1080}
           height={1920}
-          className="w-full h-full object-contain"
+          className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+        />
+        {[
+          ...photoMemories
+            .map((_, index) => ({ id: `photo${index}`, label: `Photo ${index + 1}` }))
+            .filter(({ id }) => layerVisibility[id] !== false),
+          ...(customReflection.trim() && layerVisibility.journal !== false ? [{ id: 'journal', label: 'Journal text' }] : []),
+          ...(customCoping.trim() && layerVisibility.coping !== false ? [{ id: 'coping', label: 'Coping text' }] : []),
+          ...(scrapbookData?.selectedMoodEntries?.length && layerVisibility.mood !== false ? [{ id: 'mood', label: 'Mood entries' }] : []),
+          ...decorations.map(decoration => ({
+            id: `decoration:${decoration.id}`,
+            label: decoration.kind === 'tape' ? 'Washi tape' : 'Sticker',
+            decoration,
+          })),
+        ].map(({ id, label }) => {
+          const decoration = id.startsWith('decoration:')
+            ? decorations.find(item => item.id === id.slice('decoration:'.length))
+            : null
+          const layer = decoration || layerLayout[id]
+          if (!layer) return null
+          const selected = selectedLayer === id
+          return (
+            <div
+              key={id}
+              role="group"
+              tabIndex={0}
+              aria-label={`${label}. Drag to move; drag the corner to resize.`}
+              onPointerDown={event => handleEditorPointerDown(event, id)}
+              onKeyDown={event => {
+                const step = event.shiftKey ? 10 : 2
+                const offsets = {
+                  ArrowLeft: [-step, 0],
+                  ArrowRight: [step, 0],
+                  ArrowUp: [0, -step],
+                  ArrowDown: [0, step],
+                }
+                const offset = offsets[event.key]
+                if (!offset) return
+                event.preventDefault()
+                if (id.startsWith('decoration:')) {
+                  const decorationId = id.slice('decoration:'.length)
+                  const nextDecorations = decorationsRef.current.map(decoration => {
+                    if (decoration.id !== decorationId) return decoration
+                    return {
+                      ...decoration,
+                      x: Math.max(0, Math.min(1080 - decoration.width, decoration.x + offset[0])),
+                      y: Math.max(0, Math.min(1920 - decoration.height, decoration.y + offset[1])),
+                    }
+                  })
+                  decorationsRef.current = nextDecorations
+                  setDecorations(nextDecorations)
+                  saveSnapshot(makeSnapshot({ decorations: nextDecorations }))
+                  return
+                }
+                const next = {
+                  ...layer,
+                  x: Math.max(0, Math.min(1080 - layer.width, layer.x + offset[0])),
+                  y: Math.max(0, Math.min(1920 - layer.height, layer.y + offset[1])),
+                }
+                const nextLayout = { ...layerLayoutRef.current, [id]: next }
+                layerLayoutRef.current = nextLayout
+                setLayerLayout(nextLayout)
+                saveSnapshot(makeSnapshot({ layerLayout: nextLayout }))
+                setSelectedLayer(id)
+              }}
+              className={`absolute z-10 cursor-move touch-none ${
+                selected
+                  ? 'border-2 border-[#F6C945] bg-[#F6C945]/10'
+                  : 'border border-white/50 hover:border-[#F6C945]'
+              }`}
+              style={{
+                left: `${layer.x / 1080 * 100}%`,
+                top: `${layer.y / 1920 * 100}%`,
+                width: `${layer.width / 1080 * 100}%`,
+                height: `${layer.height / 1920 * 100}%`,
+              }}
+            >
+              {selected && (
+                <>
+                  <span className="absolute left-0 top-0 -translate-y-full whitespace-nowrap rounded-t bg-[#F6C945] px-1.5 py-0.5 text-[8px] font-black text-[#3D291D]">
+                    {label}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Resize ${label}`}
+                    onPointerDown={event => handleEditorPointerDown(event, id, 'resize')}
+                    className="absolute -bottom-1.5 -right-1.5 h-3.5 w-3.5 rounded-full border-2 border-[#3D291D] bg-[#F6C945] cursor-se-resize touch-none"
+                  />
+                </>
+              )}
+            </div>
+          )
+        })}
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handlePhotoReplacement}
+          className="hidden"
         />
         {!previewReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-[#F6C945] text-xs font-bold gap-2">
-            <span className="animate-spin text-xl text-[#F6C945]">✦</span>
-            <span>Assembling your scrapbook…</span>
+            {!previewError && <span className="animate-spin text-xl text-[#F6C945]">✦</span>}
+            <span role={previewError ? 'alert' : undefined}>
+              {previewError || 'Assembling your scrapbook…'}
+            </span>
           </div>
         )}
         <div className="absolute bottom-2 left-2 right-2 px-2.5 py-1 rounded-lg bg-black/60 backdrop-blur-md text-[9px] font-bold text-white/80 flex items-center justify-between">
           <span>1080 × 1920 px (9:16 Story)</span>
-          <span className="text-[#F6C945]">✦ Live Preview</span>
+          <span className="text-[#F6C945]">✦ Drag to edit</span>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-xs items-center justify-between gap-2 text-[10px] text-white/70">
+        <span className="text-left">Drag to move · corner to resize</span>
+        <div className="flex shrink-0 gap-1">
+          <button
+            type="button"
+            onClick={undoEdit}
+            disabled={historyIndex === 0}
+            className="rounded-md bg-white/10 px-2 py-1 font-bold disabled:opacity-35"
+            aria-label="Undo scrapbook edit"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={redoEdit}
+            disabled={historyIndex >= history.length - 1}
+            className="rounded-md bg-white/10 px-2 py-1 font-bold disabled:opacity-35"
+            aria-label="Redo scrapbook edit"
+          >
+            Redo
+          </button>
+          <button
+            type="button"
+            onClick={resetEditor}
+            className="rounded-md bg-white/10 px-2 py-1 font-bold"
+          >
+            Reset
+          </button>
         </div>
       </div>
 
@@ -647,24 +1087,24 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           }`}
         >
           <Edit3 className="w-3.5 h-3.5" />
-          <span>Words & Motto</span>
+          <span>Words</span>
         </button>
 
         <button
           type="button"
-          onClick={() => setActiveTab('cards')}
+          onClick={() => setActiveTab('design')}
           className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all ${
-            activeTab === 'cards'
+            activeTab === 'design'
               ? 'bg-[#F6C945] text-[#3D291D] shadow-sm'
               : 'text-white/70 hover:text-white hover:bg-white/5'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
-          <span>Cards</span>
+          <span>Design</span>
         </button>
       </div>
 
-      {/* TAB 1: WORDS & MOTTO */}
+      {/* TAB 1: WORDS */}
       {activeTab === 'text' && (
         <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-3 text-left my-2 rounded-xl shadow-md animate-fadeIn">
           <div>
@@ -674,7 +1114,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
               </label>
               <button
                 type="button"
-                onClick={() => setCustomReflection(defaultJournalQuote)}
+                onClick={() => updateText('customReflection', defaultJournalQuote)}
                 className="text-[9px] font-bold text-[#8C6218] hover:underline flex items-center gap-1"
                 title="Reset to your journal entry"
               >
@@ -683,206 +1123,174 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
             </div>
             <textarea
               value={customReflection}
-              onChange={e => setCustomReflection(e.target.value)}
+              onChange={e => updateText('customReflection', e.target.value)}
               rows={3}
               placeholder="What thoughts or reflections made an impact on you this week?"
               className="w-full px-2.5 py-2 text-xs rounded-lg border border-warm/20 bg-white/70 text-warm focus:outline-none focus:ring-1 focus:ring-[#F6C945] font-serif italic resize-none leading-relaxed"
             />
           </div>
-
+          <div>
+            <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-warm/70">
+              Coping Note
+            </label>
+            <textarea
+              value={customCoping}
+              onChange={e => updateText('customCoping', e.target.value)}
+              rows={3}
+              placeholder="Edit your coping strategy note"
+              className="w-full resize-none rounded-lg border border-warm/20 bg-white/70 px-2.5 py-2 text-xs leading-relaxed text-warm focus:outline-none focus:ring-1 focus:ring-[#F6C945] font-serif"
+            />
+          </div>
         </div>
       )}
 
-      {/* TAB 2: STICKERS & STAMP */}
-      {activeTab === 'stickers' && (
-        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-3 text-left my-2 rounded-xl shadow-md animate-fadeIn max-h-[280px] overflow-y-auto custom-scrollbar">
-          {/* Section 1: User Die-Cut Stickers */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1.5">
-              Choose Stickers & Placement
+      {/* Design controls replace the redundant section visibility checkboxes. */}
+      {activeTab === 'design' && (
+        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-3 text-left my-2 rounded-xl shadow-md animate-fadeIn">
+          {selectedLayer.startsWith('photo') && (
+            <div className="space-y-2 border-b border-warm/10 pb-3">
+              <p className="text-[10px] font-black uppercase tracking-wider text-warm/60">Selected photo</p>
+              <button
+                type="button"
+                onClick={() => choosePhotoReplacement(Number(selectedLayer.replace('photo', '')))}
+                className="w-full rounded-lg bg-[#F6C945] px-3 py-2 text-xs font-black text-[#3D291D]"
+              >
+                Replace photo
+              </button>
+              <label className="block text-[10px] font-bold text-warm">
+                Zoom / crop
+                <input
+                  type="range"
+                  min="1"
+                  max="2.5"
+                  step="0.05"
+                  value={photoZoom[Number(selectedLayer.replace('photo', ''))] || 1}
+                  onChange={event => updatePhotoZoom(Number(selectedLayer.replace('photo', '')), event.target.value)}
+                  className="mt-1 block w-full accent-[#8C6218]"
+                />
+              </label>
+            </div>
+          )}
+
+          {editorError && <p role="alert" className="text-xs font-semibold text-rose-700">{editorError}</p>}
+
+          <div className="border-b border-warm/10 pb-3">
+            <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-warm/60">
+              Show in scrapbook
             </p>
+            <p className="mb-2 text-[9px] leading-relaxed text-warm/60">
+              Hide any personal detail you don’t want in the exported image.
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                ...photoMemories.map((_, index) => [`photo${index}`, `Photo ${index + 1}`]),
+                ['journal', 'Journal'],
+                ['coping', 'Coping note'],
+                ['mood', 'Mood entries'],
+              ].map(([layerId, label]) => {
+                const visible = layerVisibility[layerId] !== false
+                return (
+                  <button
+                    key={layerId}
+                    type="button"
+                    aria-pressed={visible}
+                    onClick={() => toggleLayerVisibility(layerId)}
+                    className={`rounded-lg px-2 py-1.5 text-left text-[10px] font-bold ${
+                      visible ? 'bg-emerald-100 text-emerald-900' : 'bg-warm/10 text-warm/50'
+                    }`}
+                  >
+                    {visible ? 'Shown' : 'Hidden'} · {label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
-            <div className="space-y-2">
-              {userStickers.map(st => (
-                <div
-                  key={st.id}
-                  className={`p-2 rounded-lg border transition-all ${
-                    st.enabled
-                      ? 'bg-white border-[#F6C945]/50 shadow-sm'
-                      : 'bg-black/5 border-transparent opacity-65'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer flex-1 select-none">
-                      <div className="w-8 h-8 rounded bg-[#FFFDF9] border border-warm/15 p-0.5 flex items-center justify-center shrink-0">
-                        <img src={st.preview} alt={st.name} className="w-full h-full object-contain" />
-                      </div>
-                      <span className="text-[11px] font-bold text-warm leading-tight">{st.name}</span>
-                    </label>
-
-                    <input
-                      type="checkbox"
-                      checked={st.enabled}
-                      onChange={e => {
-                        const checked = e.target.checked
-                        setUserStickers(prev =>
-                          prev.map(item => (item.id === st.id ? { ...item, enabled: checked } : item))
-                        )
-                      }}
-                      className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer ml-2"
-                    />
-                  </div>
-
-                  {st.enabled && (
-                    <div className="mt-2 pt-2 border-t border-warm/10 flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-bold text-warm/60 uppercase tracking-wider">Position</span>
-                      <select
-                        value={st.position}
-                        onChange={e => {
-                          const newPos = e.target.value
-                          setUserStickers(prev =>
-                            prev.map(item => (item.id === st.id ? { ...item, position: newPos } : item))
-                          )
-                        }}
-                        className="text-[10px] font-bold text-[#755B00] bg-warm/5 px-2 py-1 rounded-md border border-warm/15 focus:outline-none cursor-pointer"
-                      >
-                        <option value="bottom-left">Bottom Left</option>
-                        <option value="bottom-right">Bottom Right</option>
-                        <option value="center">Center Accent</option>
-                        <option value="top-left">Top Left</option>
-                        <option value="top-right">Top Right</option>
-                        <option value="mid-left">Middle Left</option>
-                        <option value="mid-right">Middle Right</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+          <div>
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-warm/60">Text color</p>
+            <div className="flex flex-wrap gap-2">
+              {['#3d291d', '#7d1d1d', '#254b35', '#244d73', '#704a91', '#111827'].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  aria-label={`Set text color ${color}`}
+                  aria-pressed={textColor === color}
+                  onClick={() => updateDesignOption('textColor', color)}
+                  className={`h-7 w-7 rounded-full border-2 ${textColor === color ? 'border-[#F6C945]' : 'border-white'}`}
+                  style={{ backgroundColor: color }}
+                />
               ))}
             </div>
           </div>
 
-          {/* Section 2: Botanical Accents & Seals */}
-          <div className="pt-2 border-t border-warm/15 space-y-1.5">
-            <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
-              Accents & Seals
-            </p>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-warm/60">
+            Background wash
+            <select
+              value={theme}
+              onChange={event => updateDesignOption('theme', event.target.value)}
+              className="mt-1 w-full rounded-lg border border-warm/20 bg-white px-2.5 py-2 text-xs font-semibold normal-case text-warm"
+            >
+              {Object.entries(SCRAPBOOK_THEMES).map(([key, item]) => (
+                <option key={key} value={key}>{item.label}</option>
+              ))}
+            </select>
+          </label>
 
-            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
-              <div className="flex items-center gap-2">
-                <Stamp className="w-3.5 h-3.5 text-amber-800" />
-                <span>Vintage Sanctuary Ink Stamp</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={includeVintageStamp}
-                onChange={e => setIncludeVintageStamp(e.target.checked)}
-                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-              />
-            </label>
+          <label className="block text-[10px] font-black uppercase tracking-wider text-warm/60">
+            Sticky-note paper
+            <select
+              value={noteStyle}
+              onChange={event => updateDesignOption('noteStyle', event.target.value)}
+              className="mt-1 w-full rounded-lg border border-warm/20 bg-white px-2.5 py-2 text-xs font-semibold normal-case text-warm"
+            >
+              {Object.keys(SCRAPBOOK_NOTE_STYLES).map(style => (
+                <option key={style} value={style}>{style === 'default' ? 'Original paper' : `${style[0].toUpperCase()}${style.slice(1)} paper`}</option>
+              ))}
+            </select>
+          </label>
 
-            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
-              <div className="flex items-center gap-2">
-                <Layers className="w-3.5 h-3.5 text-emerald-700" />
-                <span>Yellow Polka & Sage Washi Tapes</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={includeWashiTapes}
-                onChange={e => setIncludeWashiTapes(e.target.checked)}
-                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
-              <div className="flex items-center gap-2">
-                <Flower2 className="w-3.5 h-3.5 text-amber-600" />
-                <span>Pressed Chamomile Daisies</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={includeBotanicals}
-                onChange={e => setIncludeBotanicals(e.target.checked)}
-                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-              />
-            </label>
-
-            <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-[11px] font-bold text-warm transition-colors">
-              <div className="flex items-center gap-2">
-                <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span>Sun Doodle & Contour Stars</span>
-              </div>
-              <input
-                type="checkbox"
-                checked={includeSunDoodle && includeStars}
-                onChange={e => {
-                  setIncludeSunDoodle(e.target.checked)
-                  setIncludeStars(e.target.checked)
-                }}
-                className="w-3.5 h-3.5 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-              />
-            </label>
+          <div>
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-warm/60">Stickers</p>
+            <div className="flex flex-wrap gap-1.5">
+              {['🌼', '⭐', '💛', '🌱', '✨', '🐱', '🌷', '🦋'].map(sticker => (
+                <button
+                  key={sticker}
+                  type="button"
+                  onClick={() => addDecoration('sticker', sticker)}
+                  className="rounded-md bg-white px-2 py-1 text-lg shadow-sm"
+                  aria-label={`Add ${sticker} sticker`}
+                >
+                  {sticker}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* TAB 3: CARDS & LAYOUT */}
-      {activeTab === 'cards' && (
-        <div className="w-full max-w-xs mx-auto scrapbook-paper p-3.5 space-y-2 text-left my-2 rounded-xl shadow-md animate-fadeIn">
-          <p className="text-[10px] font-black uppercase tracking-wider text-warm/60 mb-1">
-            Content Sections
-          </p>
-
-          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
-            <div className="flex items-center gap-2.5">
-              <Camera className="w-4 h-4 text-[#755B00]" />
-              <span>Photo Memories (Polaroid Frames)</span>
+          <div>
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-warm/60">Washi tape</p>
+            <div className="flex flex-wrap gap-1.5">
+              {['#f6c945', '#e9a6a6', '#9ab89a', '#a5bfd5', '#d7b4d9'].map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => addDecoration('tape', '', color)}
+                  className="h-7 w-12 rounded-sm border border-black/10"
+                  style={{ backgroundColor: color }}
+                  aria-label={`Add washi tape in ${color}`}
+                />
+              ))}
             </div>
-            <input
-              type="checkbox"
-              checked={includeMemory}
-              onChange={e => setIncludeMemory(e.target.checked)}
-              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-            />
-          </label>
+          </div>
 
-          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
-            <div className="flex items-center gap-2.5">
-              <BookOpen className="w-4 h-4 text-[#755B00]" />
-              <span>Shared Journal Reflection Card</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={includeJournal}
-              onChange={e => setIncludeJournal(e.target.checked)}
-              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-            />
-          </label>
-
-          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>Favorite Coping Strategy Card</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={includeCoping}
-              onChange={e => setIncludeCoping(e.target.checked)}
-              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-            />
-          </label>
-
-          <label className="flex items-center justify-between p-1.5 rounded-lg hover:bg-black/5 cursor-pointer text-xs font-bold text-warm transition-colors">
-            <div className="flex items-center gap-2.5">
-              <Heart className="w-4 h-4 text-amber-500" />
-              <span>Mood Entries & Care Streak</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={includeMoodStreak}
-              onChange={e => setIncludeMoodStreak(e.target.checked)}
-              className="w-4 h-4 rounded text-[#F6C945] focus:ring-0 cursor-pointer"
-            />
-          </label>
+          {selectedLayer.startsWith('decoration:') && (
+            <button
+              type="button"
+              onClick={removeSelectedDecoration}
+              className="w-full rounded-lg bg-rose-100 px-3 py-2 text-xs font-bold text-rose-800"
+            >
+              Remove selected sticker or tape
+            </button>
+          )}
         </div>
       )}
 

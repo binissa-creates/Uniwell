@@ -1,16 +1,50 @@
-const TEMPLATE_URL = '/Scarpbook.svg'
+const TEMPLATE_URL = '/Scarpbook-background.webp'
 const CANVAS_WIDTH = 1080
 const CANVAS_HEIGHT = 1920
 
+export const SCRAPBOOK_LAYER_DEFAULTS = {
+  photo0: { x: 112, y: 374, width: 387, height: 288 },
+  photo1: { x: 679, y: 413, width: 302, height: 298 },
+  photo2: { x: 112, y: 1081, width: 392, height: 262 },
+  photo3: { x: 661, y: 1342, width: 293, height: 385 },
+  journal: { x: 146, y: 805, width: 365, height: 172 },
+  coping: { x: 266, y: 1504, width: 255, height: 178 },
+  mood: { x: 672, y: 1085, width: 258, height: 162 },
+}
+
+export const SCRAPBOOK_THEMES = {
+  original: { label: 'Original', wash: null, note: null },
+  sage: { label: 'Sage', wash: 'rgba(94, 137, 105, 0.12)', note: '#e8f0df' },
+  rose: { label: 'Rose', wash: 'rgba(183, 99, 113, 0.12)', note: '#f8e2df' },
+  lavender: { label: 'Lavender', wash: 'rgba(126, 105, 166, 0.12)', note: '#eee7f7' },
+  ocean: { label: 'Ocean', wash: 'rgba(66, 125, 160, 0.12)', note: '#e1eef4' },
+}
+
+export const SCRAPBOOK_NOTE_STYLES = {
+  default: null,
+  cream: '#fff5d6',
+  blush: '#f8e2df',
+  mint: '#e4f0df',
+  lavender: '#eee7f7',
+}
+
+const imageCache = new Map()
+
 export function loadImage(src) {
-  return new Promise(resolve => {
-    if (!src) return resolve(null)
+  if (!src) return Promise.resolve(null)
+  if (imageCache.has(src)) return imageCache.get(src)
+  const imagePromise = new Promise(resolve => {
     const image = new Image()
     image.crossOrigin = 'anonymous'
     image.onload = () => resolve(image)
-    image.onerror = () => resolve(null)
+    image.onerror = () => {
+      imageCache.delete(src)
+      resolve(null)
+    }
     image.src = src
   })
+  imageCache.set(src, imagePromise)
+  return imagePromise
 }
 
 function wrapText(context, text, maxWidth) {
@@ -32,76 +66,100 @@ function wrapText(context, text, maxWidth) {
   return lines
 }
 
-function drawImageCover(context, image, x, y, width, height, radius = 0) {
-  context.save()
-  if (radius) {
-    context.beginPath()
-    context.roundRect(x, y, width, height, radius)
-    context.clip()
-  }
-
-  if (image) {
-    const scale = Math.max(width / image.width, height / image.height)
-    const drawWidth = image.width * scale
-    const drawHeight = image.height * scale
-    context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight)
-  }
-  context.restore()
-}
-
-function drawPhoto(context, image, x, y, width, height) {
+function drawPhoto(context, image, x, y, width, height, zoom = 1) {
   if (!image) return
   context.save()
   context.beginPath()
   context.rect(x, y, width, height)
   context.clip()
-  drawImageCover(context, image, x, y, width, height)
+  const scale = Math.max(width / image.width, height / image.height) * zoom
+  const drawWidth = image.width * scale
+  const drawHeight = image.height * scale
+  context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight)
   context.restore()
 }
 
-function drawNote(context, { x, y, width, body, color = '#3d291d', fontSize = 18, lineHeight = 23, maxLines = 6 }) {
+function drawNote(context, { x, y, width, height, body, color = '#3d291d', fontSize = 16, lineHeight = 24, maxLines = 6 }) {
   context.save()
+  context.beginPath()
+  context.rect(x, y, width, height)
+  context.clip()
   context.fillStyle = color
   context.textAlign = 'left'
   context.textBaseline = 'top'
-  context.font = `italic 600 ${fontSize}px Georgia, serif`
-  String(body || '').split(/\n/).flatMap(line => wrapText(context, line, width)).slice(0, maxLines).forEach((line, index) => {
-    context.fillText(line, x, y + index * lineHeight)
+  let fittedFontSize = fontSize
+  let lines
+  do {
+    context.font = `italic 600 ${fittedFontSize}px Georgia, serif`
+    lines = String(body || '').split(/\n/).flatMap(line => wrapText(context, line, width))
+    if (lines.length <= Math.min(maxLines, Math.floor(height / lineHeight)) || fittedFontSize <= 9) break
+    fittedFontSize -= 1
+  } while (fittedFontSize > 9)
+  const fittedLineHeight = Math.min(lineHeight, fittedFontSize * 1.5)
+  lines.slice(0, Math.min(maxLines, Math.floor(height / fittedLineHeight))).forEach((line, index) => {
+    context.fillText(line, x, y + index * fittedLineHeight)
   })
   context.restore()
 }
 
-function drawMoodEntries(context, entries) {
-  const x = 604
-  const y = 1068
-  const width = 365
-  const rowHeight = 76
+function drawMoodEntries(context, entries, { x, y, width, height }, textColor) {
+  const rowHeight = 54
 
   context.save()
+  context.beginPath()
+  context.rect(x, y, width, height)
+  context.clip()
   context.textBaseline = 'top'
 
   entries.slice(0, 3).forEach((entry, index) => {
     const rowY = y + index * rowHeight
-    context.fillStyle = '#5d4037'
-    context.font = '700 14px Arial, sans-serif'
-    context.fillText(`${entry.moodLabel || entry.mood_type || 'Mood check-in'}`, x, rowY)
+    context.fillStyle = textColor
+    context.font = '700 13px Arial, sans-serif'
+    context.fillText(`${entry.moodLabel || entry.title || entry.mood_type || 'Mood check-in'}`, x, rowY)
     context.font = '10px Arial, sans-serif'
     const date = entry.logged_at ? new Date(entry.logged_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''
-    context.fillText(date, x, rowY + 21)
+    context.fillText(date, x, rowY + 20)
     if (entry.note) {
-      context.fillStyle = '#5d4037'
+      context.fillStyle = textColor
       context.font = 'italic 11px Georgia, serif'
-      context.fillText(wrapText(context, entry.note, width - 130)[0] || '', x + 128, rowY + 21)
+      wrapText(context, entry.note, width - 94).slice(0, 2).forEach((line, lineIndex) => {
+        context.fillText(line, x + 94, rowY + 19 + lineIndex * 13)
+      })
     }
   })
   context.restore()
+}
+
+function drawDecorations(context, decorations = []) {
+  decorations.forEach(decoration => {
+    const { x, y, width, height, kind, color, content } = decoration
+    context.save()
+    if (kind === 'tape') {
+      context.translate(x + width / 2, y + height / 2)
+      context.rotate(-0.12)
+      context.fillStyle = color
+      context.globalAlpha = 0.78
+      context.fillRect(-width / 2, -height / 2, width, height)
+      context.globalAlpha = 0.35
+      context.fillStyle = '#ffffff'
+      for (let stripeX = -width / 2; stripeX < width / 2; stripeX += 22) {
+        context.fillRect(stripeX, -height / 2, 8, height)
+      }
+    } else {
+      context.textAlign = 'center'
+      context.textBaseline = 'middle'
+      context.font = `${Math.min(height * 0.82, width * 0.82)}px serif`
+      context.fillText(content, x + width / 2, y + height / 2, width)
+    }
+    context.restore()
+  })
 }
 
 export async function renderScrapbookTemplate(canvas, scrapbookData, options = {}) {
   canvas.width = CANVAS_WIDTH
   canvas.height = CANVAS_HEIGHT
   const context = canvas.getContext('2d')
-  if (!context) return
+  if (!context) throw new Error('A 2D canvas context is required to render the scrapbook.')
 
   const photos = options.includeMemory === false
     ? []
@@ -111,50 +169,69 @@ export async function renderScrapbookTemplate(canvas, scrapbookData, options = {
   const moodEntries = scrapbookData?.selectedMoodEntries || []
   const journalPage = scrapbookData?.pages?.find(page => page.type === 'JOURNAL_MEMORY')
   const copingPage = scrapbookData?.pages?.find(page => page.type === 'COPING_MOMENT')
+  const layerLayout = options.layerLayout || SCRAPBOOK_LAYER_DEFAULTS
+  const layerVisibility = options.layerVisibility || {}
+  const photoSources = options.photoSources || photos.map(memory => memory.photoUrl)
   const imageSources = await Promise.all([
     loadImage(TEMPLATE_URL),
-    ...photos.map(memory => loadImage(memory.photoUrl)),
+    ...photos.map((memory, index) => loadImage(photoSources[index] || memory.photoUrl)),
   ])
   const template = imageSources[0]
 
-  if (template) context.drawImage(template, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
-  else {
-    context.fillStyle = '#fffdf9'
+  if (!template) throw new Error('The scrapbook template could not be loaded.')
+  context.drawImage(template, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
+  const theme = SCRAPBOOK_THEMES[options.theme] || SCRAPBOOK_THEMES.original
+  if (theme.wash) {
+    context.fillStyle = theme.wash
     context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
   }
 
-  const photoPositions = [
-    [140, 362, 378, 277],
-    [679, 362, 293, 316],
-    [140, 1063, 375, 258],
-    [629, 1474, 284, 166],
-  ]
-  photos.forEach((memory, index) => drawPhoto(context, imageSources[index + 1], ...photoPositions[index]))
+  photos.forEach((memory, index) => {
+    if (layerVisibility[`photo${index}`] === false) return
+    const { x, y, width, height } = layerLayout[`photo${index}`] || SCRAPBOOK_LAYER_DEFAULTS[`photo${index}`]
+    drawPhoto(context, imageSources[index + 1], x, y, width, height, options.photoZoom?.[index] || 1)
+  })
 
-  if (options.includeJournal !== false) {
-    drawNote(context, {
-      x: 143,
-      y: 790,
-      width: 386,
-      body: options.customReflection?.trim() || journalPage?.excerpt || 'A reflection you chose to keep close.',
-      fontSize: 17,
-      lineHeight: 23,
-      maxLines: 6,
+  const noteColor = SCRAPBOOK_NOTE_STYLES[options.noteStyle] || theme.note
+  const noteLayout = !noteColor
+    ? null
+    : {
+        journal: layerLayout.journal,
+        coping: layerLayout.coping,
+      }
+  if (noteLayout) {
+    Object.values(noteLayout).forEach(({ x, y, width, height }) => {
+      context.fillStyle = noteColor
+      context.fillRect(x - 8, y - 8, width + 16, height + 16)
     })
   }
 
-  if (options.includeCoping !== false) {
+  const journalText = options.customReflection == null ? journalPage?.excerpt?.trim() : options.customReflection.trim()
+  if (options.includeJournal !== false && layerVisibility.journal !== false && journalText) {
     drawNote(context, {
-      x: 175,
-      y: 1504,
-      width: 360,
-      body: `${copingPage?.title || 'A way you cared for yourself'}\n${copingPage?.caption || ''}`,
-      color: '#254b35',
-      fontSize: 17,
-      lineHeight: 23,
-      maxLines: 6,
+      ...layerLayout.journal,
+      body: journalText,
+      color: options.textColor || '#3d291d',
+      fontSize: 15,
+      lineHeight: 24,
+      maxLines: 7,
     })
   }
 
-  if (options.includeMoodStreak !== false) drawMoodEntries(context, moodEntries)
+  const copingText = options.customCoping ?? [copingPage?.title, copingPage?.caption].filter(Boolean).join('\n')
+  if (options.includeCoping !== false && layerVisibility.coping !== false && copingText) {
+    drawNote(context, {
+      ...layerLayout.coping,
+      body: copingText,
+      color: options.textColor || '#254b35',
+      fontSize: 15,
+      lineHeight: 22,
+      maxLines: 7,
+    })
+  }
+
+  if (options.includeMoodStreak !== false && layerVisibility.mood !== false) {
+    drawMoodEntries(context, moodEntries, layerLayout.mood, options.textColor || '#5d4037')
+  }
+  drawDecorations(context, options.decorations)
 }
