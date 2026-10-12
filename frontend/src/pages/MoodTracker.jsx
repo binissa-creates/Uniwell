@@ -9,6 +9,7 @@ import { Loader2, CheckCircle2, History, PenLine, ArrowRight, X, Trash2, Sparkle
 import SupportModal from '../components/SupportModal'
 import SupportPrompt from '../components/SupportPrompt'
 import MoodAnimationOverlay from '../components/MoodAnimationOverlay'
+import ReturnBloomCelebration from '../components/ReturnBloomCelebration'
 
 const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relationships', 'Personal Growth']
 const MOOD_LEVEL_LABELS = { 1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Very High' }
@@ -39,6 +40,7 @@ export default function MoodTracker() {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false)
   const [animationType, setAnimationType] = useState(null)
   const [animationMood, setAnimationMood] = useState(null)
+  const [showReturnBloom, setShowReturnBloom] = useState(false)
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -53,11 +55,28 @@ export default function MoodTracker() {
   useEffect(() => { fetchHistory() }, [fetchHistory])
 
   useEffect(() => {
+    if (!import.meta.env.DEV) return
+
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('demoReturnBloom') !== '1') return
+
+    setShowReturnBloom(true)
+    url.searchParams.delete('demoReturnBloom')
+    window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+  }, [])
+
+  useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
   const toggleTrigger = (t) =>
     setTriggers(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
+
+  const closeMoodAnimation = useCallback(() => {
+    setAnimationType(null)
+    setAnimationMood(null)
+    setShowReturnBloom(false)
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -65,6 +84,24 @@ export default function MoodTracker() {
     setLoading(true)
     setErrorMsg(null)
     try {
+      let priorHistory = history
+      if (priorHistory.length === 0) {
+        try {
+          priorHistory = await fetchMoodHistory(365)
+        } catch (historyError) {
+          console.warn('[mood return celebration] Could not check prior mood history:', historyError)
+        }
+      }
+      const lastEntry = priorHistory[0]
+      const lastEntryDay = lastEntry ? new Date(lastEntry.logged_at) : null
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      if (lastEntryDay) lastEntryDay.setHours(0, 0, 0, 0)
+      const daysSinceLastEntry = lastEntryDay
+        ? Math.round((today - lastEntryDay) / 86400000)
+        : 0
+      const isReturningAfterBreak = Boolean(lastEntry && daysSinceLastEntry >= 7)
+
       const allTriggers = [
         ...triggers,
         ...(otherActive ? ['Other'] : []),
@@ -94,6 +131,7 @@ export default function MoodTracker() {
 
       setAnimationMood(mood)
       setAnimationType(POSITIVE_MOODS.includes(mood) ? 'positive' : 'negative')
+      setShowReturnBloom(isReturningAfterBreak)
 
       setSuccess(true)
       setMood(''); setIntensity(3); setTriggers([]); setNote('')
@@ -467,12 +505,16 @@ export default function MoodTracker() {
           onClose={() => setShowSupportPrompt(false)}
         />
       )}
-      <MoodAnimationOverlay
-        type={animationType}
-        mood={animationMood}
-        isVisible={!!animationType}
-        onClose={() => { setAnimationType(null); setAnimationMood(null) }}
-      />
+      {showReturnBloom ? (
+        <ReturnBloomCelebration onClose={closeMoodAnimation} />
+      ) : (
+        <MoodAnimationOverlay
+          type={animationType}
+          mood={animationMood}
+          isVisible={!!animationType}
+          onClose={closeMoodAnimation}
+        />
+      )}
     </div>
   )
 }

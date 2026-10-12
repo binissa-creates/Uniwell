@@ -11,6 +11,7 @@ import {
   renderScrapbookTemplate,
   SCRAPBOOK_LAYER_DEFAULTS,
   SCRAPBOOK_NOTE_STYLES,
+  SCRAPBOOK_STICKERS,
   SCRAPBOOK_THEMES,
 } from '../lib/scrapbookTemplateRenderer'
 
@@ -645,17 +646,19 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     saveSnapshot(makeSnapshot({ layerVisibility: nextVisibility }))
   }
 
-  const addDecoration = (kind, content, color = '#f6c945') => {
+  const addDecoration = (kind, content, color = '#f6c945', sticker = null) => {
     const id = `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const positionIndex = decorationsRef.current.length
     const decoration = {
       id,
       kind,
       content,
       color,
-      x: 400,
-      y: 900,
-      width: kind === 'tape' ? 190 : 110,
-      height: kind === 'tape' ? 45 : 110,
+      ...(sticker ? { stickerId: sticker.id, label: sticker.label } : {}),
+      x: kind === 'tape' ? 400 : 100 + (positionIndex % 3) * 300,
+      y: kind === 'tape' ? 900 : 320 + (positionIndex % 5) * 280,
+      width: kind === 'tape' ? 190 : 190,
+      height: kind === 'tape' ? 45 : 190,
     }
     const nextDecorations = [...decorationsRef.current, decoration]
     decorationsRef.current = nextDecorations
@@ -701,8 +704,20 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
     const next = { ...drag.initial }
 
     if (drag.mode === 'resize') {
-      next.width = Math.min(1080 - next.x, Math.max(80, drag.initial.width + deltaX))
-      next.height = Math.min(1920 - next.y, Math.max(60, drag.initial.height + deltaY))
+      const isSticker = drag.layerId.startsWith('decoration:')
+        && decorationsRef.current.find(decoration => `decoration:${decoration.id}` === drag.layerId)?.stickerId
+      if (isSticker) {
+        const size = Math.min(
+          1080 - next.x,
+          1920 - next.y,
+          Math.max(80, drag.initial.width + deltaX, drag.initial.height + deltaY),
+        )
+        next.width = size
+        next.height = size
+      } else {
+        next.width = Math.min(1080 - next.x, Math.max(80, drag.initial.width + deltaX))
+        next.height = Math.min(1920 - next.y, Math.max(60, drag.initial.height + deltaY))
+      }
     } else {
       next.x = Math.max(0, Math.min(1080 - next.width, drag.initial.x + deltaX))
       next.y = Math.max(0, Math.min(1920 - next.height, drag.initial.y + deltaY))
@@ -941,7 +956,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           ...(scrapbookData?.selectedMoodEntries?.length && layerVisibility.mood !== false ? [{ id: 'mood', label: 'Mood entries' }] : []),
           ...decorations.map(decoration => ({
             id: `decoration:${decoration.id}`,
-            label: decoration.kind === 'tape' ? 'Washi tape' : 'Sticker',
+            label: decoration.kind === 'tape' ? 'Washi tape' : decoration.label || 'Sticker',
             decoration,
           })),
         ].map(({ id, label }) => {
@@ -1250,17 +1265,18 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           </label>
 
           <div>
-            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-warm/60">Stickers</p>
-            <div className="flex flex-wrap gap-1.5">
-              {['🌼', '⭐', '💛', '🌱', '✨', '🐱', '🌷', '🦋'].map(sticker => (
+            <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-warm/60">Illustrated stickers</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {SCRAPBOOK_STICKERS.map(sticker => (
                 <button
-                  key={sticker}
+                  key={sticker.id}
                   type="button"
-                  onClick={() => addDecoration('sticker', sticker)}
-                  className="rounded-md bg-white px-2 py-1 text-lg shadow-sm"
-                  aria-label={`Add ${sticker} sticker`}
+                  onClick={() => addDecoration('sticker', '', '#f6c945', sticker)}
+                  className="flex h-12 items-center justify-center rounded-lg border border-warm/10 bg-white p-1 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F6C945]"
+                  aria-label={`Add ${sticker.label} sticker`}
+                  title={sticker.label}
                 >
-                  {sticker}
+                  <img src={sticker.src} alt="" className="h-full w-full object-contain" loading="lazy" />
                 </button>
               ))}
             </div>

@@ -28,6 +28,17 @@ export const SCRAPBOOK_NOTE_STYLES = {
   lavender: '#eee7f7',
 }
 
+export const SCRAPBOOK_STICKERS = [
+  { id: 'daisy', label: 'Happy daisy', src: '/stickers/uniwell-daisy.svg' },
+  { id: 'heart', label: 'Golden heart', src: '/stickers/uniwell-heart.svg' },
+  { id: 'butterfly', label: 'Garden butterfly', src: '/stickers/uniwell-butterfly.svg' },
+  { id: 'clover', label: 'Lucky clover', src: '/stickers/uniwell-clover.svg' },
+  { id: 'rainbow', label: 'Little rainbow', src: '/stickers/uniwell-rainbow.svg' },
+  { id: 'star', label: 'Sparkle star', src: '/stickers/uniwell-star.svg' },
+  { id: 'sprig', label: 'Sage sprig', src: '/stickers/uniwell-sprig.svg' },
+  { id: 'sparkles', label: 'Golden sparkles', src: '/stickers/uniwell-sparkles.svg' },
+]
+
 const imageCache = new Map()
 
 export function loadImage(src) {
@@ -130,9 +141,9 @@ function drawMoodEntries(context, entries, { x, y, width, height }, textColor) {
   context.restore()
 }
 
-function drawDecorations(context, decorations = []) {
+function drawDecorations(context, decorations = [], stickerImages = {}) {
   decorations.forEach(decoration => {
-    const { x, y, width, height, kind, color, content } = decoration
+    const { x, y, width, height, kind, color, content, stickerId } = decoration
     context.save()
     if (kind === 'tape') {
       context.translate(x + width / 2, y + height / 2)
@@ -145,6 +156,21 @@ function drawDecorations(context, decorations = []) {
       for (let stripeX = -width / 2; stripeX < width / 2; stripeX += 22) {
         context.fillRect(stripeX, -height / 2, 8, height)
       }
+    } else if (stickerId && stickerImages[stickerId]) {
+      const image = stickerImages[stickerId]
+      const scale = Math.min(width / image.width, height / image.height)
+      const drawWidth = image.width * scale
+      const drawHeight = image.height * scale
+      context.shadowColor = 'rgba(61, 41, 29, 0.2)'
+      context.shadowBlur = 10
+      context.shadowOffsetY = 4
+      context.drawImage(
+        image,
+        x + (width - drawWidth) / 2,
+        y + (height - drawHeight) / 2,
+        drawWidth,
+        drawHeight,
+      )
     } else {
       context.textAlign = 'center'
       context.textBaseline = 'middle'
@@ -172,13 +198,27 @@ export async function renderScrapbookTemplate(canvas, scrapbookData, options = {
   const layerLayout = options.layerLayout || SCRAPBOOK_LAYER_DEFAULTS
   const layerVisibility = options.layerVisibility || {}
   const photoSources = options.photoSources || photos.map(memory => memory.photoUrl)
+  const decorations = options.decorations || []
+  const stickerIds = [...new Set(decorations
+    .filter(decoration => decoration.kind === 'sticker' && decoration.stickerId)
+    .map(decoration => decoration.stickerId))]
+  const stickers = stickerIds.map(id => SCRAPBOOK_STICKERS.find(sticker => sticker.id === id))
+  if (stickers.some(sticker => !sticker)) {
+    throw new Error('A selected scrapbook sticker is not available.')
+  }
   const imageSources = await Promise.all([
     loadImage(TEMPLATE_URL),
     ...photos.map((memory, index) => loadImage(photoSources[index] || memory.photoUrl)),
+    ...stickers.map(sticker => loadImage(sticker.src)),
   ])
   const template = imageSources[0]
 
   if (!template) throw new Error('The scrapbook template could not be loaded.')
+  const stickerImages = Object.fromEntries(stickerIds.map((id, index) => {
+    const image = imageSources[photos.length + index + 1]
+    if (!image) throw new Error(`The "${SCRAPBOOK_STICKERS.find(sticker => sticker.id === id).label}" sticker could not be loaded.`)
+    return [id, image]
+  }))
   context.drawImage(template, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT)
   const theme = SCRAPBOOK_THEMES[options.theme] || SCRAPBOOK_THEMES.original
   if (theme.wash) {
@@ -233,5 +273,5 @@ export async function renderScrapbookTemplate(canvas, scrapbookData, options = {
   if (options.includeMoodStreak !== false && layerVisibility.mood !== false) {
     drawMoodEntries(context, moodEntries, layerLayout.mood, options.textColor || '#5d4037')
   }
-  drawDecorations(context, options.decorations)
+  drawDecorations(context, decorations, stickerImages)
 }

@@ -145,6 +145,7 @@ export default function SunflowerProgress({
   careCounts = { moods: 0, journals: 0, resources: 0 },
   activeCareType = null, // 'water' | 'nourish' | 'sunlight'
   centerHero = true,
+  flowerOnly = false,
 }) {
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [isCaring, setIsCaring] = useState(false);
@@ -205,10 +206,10 @@ export default function SunflowerProgress({
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [showGuideModal]);
 
-  const size = centerHero ? 196 : 90;
+  const size = centerHero ? (flowerOnly ? 224 : 196) : 90;
 
   return (
-    <div className="relative w-full overflow-hidden select-none">
+    <div className={`relative w-full select-none ${flowerOnly ? 'overflow-visible' : 'overflow-hidden rounded-[1.8rem]'}`}>
       <style>{`
         @keyframes thrivingBloom {
           0%, 100% { transform: rotate(-2.5deg) translateY(0) scale(1); }
@@ -234,6 +235,10 @@ export default function SunflowerProgress({
         @keyframes radiantAura {
           0%, 100% { opacity: 0.62; transform: scale(0.86); }
           50% { opacity: 1; transform: scale(1.18); }
+        }
+        @keyframes radiantHalo {
+          0%, 100% { opacity: 0.72; }
+          50% { opacity: 1; }
         }
         @keyframes gardenAura {
           0%, 100% { opacity: 0.3; transform: scale(0.92); }
@@ -286,21 +291,32 @@ export default function SunflowerProgress({
 
       {/* ── Soft Botanical Card Environment ── */}
       <div
-        className="absolute inset-0 rounded-[1.8rem] pointer-events-none"
-        style={{ background: 'linear-gradient(120deg, #FFFDF8 0%, #FFFCF5 58%, #F2F7F1 100%)' }}
+        className={`absolute inset-0 pointer-events-none ${flowerOnly ? '' : 'rounded-[1.8rem]'}`}
+        style={{
+          background: flowerOnly
+            ? 'transparent'
+            : 'linear-gradient(120deg, #FFFDF8 0%, #FFFCF5 58%, #F2F7F1 100%)',
+        }}
       >
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none blur-[52px]"
-          style={{ background: stateCfg.glowColor }}
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none ${
+            flowerOnly ? 'h-[25rem] w-[25rem]' : 'h-72 w-72 blur-[52px]'
+          }`}
+          style={{
+            background: flowerOnly
+              ? 'radial-gradient(ellipse, rgba(255, 190, 35, 0.48) 0%, rgba(255, 201, 67, 0.28) 30%, rgba(255, 218, 120, 0.12) 52%, transparent 72%)'
+              : stateCfg.glowColor,
+            animation: flowerOnly ? 'radiantHalo 2.6s ease-in-out infinite' : undefined,
+          }}
         />
-        <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#81B29A]/10 blur-3xl" />
+        {!flowerOnly && <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-[#81B29A]/10 blur-3xl" />}
       </div>
 
       {/* ── CARD CONTENT HIERARCHY ── */}
-      <div className="relative z-10 p-4 sm:p-5 flex flex-col items-center">
+      <div className={`relative z-10 flex flex-col items-center ${flowerOnly ? 'p-1' : 'p-4 sm:p-5'}`}>
 
         {/* ── Top Header: Bloom Status Pill & Guide Trigger ── */}
-        <div className="w-full flex items-center justify-between gap-2 mb-1">
+        {!flowerOnly && <div className="w-full flex items-center justify-between gap-2 mb-1">
           <div
             className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md transition-colors"
             style={{
@@ -321,19 +337,20 @@ export default function SunflowerProgress({
             <Info className="w-3.5 h-3.5 text-[#F6C945]" />
             <span className="hidden sm:inline">About Care</span>
           </button>
-        </div>
+        </div>}
 
         {/* ── INTERACTIVE FULLY-BLOOMED SUNFLOWER ── */}
         <div className="flex flex-col items-center justify-center">
           <div
             className="relative flex items-center justify-center cursor-pointer select-none group my-0.5"
             style={{ width: size + 56, height: size + 56 }}
-            onClick={() => triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻')}
-            title="Click to give your sunflower a gentle moment of care 🌻"
-            role="button"
-            tabIndex={0}
-            aria-label="Interactive Sunflower Companion. Click to nurture."
+            onClick={flowerOnly ? undefined : () => triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻')}
+            title={flowerOnly ? undefined : 'Click to give your sunflower a gentle moment of care 🌻'}
+            role={flowerOnly ? undefined : 'button'}
+            tabIndex={flowerOnly ? undefined : 0}
+            aria-label={flowerOnly ? undefined : 'Interactive Sunflower Companion. Click to nurture.'}
             onKeyDown={(e) => {
+              if (flowerOnly) return;
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 triggerCare('water', 'Your presence is a gentle gift to yourself. 🌻');
@@ -560,8 +577,22 @@ export default function SunflowerProgress({
                 {/* ── Expressive, Gentle Animated Face ── */}
                 <g style={{ transformOrigin: '100px 95px' }}>
                   {/* Soft Rosy Cheeks */}
-                  <ellipse cx="80" cy="104" rx="6" ry="3.5" fill="#FF7865" opacity="0.6" />
-                  <ellipse cx="120" cy="104" rx="6" ry="3.5" fill="#FF7865" opacity="0.6" />
+                  <ellipse
+                    cx="80"
+                    cy="104"
+                    rx="6"
+                    ry="3.5"
+                    fill="#FF7865"
+                    opacity={stateCfg.face === 'resting' ? '0.28' : '0.6'}
+                  />
+                  <ellipse
+                    cx="120"
+                    cy="104"
+                    rx="6"
+                    ry="3.5"
+                    fill="#FF7865"
+                    opacity={stateCfg.face === 'resting' ? '0.28' : '0.6'}
+                  />
 
                   {/* Facial Expressions based on wellness state */}
                   {stateCfg.face === 'joyful' && (
@@ -596,10 +627,15 @@ export default function SunflowerProgress({
                   )}
 
                   {stateCfg.face === 'resting' && (
-                    <g style={{ transformOrigin: '100px 93px' }}>
-                      <path d="M81 93 Q85 96 89 93" stroke="#F1D7BE" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-                      <path d="M111 93 Q115 96 119 93" stroke="#F1D7BE" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-                      <path d="M95 104 Q100 107 105 104" stroke="#F1D7BE" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+                    <g style={{ transformOrigin: '100px 93px', animation: 'softEyeBlink 7s infinite' }}>
+                      <ellipse cx="85" cy="92" rx="5.5" ry="6.5" fill="#FFF8E9" />
+                      <ellipse cx="115" cy="92" rx="5.5" ry="6.5" fill="#FFF8E9" />
+                      <circle cx="85" cy="95" r="3.2" fill="#382419" />
+                      <circle cx="115" cy="95" r="3.2" fill="#382419" />
+                      <circle cx="84" cy="94" r="1.1" fill="#FFFFFF" />
+                      <circle cx="114" cy="94" r="1.1" fill="#FFFFFF" />
+                      <path d="M94 106 Q100 102 106 106" stroke="#F1D7BE" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                      <path d="M76 99 C73 103 74 106 77 106 C80 106 80 103 76 99Z" fill="#9ED8E8" opacity="0.85" />
                     </g>
                   )}
                 </g>
@@ -613,7 +649,7 @@ export default function SunflowerProgress({
       </div>
 
       {/* ── ABOUT SUNFLOWER CARE MODAL (Compassionate Philosophy) ── */}
-      {showGuideModal && (
+      {!flowerOnly && showGuideModal && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#3A2B25]/60 backdrop-blur-md animate-fadeIn"
           onClick={() => setShowGuideModal(false)}
