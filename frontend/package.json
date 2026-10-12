@@ -4,12 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "predev": "npm run optimize:scrapbook",
     "dev": "vite",
-    "prebuild": "npm run optimize:scrapbook",
     "build": "vite build",
     "preview": "vite preview",
-    "optimize:scrapbook": "node scripts/optimize-scrapbook.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -31,7 +28,6 @@
     "autoprefixer": "^10.4.19",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.40",
-    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.7",
     "vite": "^5.3.5",
     "vitest": "^2.1.9"
