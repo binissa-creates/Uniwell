@@ -1,6 +1,7 @@
 import { Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { hasSupabaseConfig } from './lib/supabase'
 import { getHomeForRole } from './lib/portalAccess'
 import ProtectedRoute from './components/ProtectedRoute'
 import { Sparkles } from 'lucide-react'
@@ -67,6 +68,31 @@ class AppErrorBoundary extends Component {
   }
 }
 
+function DeploymentConfigurationScreen() {
+  return (
+    <main className="min-h-screen bg-[#FDF9F2] flex items-center justify-center px-6 py-12">
+      <section className="w-full max-w-lg rounded-[2rem] bg-white p-8 shadow-lift">
+        <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-[#6B5A10]">UniWell</p>
+        <h1 className="font-jakarta text-2xl font-extrabold text-[#3a2b25]">
+          Deployment setup is incomplete
+        </h1>
+        <p className="mt-3 text-sm leading-relaxed text-[#3a2b25]/70">
+          This site is missing its public Supabase configuration. Add both variables to the Vercel
+          project, enable them for Production, then redeploy.
+        </p>
+        <ul className="mt-5 list-inside list-disc space-y-2 rounded-xl bg-[#FDF9F2] p-4 font-mono text-xs text-[#3a2b25]">
+          <li>VITE_SUPABASE_URL</li>
+          <li>VITE_SUPABASE_ANON_KEY</li>
+        </ul>
+        <p className="mt-4 text-xs leading-relaxed text-[#3a2b25]/60">
+          In Vercel, open Project Settings → Environment Variables. These are browser-side project
+          URL and anon-key values; never add a service-role key here.
+        </p>
+      </section>
+    </main>
+  )
+}
+
 function GuestRoute({ children }) {
   const { session, profile, loading } = useAuth()
   // Always wait for auth (and profile fetch) to complete before deciding.
@@ -112,10 +138,13 @@ function StudentSupportWrapper() {
 export default function App() {
   return (
     <AppErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
-          <StudentSupportWrapper />
-          <Routes>
+      {!hasSupabaseConfig ? (
+        <DeploymentConfigurationScreen />
+      ) : (
+        <AuthProvider>
+          <BrowserRouter>
+            <StudentSupportWrapper />
+            <Routes>
           {/* Public */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
@@ -186,9 +215,10 @@ export default function App() {
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      )}
     </AppErrorBoundary>
   )
 }

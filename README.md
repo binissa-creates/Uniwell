@@ -91,6 +91,8 @@ Copy `frontend/.env.example` to `frontend/.env.local` and fill in the project UR
 
 Vercel builds `frontend/` and serves `frontend/dist`. The root `vercel.json` contains the SPA rewrite needed for deep links such as `/accept-invite` and `/reset-password`. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel project environment variables, then deploy the project.
 
+If either public Supabase variable is missing at build time, the app displays a deployment setup message instead of a blank page. Add both values in Vercel Project Settings → Environment Variables for Production and redeploy. Never set a Supabase service-role key as a `VITE_` variable.
+
 ## Project layout
 
 - `frontend/src/`: React app, routes, auth context, pages, and Supabase client.

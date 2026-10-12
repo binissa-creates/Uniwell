@@ -4,16 +4,16 @@ const env = import.meta.env ?? (typeof process !== 'undefined' ? process.env : {
 const url = env.VITE_SUPABASE_URL
 const key = env.VITE_SUPABASE_ANON_KEY
 
-if (!url || !key) {
-  throw new Error(
-    'Missing Supabase env vars. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env (and in Vercel project settings for production).'
-  )
-}
+export const hasSupabaseConfig = Boolean(url && key)
 
-export const supabase = createClient(url, key, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+export const supabase = createClient(
+  url || 'https://missing-project.supabase.co',
+  key || 'missing-supabase-anon-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
   },
-})
+)
