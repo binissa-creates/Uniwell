@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
+import LoadingIndicator from '../components/LoadingIndicator'
+import { ArrowLeft, CheckCircle } from 'lucide-react'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
@@ -114,7 +115,7 @@ export default function ForgotPassword() {
                     disabled={loading || !email}
                     className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-6 disabled:opacity-50 disabled:cursor-not-allowed transform"
                   >
-                    {loading && <Loader2 size={18} className="animate-spin" />}
+                    {loading && <LoadingIndicator size={16} label="Sending reset link" />}
                     {loading ? 'Sending...' : 'Send Reset Link'}
                   </button>
                 </form>

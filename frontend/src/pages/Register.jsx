@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
+import LoadingIndicator from '../components/LoadingIndicator'
+import { Eye, EyeOff, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
 import { ACADEMIC_DEPARTMENTS } from '../lib/academicPrograms'
 
 const YEARS = ['1st', '2nd', '3rd', '4th']
@@ -208,7 +209,7 @@ export default function Register() {
 
               <button type="submit" disabled={loading}
                 className="w-full mt-4 bg-[#F8D272] text-[#3E3006] hover:bg-[#EBC15A] shadow-sm font-bold rounded-2xl py-4 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
-                {loading && <Loader2 size={16} className="animate-spin" />}
+                {loading && <LoadingIndicator size={16} label="Creating account" />}
                 {loading ? 'Creating...' : 'Get Started'} <ArrowRight size={16} />
               </button>
             </form>

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import ReflectionCapsuleModal from './ReflectionCapsuleModal'
 import PhotoCropAdjustModal from './PhotoCropAdjustModal'
+import LoadingIndicator from './LoadingIndicator'
 import { saveJourneyMemory } from '../lib/journeyScrapbook'
 import {
   renderScrapbookTemplate,
@@ -1047,7 +1048,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
         />
         {!previewReady && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-[#F6C945] text-xs font-bold gap-2">
-            {!previewError && <span className="animate-spin text-xl text-[#F6C945]">✦</span>}
+            {!previewError && <LoadingIndicator size={24} label="Assembling scrapbook" />}
             <span role={previewError ? 'alert' : undefined}>
               {previewError || 'Assembling your scrapbook…'}
             </span>

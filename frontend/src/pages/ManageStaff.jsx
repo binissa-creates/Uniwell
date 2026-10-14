@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { AlertCircle, Check, Loader2, MailPlus, RefreshCw, Shield, UserRoundX, UserRoundCheck, X } from 'lucide-react'
+import { AlertCircle, Check, MailPlus, RefreshCw, Shield, UserRoundX, UserRoundCheck, Trash2, X } from 'lucide-react'
 
 const INITIAL_FORM = { fullName: '', email: '', role: 'counselor' }
 const ACTION_COPY = {
@@ -10,12 +11,14 @@ const ACTION_COPY = {
   revoke: 'revoke the invitation for',
   deactivate: 'deactivate the staff account for',
   reactivate: 'reactivate the staff account for',
+  delete: 'permanently delete the counselor account for',
 }
 const ACTION_DETAILS = {
   resend: 'A new invitation email will be sent.',
   revoke: 'The invitation will be cancelled and an unconfirmed account will be removed.',
   deactivate: 'They will be blocked from signing in.',
   reactivate: 'Their sign-in access will be restored.',
+  delete: 'Their account and staff profile will be removed. Deletion is blocked if they have linked wellness records, so those records are preserved.',
 }
 
 async function getFunctionError(error, data, functionName) {
@@ -136,7 +139,11 @@ export default function ManageStaff() {
       })
       if (functionError) throw new Error(await getFunctionError(functionError, data, 'set-staff-status'))
       if (data?.error) throw new Error(data.error)
-      setNotice(action === 'resend' ? 'Invitation resent.' : 'Staff account updated.')
+      setNotice(action === 'resend'
+        ? 'Invitation resent.'
+        : action === 'delete'
+          ? 'Counselor account deleted.'
+          : 'Staff account updated.')
       await loadStaff()
     } catch (actionError) {
       console.error('[ManageStaff] Staff action failed:', actionError)
@@ -153,8 +160,8 @@ export default function ManageStaff() {
     setConfirmation({
       title: 'Confirm staff action',
       message: `Are you sure you want to ${ACTION_COPY[action]} ${name}? ${ACTION_DETAILS[action]}`,
-      confirmLabel: action === 'resend' ? 'Resend invitation' : action[0].toUpperCase() + action.slice(1),
-      destructive: action === 'revoke' || action === 'deactivate',
+      confirmLabel: action === 'resend' ? 'Resend invitation' : action === 'delete' ? 'Delete account' : action[0].toUpperCase() + action.slice(1),
+      destructive: action === 'revoke' || action === 'deactivate' || action === 'delete',
       onConfirm: () => runStaffAction(member, action),
     })
   }
@@ -178,7 +185,7 @@ export default function ManageStaff() {
             <p className="mt-2 text-sm text-[#3a2b25]/60">Invite counselors and manage staff account access.</p>
           </div>
           <button type="button" onClick={loadStaff} disabled={loading} aria-label="Refresh staff list" className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-bold text-[#5D4037] shadow-sm disabled:opacity-50">
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Refresh
+            {loading ? <LoadingIndicator size={12} label="Refreshing staff list" /> : <RefreshCw size={15} />} Refresh
           </button>
         </header>
 
@@ -211,7 +218,7 @@ export default function ManageStaff() {
               </select>
             </div>
             <button type="submit" disabled={submitting} aria-busy={submitting} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F8D272] to-[#F6C945] px-5 text-xs font-black uppercase tracking-wide text-[#3E3006] shadow-sm disabled:cursor-not-allowed disabled:opacity-60">
-              {submitting ? <Loader2 size={16} className="animate-spin" /> : <MailPlus size={16} />}
+              {submitting ? <LoadingIndicator size={12} label="Sending invitation" /> : <MailPlus size={16} />}
               {submitting ? 'Sending...' : 'Send Invite'}
             </button>
           </form>
@@ -239,7 +246,7 @@ export default function ManageStaff() {
               </thead>
               <tbody className="divide-y divide-[#AA8E7E]/10 text-sm text-[#3a2b25]">
                 {loading ? (
-                  <tr><td colSpan="5" className="px-5 py-12 text-center text-[#3a2b25]/55"><Loader2 size={20} className="mx-auto mb-2 animate-spin" />Loading staff...</td></tr>
+                  <tr><td colSpan="5" className="px-5 py-12 text-center text-[#3a2b25]/55"><LoadingIndicator size={20} message="Loading staff…" /></td></tr>
                 ) : staff.length === 0 ? (
                   <tr><td colSpan="5" className="px-5 py-12 text-center text-[#3a2b25]/55">No staff accounts yet.</td></tr>
                 ) : staff.map(member => (
@@ -256,7 +263,8 @@ export default function ManageStaff() {
                         </>}
                         {member.status === 'active' && member.id !== user?.id && <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'deactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><UserRoundX size={13} />Deactivate</button>}
                         {member.status === 'disabled' && <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'reactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EAF2E6] px-3 text-xs font-bold text-[#2D5A29] disabled:opacity-50"><UserRoundCheck size={13} />Reactivate</button>}
-                        {acting?.startsWith(`${member.id}:`) && <Loader2 size={15} className="self-center animate-spin text-[#755b00]" aria-label="Updating staff account" />}
+                        {member.role === 'counselor' && member.id !== user?.id && <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'delete')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><Trash2 size={13} />Delete</button>}
+                        {acting?.startsWith(`${member.id}:`) && <LoadingIndicator size={12} label="Updating staff account" />}
                       </div>
                     </td>
                   </tr>
@@ -321,7 +329,7 @@ export default function ManageStaff() {
                     : 'bg-[#755b00] hover:bg-[#5d4900]'
                 }`}
               >
-                {(submitting || acting) && <Loader2 size={14} className="animate-spin" />}
+                {(submitting || acting) && <LoadingIndicator size={12} label="Updating staff account" />}
                 {confirmation.confirmLabel}
               </button>
             </div>

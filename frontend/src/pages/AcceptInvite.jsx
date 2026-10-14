@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react'
+import LoadingIndicator from '../components/LoadingIndicator'
+import LoadingScreen from '../components/LoadingScreen'
+import { Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getHomeForRole } from '../lib/portalAccess'
 
 function meetsPasswordRules(value) {
-  return value.length >= 12
-    && /[a-z]/.test(value)
-    && /[A-Z]/.test(value)
-    && /\d/.test(value)
-    && /[^A-Za-z0-9]/.test(value)
+  return value.length >= 8
 }
 
 export default function AcceptInvite() {
@@ -51,7 +49,7 @@ export default function AcceptInvite() {
       return
     }
     if (!meetsPasswordRules(password)) {
-      setError('Use at least 12 characters with uppercase, lowercase, a number, and a symbol.')
+      setError('Use a password with at least 8 characters.')
       return
     }
     if (password !== confirmPassword) {
@@ -83,12 +81,7 @@ export default function AcceptInvite() {
   }
 
   if (checking || authLoading) {
-    return (
-      <main className="min-h-screen bg-[#FDF9F2] flex items-center justify-center text-[#6B5A10]" role="status" aria-live="polite">
-        <Loader2 size={24} className="animate-spin" />
-        <span className="ml-3 text-sm font-semibold">Verifying invitation...</span>
-      </main>
-    )
+    return <LoadingScreen autoReload={false} message="Verifying your invitation…" />
   }
 
   if (!validInvite) {
@@ -154,6 +147,7 @@ export default function AcceptInvite() {
                 id="invite-password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="new-password"
+                minLength={8}
                 required
                 value={password}
                 onChange={event => setPassword(event.target.value)}
@@ -163,7 +157,7 @@ export default function AcceptInvite() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <p className="mt-2 text-xs text-[#3a2b25]/50">At least 12 characters, including uppercase, lowercase, a number, and a symbol.</p>
+            <p className="mt-2 text-xs text-[#3a2b25]/50">At least 8 characters.</p>
           </div>
 
           <div>
@@ -173,6 +167,7 @@ export default function AcceptInvite() {
                 id="invite-confirm-password"
                 type={showConfirm ? 'text' : 'password'}
                 autoComplete="new-password"
+                minLength={8}
                 required
                 value={confirmPassword}
                 onChange={event => setConfirmPassword(event.target.value)}
@@ -185,7 +180,7 @@ export default function AcceptInvite() {
           </div>
 
           <button type="submit" disabled={submitting} aria-busy={submitting} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#F8D272] to-[#F6C945] px-4 text-sm font-extrabold text-[#3E3006] shadow-sm transition hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60">
-            {submitting && <Loader2 size={18} className="animate-spin" />}
+            {submitting && <LoadingIndicator size={16} label="Activating account" />}
             {submitting ? 'Activating account...' : 'Complete account setup'}
           </button>
         </form>

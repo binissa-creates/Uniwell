@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     auth: {
       signInWithPassword: vi.fn(),
       signUp: vi.fn(),
+      updateUser: vi.fn(),
       resetPasswordForEmail: vi.fn(),
       signOut: vi.fn(),
     },
@@ -22,6 +23,7 @@ vi.mock('../src/context/AuthContext.jsx', () => ({ useAuth: mocks.useAuth }))
 import Login from '../src/pages/Login.jsx'
 import Register from '../src/pages/Register.jsx'
 import ForgotPassword from '../src/pages/ForgotPassword.jsx'
+import AcceptInvite from '../src/pages/AcceptInvite.jsx'
 import ProtectedRoute from '../src/components/ProtectedRoute.jsx'
 import { ACADEMIC_DEPARTMENTS } from '../src/lib/academicPrograms.js'
 
@@ -92,6 +94,7 @@ describe('unified login', () => {
       data: { user: { id: 'user-1' } },
       error: null,
     })
+
     mocks.supabase.rpc.mockResolvedValue({ data: null, error: null })
     profileQuery({ role, status: 'active' })
     renderLogin()
@@ -145,6 +148,62 @@ describe('unified login', () => {
       'Sign-in is temporarily unavailable. Please contact your administrator.',
     )
     expect(mocks.supabase.auth.signOut).toHaveBeenCalled()
+  })
+})
+
+describe('staff invitation password setup', () => {
+  it('accepts a password with 8 characters without composition rules', async () => {
+    const refreshProfile = vi.fn().mockResolvedValue({ role: 'counselor', status: 'active' })
+    mocks.useAuth.mockReturnValue({
+      session: { user: { id: 'staff-1' } },
+      profile: { role: 'counselor', status: 'invited', full_name: 'Bea Benessa Galleto' },
+      loading: false,
+      refreshProfile,
+    })
+    mocks.supabase.auth.updateUser.mockResolvedValue({ error: null })
+    mocks.supabase.rpc.mockResolvedValue({ error: null })
+
+    render(
+      <MemoryRouter initialEntries={['/accept-invite']}>
+        <Routes>
+          <Route path="/accept-invite" element={<AcceptInvite />} />
+          <Route path="/admin" element={<p>Admin dashboard reached</p>} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'password' } })
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'password' } })
+    fireEvent.submit(screen.getByLabelText('Confirm password').closest('form'))
+
+    expect(await screen.findByText('Admin dashboard reached')).toBeInTheDocument()
+    expect(mocks.supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'password' })
+    expect(mocks.supabase.rpc).toHaveBeenCalledWith('accept_staff_invite', {
+      p_full_name: 'Bea Benessa Galleto',
+    })
+    expect(refreshProfile).toHaveBeenCalled()
+  })
+
+  it('rejects staff invitation passwords shorter than 8 characters', async () => {
+    mocks.useAuth.mockReturnValue({
+      session: { user: { id: 'staff-1' } },
+      profile: { role: 'counselor', status: 'invited', full_name: 'Bea Benessa Galleto' },
+      loading: false,
+      refreshProfile: vi.fn(),
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/accept-invite']}>
+        <Routes><Route path="/accept-invite" element={<AcceptInvite />} /></Routes>
+      </MemoryRouter>,
+    )
+
+    fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'short7!' } })
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'short7!' } })
+    fireEvent.submit(screen.getByLabelText('Confirm password').closest('form'))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Use a password with at least 8 characters.')
+    expect(mocks.supabase.auth.updateUser).not.toHaveBeenCalled()
   })
 })
 

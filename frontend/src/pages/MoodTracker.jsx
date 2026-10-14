@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import MoodEmojiPicker, { ALL_MOODS } from '../components/MoodEmojiPicker'
 import { fetchMoodHistory, logMood, safeMoodKey, deleteMoodEntry } from '../lib/data'
 import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
 import { useAuth } from '../context/AuthContext'
-import { Loader2, CheckCircle2, History, PenLine, ArrowRight, X, Trash2, Sparkles, Clock, ChevronRight, Star } from 'lucide-react'
+import { CheckCircle2, History, PenLine, ArrowRight, X, Trash2, Sparkles, Clock, ChevronRight, Star } from 'lucide-react'
 
 import SupportModal from '../components/SupportModal'
 import SupportPrompt from '../components/SupportPrompt'
@@ -309,7 +310,7 @@ export default function MoodTracker() {
                   disabled={!mood || loading}
                   className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-3 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {loading ? <LoadingIndicator size={12} label="Recording mood entry" /> : <Sparkles size={14} />}
                   {loading ? 'Recording...' : 'Save this Entry'}
                 </button>
               </div>

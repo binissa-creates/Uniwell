@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import AppearanceSettings from '../components/AppearanceSettings'
+import LoadingIndicator from '../components/LoadingIndicator'
+import NotificationSettings from '../components/NotificationSettings'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
   Mail, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle,
-  Loader2, BookOpen, GraduationCap, Hash,
+  BookOpen, GraduationCap, Hash, Bell, Palette,
 } from 'lucide-react'
 
 export default function StudentProfile() {
@@ -26,7 +28,7 @@ export default function StudentProfile() {
   const [pwMsg, setPwMsg] = useState(null)
   const [pwBusy, setPwBusy] = useState(false)
 
-  const [tab, setTab] = useState('email') // 'email' | 'password' | 'appearance'
+  const [tab, setTab] = useState('email')
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -138,6 +140,7 @@ export default function StudentProfile() {
             { key: 'email', icon: Mail, label: 'Change Email' },
             { key: 'password', icon: Lock, label: 'Change Password' },
             { key: 'appearance', icon: Palette, label: 'Appearance' },
+            { key: 'notifications', icon: Bell, label: 'Notifications' },
           ].map(({ key, icon: Icon, label }) => (
             <button key={key} type="button" onClick={() => setTab(key)}
               className={`flex shrink-0 items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200
@@ -184,7 +187,7 @@ export default function StudentProfile() {
 
               <button type="submit" disabled={emailBusy}
                 className="w-full gradient-cta text-[#3E3006] font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow active:scale-[0.98] transition-all duration-200 disabled:opacity-50 text-sm">
-                {emailBusy ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
+                {emailBusy ? <LoadingIndicator size={12} label="Sending confirmation email" /> : <Mail size={16} />}
                 {emailBusy ? 'Sending…' : 'Send Confirmation Email'}
               </button>
             </form>
@@ -228,7 +231,7 @@ export default function StudentProfile() {
 
               <button type="submit" disabled={pwBusy}
                 className="w-full gradient-cta text-[#3E3006] font-semibold rounded-full py-3.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow active:scale-[0.98] transition-all duration-200 disabled:opacity-50 text-sm">
-                {pwBusy ? <Loader2 size={16} className="animate-spin" /> : <Lock size={16} />}
+                {pwBusy ? <LoadingIndicator size={12} label="Updating password" /> : <Lock size={16} />}
                 {pwBusy ? 'Updating…' : 'Update Password'}
               </button>
             </form>
@@ -237,6 +240,9 @@ export default function StudentProfile() {
 
         {tab === 'appearance' && (
           <AppearanceSettings />
+        )}
+        {tab === 'notifications' && user?.id && (
+          <NotificationSettings userId={user.id} />
         )}
       </main>
     </div>

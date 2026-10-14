@@ -46,6 +46,8 @@ Replace role decisions based only on the cached JWT `app_metadata.role` with `is
    - `supabase/migrations/20261005_audit_security_functions.sql`
    - `supabase/migrations/20261012_allow_undo_coping_moderation.sql`
    - `supabase/migrations/20261014_counselor_admin_access.sql`
+   - `supabase/migrations/20261014_student_guidance_checkins.sql`
+   - `supabase/migrations/20261014_student_notifications.sql`
 4. Do not rerun `schema.sql` after the unified-auth migration; it contains the legacy auth trigger. Review and test each migration against a dev project before production.
 5. Run `supabase/tests/rls_auth_checks.sql` in a development project after replacing both student UUID placeholders. It should confirm a student can read their own profile, cannot read another student's profile, cannot read staff invites or audit logs, and cannot change their own role.
 6. The counselor access migration intentionally gives active counselors the same campus-wide administration tools and data access as admins, including analytics, moderation, and staff management. Journal entries remain available only to their owner or when explicitly shared with guidance. Review this permission expansion before applying it to production.
@@ -71,6 +73,24 @@ The script only promotes an existing user to `admin` and `active`; it does not c
 
 4. Active counselors and admins can then open the shared administration pages, including `/staff/manage` to invite counselors or admins. The invitee follows the email link at `/accept-invite`, confirms their name, and sets a password.
 5. If the browser reports that it could not send a request to an Edge Function, confirm the functions are deployed and that `SITE_URL` is a valid canonical frontend URL. Local origins `http://localhost:5173` and `http://localhost:5174` are allowed; add any other exact frontend origins (scheme and host, with no path), including Vercel preview deployments, to `ALLOWED_ORIGINS`. Redeploy the functions after changing their source or CORS configuration, then retry. Do not use `*` for production origins.
+6. `/staff/manage` can permanently delete counselor accounts. Deletion is blocked when an account owns wellness records so those records are not cascade-deleted; deactivate the account instead. Deploy the updated `set-staff-status` function to enable this action.
+7. The Admin Hub's Campus Attention review supports separate reviewed and contacted follow-up markers. Apply `20261014_student_guidance_checkins.sql`; a newer difficult mood entry automatically makes follow-up pending again. Check-in actions are audit logged and do not expose journal content.
+8. The navigation notification center shows students a gentle in-app mood-check-in reminder when they have not logged a mood today, with a welcome-back message after three or more days since their last mood check-in. Active guidance staff see counts of students whose latest difficult mood entry still needs review/contact and pending coping strategies. Mood and follow-up reminders refresh through Supabase Realtime; the pending moderation count refreshes when the notification center opens. Time away is based on mood check-ins, not authentication login history.
+9. Student Profile > Notifications lets each student disable in-app reminders and opt in to a once-daily phone push at a chosen local hour. Push requires a secure deployed origin, a browser/device with web-push support, the database migration, VAPID configuration, the `send-daily-dose` Edge Function, and the scheduled job below. Daily Dose notifications use private generic lock-screen copy and open the Daily Dose section in the dashboard.
+
+### Daily Dose web-push setup
+
+1. Generate a VAPID key pair using a trusted local environment (`npx web-push generate-vapid-keys --json`). Never put the private key in a `VITE_` variable, the frontend, SQL, or source control.
+2. Set the Edge Function secrets:
+
+   ```bash
+   supabase secrets set VAPID_PUBLIC_KEY="<public-key>" VAPID_PRIVATE_KEY="<private-key>" VAPID_SUBJECT="mailto:admin@example.edu" PUSH_CRON_SECRET="<long-random-secret>"
+   supabase functions deploy send-daily-dose
+   ```
+
+3. Add only the VAPID public key to the frontend deployment environment as `VITE_WEB_PUSH_PUBLIC_KEY`, then rebuild/redeploy the frontend. Local development can use the same public key in `frontend/.env.local`; do not put the private key there.
+4. Enable `pg_cron`, `pg_net`, and Vault in the Supabase project if they are not already enabled. Follow [daily-dose-push.sql](./supabase/schedules/daily-dose-push.sql) to store the function URL, anon key, and same cron secret in Vault, then schedule `send-daily-dose` hourly. The function sends at most once per student's selected local date and hour. Use the SQL Editor to configure and verify the scheduled job.
+5. Apply the migration before enabling the UI in production. Test opt-in, denied permission, opt-out, local delivery time, expired device subscriptions, and tapping the notification on supported Android browsers and iPhone Home Screen web apps. Push delivery depends on device/browser support and internet access.
 
 ## Password recovery and Auth dashboard checklist
 

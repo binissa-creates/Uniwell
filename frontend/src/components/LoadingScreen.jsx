@@ -9,7 +9,7 @@ const AFFIRMATIONS = [
   'Connecting your wellness journey…',
 ]
 
-export default function LoadingScreen({ message, subtext }) {
+export default function LoadingScreen({ message, subtext, autoReload = true }) {
   const [index, setIndex] = useState(0)
   const [fade, setFade] = useState(true)
   const [seconds, setSeconds] = useState(0)
@@ -24,11 +24,11 @@ export default function LoadingScreen({ message, subtext }) {
 
   // Auto-reload on itself without requiring manual user intervention if stalled
   useEffect(() => {
-    if (seconds >= 6) {
+    if (autoReload && seconds >= 6) {
       console.warn('[LoadingScreen] Auto-reloading after 6s wait threshold')
       window.location.reload()
     }
-  }, [seconds])
+  }, [autoReload, seconds])
 
   // Rotate mindful messages smoothly every 2.4 seconds to reduce perceived waiting time
   useEffect(() => {
@@ -106,13 +106,13 @@ export default function LoadingScreen({ message, subtext }) {
 
         {/* Reassuring Subtext */}
         <p className="text-[11px] font-medium text-[#AA8E7E] leading-relaxed max-w-[240px]">
-          {seconds >= 4
+          {autoReload && seconds >= 4
             ? `Connection taking a moment — auto-refreshing in ${Math.max(1, 6 - seconds)}s…`
             : (subtext || 'A gentle moment for your mind while we prepare your space.')}
         </p>
 
         {/* Immediate 1-tap reload button if taking longer than 2.5s */}
-        {seconds >= 3 && (
+        {autoReload && seconds >= 3 && (
           <button
             type="button"
             onClick={() => window.location.reload()}

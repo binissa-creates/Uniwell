@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import NotificationCenter from './NotificationCenter'
 import {
   LayoutDashboard, SmilePlus, BookOpen, Users, LogOut,
   ShieldCheck, ClipboardList, GraduationCap, ChevronDown,
-  FileBarChart2, Bell, Settings, HelpCircle,
+  FileBarChart2, Settings, HelpCircle,
   MoreHorizontal, UserCircle, Heart, X,
 } from 'lucide-react'
 
@@ -257,6 +258,14 @@ export default function Navbar() {
 
           {/* Profile & Logout */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            {user && (isStudent || isStaff) && (
+              <NotificationCenter
+                user={user}
+                isStudent={isStudent}
+                isStaff={isStaff}
+                pathname={location.pathname}
+              />
+            )}
             {user && (
               <div className="flex items-center gap-3 pl-3 border-l border-[#AA8E7E]/10">
                 <div className="hidden sm:flex flex-col items-end leading-none">

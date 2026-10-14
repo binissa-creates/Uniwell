@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { supabase } from '../lib/supabase'
-import { CheckCircle, XCircle, Loader2, Inbox, ShieldCheck, Clock, X, Tag, Flag, RotateCcw } from 'lucide-react'
+import { CheckCircle, XCircle, Inbox, ShieldCheck, Clock, X, Tag, Flag, RotateCcw } from 'lucide-react'
 
 const CAT_STYLE = {
   'Relaxation': { bg: 'var(--color-tertiary-container)', text: '#2d4550' },
@@ -286,11 +287,8 @@ export default function AdminModeration() {
           {/* ── QUEUE LISTING ── */}
           <div className="lg:col-span-3">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-40 space-y-6">
-                <div className="w-16 h-16 rounded-3xl bg-[#F6C945]/10 flex items-center justify-center text-[#6B5A10] animate-pulse">
-                  <Loader2 size={32} className="animate-spin" />
-                </div>
-                <p className="text-[10px] font-black text-[#AA8E7E] uppercase tracking-[0.3em]">Synchronizing Review Queue</p>
+              <div className="flex flex-col items-center justify-center py-40">
+                <LoadingIndicator size={32} message="Synchronizing review queue…" />
               </div>
             ) : !(filteredEntries && filteredEntries.length > 0) ? (
               <div className="bg-white rounded-[2.5rem] p-24 shadow-lift border border-white flex flex-col items-center text-center animate-scaleIn">
@@ -377,7 +375,7 @@ export default function AdminModeration() {
                               className="flex-1 py-2.5 rounded-2xl bg-[#EAF2E6] text-[#2D5A29] text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 hover:bg-[#c3e0cc] transition-all active:scale-95 min-h-[44px]"
                             >
                               {acting?.id === s.id && acting.status === 'approved'
-                                ? <Loader2 size={11} className="animate-spin" />
+                                ? <LoadingIndicator size={12} label="Approving submission" />
                                 : <CheckCircle size={12} />}
                               Approve
                             </button>
@@ -387,7 +385,7 @@ export default function AdminModeration() {
                               className="flex-1 py-2.5 rounded-2xl bg-white text-[#ba1a1a] text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 border border-[#ba1a1a]/10 hover:bg-[#ffdad6] transition-all active:scale-95 min-h-[44px]"
                             >
                               {acting?.id === s.id && acting.status === 'rejected'
-                                ? <Loader2 size={11} className="animate-spin" />
+                                ? <LoadingIndicator size={12} label="Dismissing submission" />
                                 : <XCircle size={12} />}
                               Dismiss
                             </button>
@@ -399,7 +397,7 @@ export default function AdminModeration() {
                             className="flex-1 py-2.5 rounded-2xl bg-[#FDF9F2] text-[#6B5A10] text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 border border-[#6B5A10]/10 hover:bg-[#F6C945]/20 transition-all active:scale-95 min-h-[44px]"
                           >
                             {acting?.id === s.id && acting.status === 'pending'
-                              ? <Loader2 size={11} className="animate-spin" />
+                              ? <LoadingIndicator size={12} label="Updating submission" />
                               : <RotateCcw size={12} />}
                             Undo Action
                           </button>
@@ -497,7 +495,7 @@ export default function AdminModeration() {
                       className="flex-1 py-3 rounded-2xl bg-[#EAF2E6] text-[#2D5A29] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#c3e0cc] transition-all active:scale-95 min-h-[44px]"
                     >
                       {acting?.id === s.id && acting.status === 'approved'
-                        ? <Loader2 size={14} className="animate-spin" />
+                        ? <LoadingIndicator size={12} label="Approving submission" />
                         : <CheckCircle size={14} />}
                       Approve
                     </button>
@@ -507,7 +505,7 @@ export default function AdminModeration() {
                       className="flex-1 py-3 rounded-2xl bg-white text-[#ba1a1a] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-[#ba1a1a]/10 hover:bg-[#ffdad6] transition-all active:scale-95 min-h-[44px]"
                     >
                       {acting?.id === s.id && acting.status === 'rejected'
-                        ? <Loader2 size={14} className="animate-spin" />
+                        ? <LoadingIndicator size={12} label="Dismissing submission" />
                         : <XCircle size={14} />}
                       Dismiss
                     </button>
@@ -519,7 +517,7 @@ export default function AdminModeration() {
                     className="flex-1 py-3 rounded-2xl bg-[#FDF9F2] text-[#6B5A10] text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 border border-[#6B5A10]/10 hover:bg-[#F6C945]/20 transition-all active:scale-95 min-h-[44px]"
                   >
                     {acting?.id === s.id && acting.status === 'pending'
-                      ? <Loader2 size={14} className="animate-spin" />
+                      ? <LoadingIndicator size={12} label="Updating submission" />
                       : <RotateCcw size={14} />}
                     Undo Action & Move to Pending
                   </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 
 import ReflectionCapsuleModal from '../components/ReflectionCapsuleModal'
 import { supabase } from '../lib/supabase'
@@ -8,7 +9,7 @@ import { journalPromptForToday, JOURNAL_PROMPTS } from '../lib/data'
 import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
 import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
 import { saveJournalDraft, getJournalDraft, clearJournalDraft } from '../lib/journalDraft'
-import { Loader2, Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera, Search, Check } from 'lucide-react'
+import { Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera, Search, Check } from 'lucide-react'
 
 const PROMPT_GROUPS = [
   {
@@ -494,7 +495,7 @@ export default function Journal() {
                   disabled={!content.trim() || loading}
                   className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-2.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
                 >
-                  {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                  {loading ? <LoadingIndicator size={12} label="Saving reflection" /> : <Sparkles size={14} />}
                   {loading ? 'Securing...' : 'Save Reflection'}
                 </button>
               </form>
@@ -652,7 +653,7 @@ export default function Journal() {
                                 title="Delete entry"
                                 className="p-1 rounded-lg text-warm/30 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
                               >
-                                {deleting === e.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                {deleting === e.id ? <LoadingIndicator size={12} label="Deleting journal entry" /> : <Trash2 size={12} />}
                               </button>
                             </div>
                           </div>
@@ -761,7 +762,7 @@ export default function Journal() {
                 disabled={!content.trim() || loading}
                 className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-2.5 text-xs flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                {loading ? <LoadingIndicator size={12} label="Saving reflection" /> : <Sparkles size={14} />}
                 {loading ? 'Saving...' : 'Save Reflection'}
               </button>
             </form>

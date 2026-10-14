@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import LoadingIndicator from '../components/LoadingIndicator'
+import LoadingScreen from '../components/LoadingScreen'
 import { supabase } from '../lib/supabase'
-import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 
 const RECOVERY_SESSION_KEY = 'uniwell.password-recovery-at'
 const RECOVERY_SESSION_TTL = 15 * 60 * 1000
@@ -136,14 +138,7 @@ export default function ResetPassword() {
   }
 
   if (checkingToken) {
-    return (
-      <div className="h-screen bg-[#FDF9F2] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 size={32} className="animate-spin text-[#F8D272] mx-auto mb-4" />
-          <p className="text-[#3a2b25] font-jakarta">Verifying reset link...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen autoReload={false} message="Verifying your password reset link…" />
   }
 
   if (!tokenValid) {
@@ -300,7 +295,7 @@ export default function ResetPassword() {
                     disabled={loading || !password || !confirmPassword}
                     className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-6 disabled:opacity-50 disabled:cursor-not-allowed transform"
                   >
-                    {loading && <Loader2 size={18} className="animate-spin" />}
+                    {loading && <LoadingIndicator size={16} label="Updating password" />}
                     {loading ? 'Updating...' : 'Update Password'}
                   </button>
                 </form>

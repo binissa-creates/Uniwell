@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import { getPersonalizedRecommendations } from '../lib/recommendationEngine'
 import { 
-  Search, Heart, Loader2, CheckCircle2, PlusCircle, X, Sparkles, 
+  Search, Heart, CheckCircle2, PlusCircle, X, Sparkles, 
   Bookmark, Library, BookOpen, Tag, Calendar, Target, Award, 
   ArrowRight, Compass, Zap, Filter, SlidersHorizontal, ChevronRight
 } from 'lucide-react'
@@ -978,7 +979,7 @@ export default function PeerInsights() {
                   disabled={submitting}
                   className="w-full gradient-cta text-on-primary font-bold rounded-full py-2.5 sm:py-3 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-40 text-xs sm:text-sm mt-3"
                 >
-                  {submitting && <Loader2 size={15} className="animate-spin" />}
+                  {submitting && <LoadingIndicator size={12} label="Submitting strategy" />}
                   {submitting ? 'Submitting…' : 'Submit Strategy for Review'}
                 </button>
               </form>
@@ -1085,7 +1086,7 @@ export default function PeerInsights() {
                   }`}
                 >
                   {bookmarking === selectedCard.id ? (
-                    <Loader2 size={15} className="animate-spin" />
+                    <LoadingIndicator size={12} label="Saving bookmark" />
                   ) : (
                     <Bookmark size={15} fill={selectedCard._isFav ? 'currentColor' : 'none'} />
                   )}
@@ -1111,7 +1112,7 @@ export default function PeerInsights() {
                     }`}
                   >
                     {voting === selectedCard.id ? (
-                      <Loader2 size={13} className="animate-spin" />
+                      <LoadingIndicator size={12} label="Saving vote" />
                     ) : (
                       <Heart size={13} fill={selectedCard.i_voted ? 'currentColor' : 'none'} />
                     )}
@@ -1208,7 +1209,7 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
             }`}
           >
             {bookmarking === s.id
-              ? <Loader2 size={13} className="animate-spin" />
+              ? <LoadingIndicator size={12} label="Saving bookmark" />
               : <Bookmark size={13} fill={isFav ? 'currentColor' : 'none'} />}
           </button>
 
@@ -1221,7 +1222,7 @@ function StrategyCard({ s, i, isFav, onVote, onBookmark, voting, bookmarking, hi
                 s.i_voted ? 'bg-red-100 text-red-500 shadow-sm' : 'text-warm/40 hover:bg-red-50 hover:text-red-400'
               }`}
             >
-              {voting === s.id ? <Loader2 size={11} className="animate-spin" /> : <Heart size={11} fill={s.i_voted ? 'currentColor' : 'none'} />}
+              {voting === s.id ? <LoadingIndicator size={12} label="Saving vote" /> : <Heart size={11} fill={s.i_voted ? 'currentColor' : 'none'} />}
               <span>{s.helpful_count}</span>
             </button>
           )}
@@ -1243,9 +1244,8 @@ function EmptyState({ emoji, title, sub }) {
 
 function LoadingState() {
   return (
-    <div className="flex flex-col items-center justify-center py-14 gap-3">
-      <Loader2 size={26} className="animate-spin text-[#755b00]" />
-      <p className="text-[11px] font-bold uppercase tracking-widest text-warm/40">Loading insights…</p>
+    <div className="flex flex-col items-center justify-center py-14">
+      <LoadingIndicator size={26} message="Loading insights…" />
     </div>
   )
 }

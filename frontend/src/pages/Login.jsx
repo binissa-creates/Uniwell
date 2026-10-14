@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { getHomeForRole } from '../lib/portalAccess'
-import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
+import LoadingIndicator from '../components/LoadingIndicator'
+import { Eye, EyeOff, ShieldCheck, Sparkles, ArrowRight, GraduationCap } from 'lucide-react'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -217,7 +218,7 @@ export default function Login() {
               <button type="submit" disabled={loading}
                 aria-busy={loading}
                 className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4 transform disabled:cursor-not-allowed disabled:opacity-70">
-                {loading && <Loader2 size={18} className="animate-spin" />}
+                {loading && <LoadingIndicator size={16} label="Signing in" />}
                 {loading ? 'Signing in...' : 'Sign In'} <ArrowRight size={18} />
               </button>
             </form>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import RadianceDose from '../components/RadianceDose'
@@ -15,6 +15,7 @@ import { ArrowRight, Sparkles, ChevronRight, Clock, Heart, Users, ShieldAlert, D
 import SupportModal from '../components/SupportModal'
 
 export default function Dashboard() {
+  const location = useLocation()
   const { user } = useAuth()
   const [streak, setStreak] = useState(0)
   const [streakMetrics, setStreakMetrics] = useState({ currentStreak: 0, totalDays: 0, bestStreak: 0, loggedToday: false })
@@ -72,6 +73,14 @@ export default function Dashboard() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
+  useEffect(() => {
+    if (location.hash !== '#daily-dose') return undefined
+    const timer = window.setTimeout(() => {
+      document.getElementById('daily-dose')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+    return () => window.clearTimeout(timer)
+  }, [location.hash])
 
   return (
     <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
@@ -140,7 +149,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch mb-8">
 
           {/* 1. Daily Dose */}
-          <div className="flex flex-col h-full">
+          <div id="daily-dose" className="flex flex-col h-full scroll-mt-28">
             <div className="flex items-center gap-2 mb-3 px-1">
               <div className="w-7 h-7 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755b00]">
                 <Sparkles size={14} />

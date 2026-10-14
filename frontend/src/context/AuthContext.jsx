@@ -90,14 +90,14 @@ export function AuthProvider({ children }) {
         name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
         full_name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
         role: session.user.user_metadata?.role || fallbackRole,
-        status: 'active',
+        status: 'unknown',
       })
       setProfileLoading(false)
     }, 3000)
 
-    // Query columns that actually exist in the profiles table
+    // The stored status is authoritative for distinguishing pending invites from active staff.
     supabase.from('profiles')
-      .select('id, name, student_id, course, year_level, role, created_at')
+      .select('id, name, student_id, course, year_level, role, status, created_at')
       .eq('id', session.user.id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -109,7 +109,7 @@ export function AuthProvider({ children }) {
           setProfile({
             ...data,
             full_name: data.name,
-            status: 'active',
+            email: session.user.email,
           })
           setProfileLoading(false)
           return
@@ -126,7 +126,7 @@ export function AuthProvider({ children }) {
             name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : session.user.email?.split('@')[0] || 'Student'),
             full_name: session.user.user_metadata?.full_name || (fallbackRole === 'admin' ? 'Guidance' : session.user.email?.split('@')[0] || 'Student'),
             role: fallbackRole,
-            status: 'active',
+            status: 'unknown',
           }
           console.log('[AuthContext] Loaded profile via fallback:', minimalProfile)
           setProfile(minimalProfile)
@@ -144,7 +144,7 @@ export function AuthProvider({ children }) {
           name: session.user.user_metadata?.name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
           full_name: session.user.user_metadata?.full_name || (fallbackRole === 'admin' ? 'Guidance' : 'Student'),
           role: fallbackRole,
-          status: 'active',
+          status: 'unknown',
         })
         setProfileLoading(false)
       })
@@ -170,12 +170,18 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, student_id, course, year_level, role, created_at')
+        .select('id, name, student_id, course, year_level, role, status, created_at')
         .eq('id', userId)
         .maybeSingle()
       if (error) throw error
 
-      const nextProfile = data ? { ...data, full_name: data.name, status: 'active' } : null
+      const nextProfile = data
+        ? {
+          ...data,
+          full_name: data.name,
+          email: session.user.email,
+        }
+        : null
       setProfile(nextProfile)
       return nextProfile
     } catch (error) {

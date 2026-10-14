@@ -35,11 +35,49 @@ Deno.serve(async (request) => {
     }
 
     const action = body.action
-    if (!['resend', 'revoke', 'deactivate', 'reactivate'].includes(String(action))) {
+    if (!['resend', 'revoke', 'deactivate', 'reactivate', 'delete'].includes(String(action))) {
       throw new HttpError(400, 'Choose a valid staff action.')
     }
 
     const profile = await getStaffProfile(client, body.targetId)
+    if (action === 'delete') {
+      if (profile.role !== 'counselor') {
+        throw new HttpError(409, 'Only counselor accounts can be permanently deleted.')
+      }
+      if (profile.id === user.id) {
+        throw new HttpError(409, 'You cannot delete your own account.')
+      }
+
+      const linkedRecords = await Promise.all([
+        client.from('mood_logs').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+        client.from('journal_entries').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+        client.from('coping_strategies').select('id', { count: 'exact', head: true }).eq('submitter_id', profile.id),
+        client.from('helpful_votes').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+        client.from('strategy_favorites').select('id', { count: 'exact', head: true }).eq('user_id', profile.id),
+      ])
+
+      if (linkedRecords.some(result => result.error)) {
+        console.error('[set-staff-status] Could not check linked counselor records:', linkedRecords.map(result => result.error).filter(Boolean))
+        throw new HttpError(500, 'Could not verify whether the counselor has linked records. No deletion was made.')
+      }
+      if (linkedRecords.some(result => (result.count ?? 0) > 0)) {
+        throw new HttpError(409, 'This counselor has linked wellness records. Delete is blocked to preserve those records; deactivate the account instead.')
+      }
+
+      await writeAudit(client, user.id, 'staff.account.deletion_requested', profile.id, {
+        role: profile.role,
+        status: profile.status,
+      })
+
+      const { error: deleteError } = await client.auth.admin.deleteUser(profile.id)
+      if (deleteError) {
+        console.error('[set-staff-status] Counselor account deletion failed:', deleteError)
+        throw new HttpError(500, 'The counselor account could not be deleted.')
+      }
+
+      return jsonResponse(request, { ok: true })
+    }
+
     if (action === 'resend' || action === 'revoke') {
       if (profile.status !== 'invited') throw new HttpError(409, 'This account has no pending invitation.')
       const { data: invite, error: inviteError } = await client

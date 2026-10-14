@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { supabase } from '../lib/supabase'
-import { Loader2, ShieldAlert } from 'lucide-react'
+import { ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
 import { normalizeCourse } from '../lib/data'
@@ -277,8 +278,7 @@ export default function StudentWellnessOverview() {
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-40">
-            <Loader2 className="animate-spin mb-4 text-gold" size={40} />
-            <p className="text-[10px] font-black uppercase tracking-widest text-warm/40">Aggregating Campus Data</p>
+            <LoadingIndicator size={32} message="Aggregating campus data…" />
           </div>
         ) : (
           <div className="mt-8">

@@ -99,6 +99,21 @@ describe('staff action confirmations', () => {
     }))
   })
 
+  it('requires confirmation before permanently deleting a counselor account', async () => {
+    renderPage()
+    const counselorRow = screen.getByRole('row', { name: /Alex Counselor/ })
+    fireEvent.click(within(counselorRow).getByRole('button', { name: 'Delete' }))
+
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('permanently delete the counselor account')
+    expect(screen.getByRole('alertdialog')).toHaveTextContent('Deletion is blocked if they have linked wellness records')
+    expect(mocks.invoke).not.toHaveBeenCalled()
+
+    fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Delete account' }))
+    await waitFor(() => expect(mocks.invoke).toHaveBeenCalledWith('set-staff-status', {
+      body: { targetId: 'counselor-1', action: 'delete' },
+    }))
+  })
+
   it('explains likely Edge Function deployment or origin configuration issues', async () => {
     mocks.invoke.mockResolvedValue({
       data: null,

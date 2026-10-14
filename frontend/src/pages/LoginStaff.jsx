@@ -8,7 +8,8 @@ import {
   getPortalDeniedMessage,
   roleMatchesPortal,
 } from '../lib/portalAccess'
-import { Eye, EyeOff, Loader2, ShieldCheck, Sparkles, ArrowRight, UserCircle } from 'lucide-react'
+import LoadingIndicator from '../components/LoadingIndicator'
+import { Eye, EyeOff, ShieldCheck, Sparkles, ArrowRight, UserCircle } from 'lucide-react'
 
 export default function LoginStaff() {
   const navigate = useNavigate()
@@ -172,7 +173,7 @@ export default function LoginStaff() {
 
               <button type="submit" disabled={loading}
                 className="w-full gradient-cta text-[#3E3006] hover:shadow-glow shadow-sm font-extrabold rounded-2xl py-4 flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4 transform">
-                {loading && <Loader2 size={18} className="animate-spin" />}
+                {loading && <LoadingIndicator size={16} label="Signing in" />}
                 {loading ? 'Authenticating...' : 'Access Hub'} <ArrowRight size={18} />
               </button>
             </form>
@@ -202,4 +203,3 @@ export default function LoginStaff() {
     </div>
   )
 }
-

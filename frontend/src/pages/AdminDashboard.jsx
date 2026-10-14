@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
+import LoadingIndicator from '../components/LoadingIndicator'
 import { supabase } from '../lib/supabase'
 import {
   PieChart, Pie, Cell, BarChart, Bar, CartesianGrid,
@@ -8,9 +9,9 @@ import {
 } from 'recharts'
 
 import {
-  Users, Bell, Download, RefreshCw, Loader2,
+  Users, Bell, Download, RefreshCw,
   Heart, Smile, AlertTriangle, CheckCircle, Flag,
-  ExternalLink, ShieldAlert, Sparkles,
+  ExternalLink, ShieldAlert, Sparkles, ArrowRight, X,
 } from 'lucide-react'
 
 // ─────────────────────────────────────────────────────────────
@@ -52,14 +53,31 @@ export const MOOD_META = {
 
 const LOW_MOOD_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
 
+function isGuidanceStageComplete(student, stage) {
+  const completedThrough = student.checkin?.[`${stage}_through_log_id`]
+  return completedThrough != null && Number(completedThrough) >= student.latestLowLogId
+}
+
 // ─────────────────────────────────────────────────────────────
 // Subcomponents
 // ─────────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, color, icon: Icon, trend, alert }) {
+function StatCard({ label, value, sub, color, icon: Icon, trend, alert, onClick }) {
   const valueColor = alert ? CORAL : WARM_DARK
   const accent = alert ? CORAL : color
   return (
-    <div className="bg-white rounded-[2rem] p-6 shadow-lift border border-white transition-all hover:-translate-y-0.5 hover:shadow-xl animate-fadeIn">
+    <div
+      className={`bg-white rounded-[2rem] p-6 shadow-lift border border-white transition-all hover:-translate-y-0.5 hover:shadow-xl animate-fadeIn ${onClick ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6B86A]' : ''}`}
+      onClick={onClick}
+      onKeyDown={onClick ? event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onClick()
+        }
+      } : undefined}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? `${label}: ${value}. ${sub}. ${trend}. Open affected students.` : undefined}
+    >
       <div className="flex items-center justify-between mb-5">
         <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>
           {label}
@@ -146,11 +164,19 @@ function EmptyChartState({ message }) {
 // MAIN
 // ─────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [period, setPeriod]         = useState('30')
   const [isRefreshing, setRefresh]  = useState(false)
   const [analytics, setAnalytics]   = useState(null)
   const [pendingItems, setPending]  = useState([])
   const [recentLowLogs, setRecentLowLogs] = useState([])
+  const [attentionOpen, setAttentionOpen] = useState(false)
+  const [attentionLoading, setAttentionLoading] = useState(false)
+  const [attentionError, setAttentionError] = useState('')
+  const [attentionStudents, setAttentionStudents] = useState([])
+  const [attentionFilter, setAttentionFilter] = useState('needs-follow-up')
+  const [checkinActing, setCheckinActing] = useState('')
+  const [realtimeStatus, setRealtimeStatus] = useState('CONNECTING')
   const [acting, setActing]         = useState(null)
   const [loadError, setLoadError]   = useState('')
 
@@ -199,6 +225,15 @@ export default function AdminDashboard() {
     window.scrollTo(0, 0)
   }, [])
 
+  useEffect(() => {
+    if (!attentionOpen) return undefined
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') setAttentionOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [attentionOpen])
+
   const handleAction = async (id, status) => {
     setActing(id)
     try {
@@ -214,6 +249,165 @@ export default function AdminDashboard() {
       setActing(null)
     }
   }
+
+  const openAttentionList = useCallback(async () => {
+    setAttentionOpen(true)
+    setAttentionLoading(true)
+    setAttentionError('')
+    setAttentionStudents([])
+
+    try {
+      const since = new Date(Date.now() - (parseInt(period, 10) || 30) * 86400000).toISOString()
+      const logs = []
+      const pageSize = 500
+      let offset = 0
+
+      while (true) {
+        const { data, error } = await supabase
+          .from('mood_logs')
+          .select('id, user_id, mood_type, logged_at')
+          .in('mood_type', LOW_MOOD_KEYS)
+          .gte('logged_at', since)
+          .order('logged_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + pageSize - 1)
+        if (error) throw error
+        logs.push(...(data || []))
+        if (!data || data.length < pageSize) break
+        offset += pageSize
+      }
+
+      const userIds = [...new Set(logs.map(log => log.user_id))]
+      const profiles = []
+      for (let index = 0; index < userIds.length; index += 200) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, student_id, course, year_level')
+          .eq('role', 'student')
+          .in('id', userIds.slice(index, index + 200))
+        if (error) throw error
+        profiles.push(...(data || []))
+      }
+
+      const checkins = userIds.length
+        ? await supabase
+          .from('student_guidance_checkins')
+          .select('student_id, reviewed_through_log_id, reviewed_at, reviewed_by, contacted_through_log_id, contacted_at, contacted_by')
+          .in('student_id', userIds)
+        : { data: [], error: null }
+      if (checkins.error) throw checkins.error
+
+      const staffIds = [...new Set((checkins.data || [])
+        .flatMap(checkin => [checkin.reviewed_by, checkin.contacted_by])
+        .filter(Boolean))]
+      const staffProfiles = staffIds.length
+        ? await supabase.from('profiles').select('id, name').in('id', staffIds)
+        : { data: [], error: null }
+      if (staffProfiles.error) throw staffProfiles.error
+
+      const profileById = new Map(profiles.map(profile => [profile.id, profile]))
+      const staffById = new Map((staffProfiles.data || []).map(profile => [profile.id, profile]))
+      const checkinsByStudent = new Map((checkins.data || []).map(checkin => [checkin.student_id, {
+        ...checkin,
+        reviewed_by_name: staffById.get(checkin.reviewed_by)?.name,
+        contacted_by_name: staffById.get(checkin.contacted_by)?.name,
+      }]))
+      const studentsById = new Map()
+      for (const log of logs.filter(entry => profileById.has(entry.user_id))) {
+        if (!studentsById.has(log.user_id)) {
+          const profile = profileById.get(log.user_id)
+          studentsById.set(log.user_id, {
+            id: log.user_id,
+            name: profile.name || 'Student profile unavailable',
+            studentId: profile.student_id || '',
+            course: profile.course || '',
+            yearLevel: profile.year_level,
+            entries: 0,
+            latestEntry: log.logged_at,
+            latestLowLogId: Number(log.id),
+            moodCounts: {},
+            recentEntries: [],
+            checkin: checkinsByStudent.get(log.user_id) || null,
+          })
+        }
+        const student = studentsById.get(log.user_id)
+        student.entries += 1
+        student.moodCounts[log.mood_type] = (student.moodCounts[log.mood_type] || 0) + 1
+        student.recentEntries.push({ moodType: log.mood_type, loggedAt: log.logged_at })
+        if (
+          new Date(log.logged_at).getTime() > new Date(student.latestEntry).getTime()
+          || (
+            new Date(log.logged_at).getTime() === new Date(student.latestEntry).getTime()
+            && Number(log.id) > student.latestLowLogId
+          )
+        ) {
+          student.latestEntry = log.logged_at
+          student.latestLowLogId = Number(log.id)
+        }
+      }
+
+      setAttentionStudents([...studentsById.values()].sort((a, b) =>
+        b.entries - a.entries || new Date(b.latestEntry) - new Date(a.latestEntry)
+      ))
+    } catch (error) {
+      console.error('[AdminDashboard] Could not load affected students:', error)
+      setAttentionError('Affected students could not be loaded. Please close this panel and try again.')
+    } finally {
+      setAttentionLoading(false)
+    }
+  }, [period])
+
+  useEffect(() => {
+    if (searchParams.get('panel') !== 'follow-up') return
+    openAttentionList()
+    setSearchParams({}, { replace: true })
+  }, [openAttentionList, searchParams, setSearchParams])
+
+  const handleGuidanceCheckin = async (studentId, stage, completed) => {
+    const actionKey = `${studentId}:${stage}`
+    setCheckinActing(actionKey)
+    setAttentionError('')
+    try {
+      const { error } = await supabase.rpc('set_student_guidance_checkin', {
+        p_student_id: studentId,
+        p_stage: stage,
+        p_completed: completed,
+      })
+      if (error) throw error
+      await openAttentionList()
+    } catch (error) {
+      console.error('[AdminDashboard] Could not update guidance check-in:', error)
+      setAttentionError('Could not save this follow-up status. Please try again.')
+    } finally {
+      setCheckinActing('')
+    }
+  }
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-guidance-monitoring')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'mood_logs',
+      }, payload => {
+        if (!LOW_MOOD_KEYS.includes(payload.new?.mood_type)) return
+        fetchAnalytics()
+        if (attentionOpen) openAttentionList()
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'student_guidance_checkins',
+      }, () => {
+        if (attentionOpen) openAttentionList()
+      })
+      .subscribe(status => setRealtimeStatus(status))
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [attentionOpen, fetchAnalytics, openAttentionList])
 
   const triggerStats = analytics?.topTriggers?.length
     ? analytics.topTriggers.slice(0, 5).map((t, i) => ({
@@ -259,6 +453,12 @@ export default function AdminDashboard() {
 
   const hasLowMoods = lowMoodCount > 0
   const rangeLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days'
+  const studentsNeedingFollowUp = attentionStudents.filter(student =>
+    !isGuidanceStageComplete(student, 'reviewed') || !isGuidanceStageComplete(student, 'contacted')
+  )
+  const visibleAttentionStudents = attentionFilter === 'all'
+    ? attentionStudents
+    : studentsNeedingFollowUp
 
   const snapshotMessage = !analytics
     ? 'Analytics will appear here once responses are available.'
@@ -304,7 +504,7 @@ export default function AdminDashboard() {
             <div className="bg-white/60 backdrop-blur-md rounded-full p-1.5 border border-white shadow-lift flex items-center gap-1.5 animate-slideInRight self-start lg:self-end">
               <div className="flex items-center gap-0.5 px-1">
                 {[{ v: '7', l: '7D' }, { v: '30', l: '30D' }, { v: '90', l: '90D' }].map(({ v, l }) => (
-                  <button key={v} onClick={() => setPeriod(v)}
+                  <button key={v} onClick={() => { setAttentionOpen(false); setPeriod(v) }}
                     className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all"
                     style={{
                       background: period === v ? WARM_GOLD : 'transparent',
@@ -320,7 +520,7 @@ export default function AdminDashboard() {
                 style={{ color: WARM_TAN }}
                 title="Refresh">
                 {isRefreshing
-                  ? <Loader2 size={14} className="animate-spin" />
+                  ? <LoadingIndicator size={12} label="Refreshing dashboard" />
                   : <RefreshCw size={14} />}
               </button>
             </div>
@@ -354,24 +554,29 @@ export default function AdminDashboard() {
 
         {/* ── CAMPUS ALERT BANNER ──────────────────────────────── */}
         {hasLowMoods ? (
-          <div
-            className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
-            style={{ background: '#FDECEA', border: `1px solid ${CORAL}40` }}
+          <button
+            type="button"
+            onClick={openAttentionList}
+            className="mb-8 w-full text-left backdrop-blur-md rounded-3xl px-6 sm:px-8 py-5 flex items-center gap-4 animate-fadeIn transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6B86A]"
+            style={{ background: '#FFF8E7', border: `1px solid ${GOLD}65` }}
+            aria-label={`${lowMoodCount} low or difficult mood entries in the ${rangeLabel}. Review affected students.`}
           >
             <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#FEE2E2' }}>
-              <ShieldAlert size={18} style={{ color: CORAL }} />
+              style={{ background: '#FEF0C7' }}>
+              <ShieldAlert size={18} style={{ color: '#9A6B12' }} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#991B1B' }}>
-                Campus Attention
+              <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: '#755B1A' }}>
+                Guidance Check-in
               </p>
-              <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#B91C1C' }}>
-                {lowMoodCount} low or difficult mood {lowMoodCount === 1 ? 'entry' : 'entries'} (awful, bad, burnt out, etc.) recorded in the {rangeLabel.toLowerCase()}. Guidance check-in is recommended for affected students.
+              <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#71591F' }}>
+                {lowMoodCount} low or difficult mood {lowMoodCount === 1 ? 'entry' : 'entries'} (awful, bad, burnt out, etc.) recorded in the {rangeLabel.toLowerCase()}. Review the affected students and recent patterns.
               </p>
             </div>
-            <div className="w-2 h-2 rounded-full animate-pulse flex-shrink-0" style={{ background: CORAL }} />
-          </div>
+            <span className="hidden sm:inline-flex items-center gap-2 text-xs font-bold flex-shrink-0" style={{ color: '#755B1A' }}>
+              Review <ArrowRight size={15} />
+            </span>
+          </button>
         ) : analytics ? (
           <div
             className="mb-8 backdrop-blur-md rounded-3xl px-8 py-5 flex items-center gap-4 animate-fadeIn"
@@ -386,7 +591,7 @@ export default function AdminDashboard() {
                 Community Wellness
               </p>
               <p className="text-[12px] font-medium leading-relaxed" style={{ color: '#065F46' }}>
-                Campus wellness is currently positive. {totalReports} mood entries logged with no critical alerts.
+                No low or difficult mood entries were recorded in the {rangeLabel.toLowerCase()}. {totalReports} mood {totalReports === 1 ? 'entry was' : 'entries were'} logged during this period.
               </p>
             </div>
           </div>
@@ -407,9 +612,9 @@ export default function AdminDashboard() {
           <StatCard
             label="Low Mood Entries" value={lowMoodCount}
             sub="Awful, bad & high stress"
-            icon={AlertTriangle} color={CORAL}
-            trend={lowMoodCount > 0 ? `${lowMoodCount} entries needing care` : 'No low entries'}
-            alert={lowMoodCount > 0}
+            icon={Heart} color={GOLD}
+            trend={lowMoodCount > 0 ? 'Review affected students' : 'No low entries'}
+            onClick={hasLowMoods ? openAttentionList : undefined}
           />
           <StatCard
             label="Most Common Mood"
@@ -443,12 +648,12 @@ export default function AdminDashboard() {
             <SectionTitle eyebrow="Real-Time Inputs" title="Campus Mood Entries & Feelings">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black self-start"
                 style={{ 
-                  background: hasLowMoods ? '#FEE2E2' : '#E0F2F1', 
-                  color: hasLowMoods ? CORAL : SAGE 
+                  background: hasLowMoods ? '#FEF0C7' : '#E0F2F1',
+                  color: hasLowMoods ? '#755B1A' : SAGE
                 }}>
-                <div className={`w-1.5 h-1.5 rounded-full ${hasLowMoods ? 'animate-pulse' : ''}`} 
-                  style={{ background: hasLowMoods ? CORAL : SAGE }} />
-                {hasLowMoods ? `${lowMoodCount} LOW ENTRIES` : 'ALL POSITIVE'}
+                <div className="w-1.5 h-1.5 rounded-full"
+                  style={{ background: hasLowMoods ? GOLD : SAGE }} />
+                {hasLowMoods ? `${lowMoodCount} LOW ENTRIES` : 'NO LOW ENTRIES'}
               </div>
             </SectionTitle>
 
@@ -478,7 +683,7 @@ export default function AdminDashboard() {
                           <span className="text-xl">{m.emoji}</span>
                           <span className="text-sm font-bold capitalize" style={{ color: WARM_BODY }}>{m.label}</span>
                           {m.isLow && (
-                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                            <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[#FEF0C7] text-[#755B1A]">
                               Low
                             </span>
                           )}
@@ -552,7 +757,7 @@ export default function AdminDashboard() {
           
           {/* Card 1: Recent Low Mood Entries */}
           <Card>
-            <SectionTitle eyebrow="Requires Attention" title="Recent Low Mood Logs" />
+            <SectionTitle eyebrow="Guidance Check-in" title="Recent Low Mood Logs" />
             <div className="space-y-2.5 overflow-y-auto pr-1" style={{ maxHeight: 250 }}>
               {recentLowLogs.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
@@ -583,7 +788,7 @@ export default function AdminDashboard() {
                       {log.triggers?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {log.triggers.map((t, ti) => (
-                            <span key={ti} className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700">
+                            <span key={ti} className="text-[8px] font-bold px-2 py-0.5 rounded-full bg-[#FEF0C7] text-[#755B1A]">
                               {t}
                             </span>
                           ))}
@@ -664,7 +869,7 @@ export default function AdminDashboard() {
                         style={{ background: `${SAGE}30`, color: SAGE }}
                         title="Approve">
                         {acting === item.id
-                          ? <Loader2 size={10} className="animate-spin" />
+                          ? <LoadingIndicator size={12} label="Updating entry" />
                           : <CheckCircle size={12} />}
                       </button>
                       <button onClick={() => handleAction(item.id, 'rejected')}
@@ -693,6 +898,216 @@ export default function AdminDashboard() {
           </span>
         </div>
       </main>
+
+      {attentionOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#241d1d]/50 p-4 backdrop-blur-sm"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setAttentionOpen(false)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guidance-checkin-title"
+            className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-[#FDF9F2] shadow-lift"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-warm/10 bg-white px-6 py-5 sm:px-8">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: '#9A6B12' }}>
+                  {rangeLabel} · Guidance review
+                </p>
+                <h2 id="guidance-checkin-title" className="mt-1 font-jakarta text-xl font-extrabold" style={{ color: WARM_DARK }}>
+                  Students with difficult mood entries
+                </h2>
+                <p className="mt-1 text-xs" style={{ color: WARM_TAN }}>
+                  Entries are grouped by student. Private journal content is not shown here.
+                </p>
+                <p className="mt-2 text-[10px] font-semibold" style={{ color: realtimeStatus === 'SUBSCRIBED' ? '#2D6B47' : WARM_TAN }}>
+                  {realtimeStatus === 'SUBSCRIBED'
+                    ? 'Live updates on'
+                    : ['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(realtimeStatus)
+                      ? 'Live updates unavailable'
+                      : 'Connecting to live updates…'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAttentionOpen(false)}
+                aria-label="Close guidance review"
+                className="rounded-xl p-2 text-warm/50 transition hover:bg-[#FDF9F2] hover:text-warm"
+              >
+                <X size={20} />
+              </button>
+            </header>
+
+            <div className="overflow-y-auto px-6 py-5 sm:px-8">
+              {attentionLoading ? (
+                <div className="flex items-center justify-center gap-3 py-14 text-sm font-semibold" role="status">
+                  <LoadingIndicator size={28} message="Gathering affected students…" />
+                </div>
+              ) : attentionError ? (
+                <div role="alert" className="rounded-2xl bg-red-50 p-5 text-sm font-medium text-red-800">
+                  {attentionError}
+                </div>
+              ) : attentionStudents.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-warm/15 bg-white px-5 py-12 text-center">
+                  <CheckCircle size={26} className="mx-auto mb-3 text-[#81B29A]" />
+                  <p className="font-bold" style={{ color: WARM_DARK }}>No affected students in this period</p>
+                  <p className="mt-1 text-xs" style={{ color: WARM_TAN }}>No low or difficult mood entries were found.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-white p-4">
+                      <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>Affected students</p>
+                      <p className="mt-1 font-jakarta text-2xl font-extrabold" style={{ color: WARM_DARK }}>{attentionStudents.length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-white p-4">
+                      <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>Mood entries</p>
+                      <p className="mt-1 font-jakarta text-2xl font-extrabold" style={{ color: WARM_DARK }}>
+                        {attentionStudents.reduce((sum, student) => sum + student.entries, 0)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex rounded-xl bg-white p-1">
+                      {[
+                        { key: 'needs-follow-up', label: `Needs follow-up (${studentsNeedingFollowUp.length})` },
+                        { key: 'all', label: `All affected (${attentionStudents.length})` },
+                      ].map(filter => (
+                        <button
+                          key={filter.key}
+                          type="button"
+                          onClick={() => setAttentionFilter(filter.key)}
+                          aria-pressed={attentionFilter === filter.key}
+                          className="rounded-lg px-3 py-2 text-[10px] font-bold transition"
+                          style={{
+                            background: attentionFilter === filter.key ? '#FEF0C7' : 'transparent',
+                            color: attentionFilter === filter.key ? '#755B1A' : WARM_TAN,
+                          }}
+                        >
+                          {filter.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px]" style={{ color: WARM_TAN }}>
+                      Mark both stages complete to clear follow-up.
+                    </p>
+                  </div>
+                  {visibleAttentionStudents.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-[#81B29A]/40 bg-white px-5 py-10 text-center">
+                      <CheckCircle size={24} className="mx-auto mb-2 text-[#81B29A]" />
+                      <p className="font-bold" style={{ color: WARM_DARK }}>All follow-up stages are complete</p>
+                      <p className="mt-1 text-xs" style={{ color: WARM_TAN }}>New difficult mood entries will reopen follow-up.</p>
+                    </div>
+                  ) : (
+                  <ul className="divide-y divide-warm/10 overflow-hidden rounded-2xl border border-warm/10 bg-white">
+                    {visibleAttentionStudents.map(student => {
+                      const reviewed = isGuidanceStageComplete(student, 'reviewed')
+                      const contacted = isGuidanceStageComplete(student, 'contacted')
+                      const moods = Object.entries(student.moodCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([key, count]) => `${MOOD_META[key]?.label || key} ×${count}`)
+                      return (
+                        <li key={student.id} className="flex flex-col gap-2 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="font-bold" style={{ color: WARM_DARK }}>{student.name}</p>
+                            <p className="mt-0.5 text-xs" style={{ color: WARM_TAN }}>
+                              {[student.studentId, student.course, student.yearLevel ? `Year ${student.yearLevel}` : '']
+                                .filter(Boolean).join(' · ') || 'Student details unavailable'}
+                            </p>
+                            <p className="mt-1 text-xs font-medium" style={{ color: '#755B1A' }}>{moods.join(' · ')}</p>
+                            <details className="mt-2 text-xs">
+                              <summary className="w-fit cursor-pointer font-bold" style={{ color: '#755B1A' }}>
+                                Review mood entries
+                              </summary>
+                              <ul className="mt-2 space-y-1.5 border-l-2 border-[#E6B86A]/40 pl-3">
+                                {student.recentEntries.map((entry, index) => (
+                                  <li key={`${entry.loggedAt}-${entry.moodType}-${index}`} className="flex flex-wrap gap-x-2 text-[11px]" style={{ color: WARM_TAN }}>
+                                    <span>{MOOD_META[entry.moodType]?.emoji || '😶'} {MOOD_META[entry.moodType]?.label || entry.moodType}</span>
+                                    <time dateTime={entry.loggedAt}>
+                                      {new Date(entry.loggedAt).toLocaleString(undefined, {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                      })}
+                                    </time>
+                                  </li>
+                                ))}
+                              </ul>
+                            </details>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                disabled={Boolean(checkinActing)}
+                                onClick={() => handleGuidanceCheckin(student.id, 'reviewed', !reviewed)}
+                                aria-pressed={reviewed}
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-[11px] font-bold transition disabled:cursor-wait disabled:opacity-60"
+                                style={{
+                                  background: reviewed ? '#EAF5EE' : '#FDF9F2',
+                                  color: reviewed ? '#2D6B47' : '#755B1A',
+                                  border: `1px solid ${reviewed ? '#81B29A55' : '#E6B86A55'}`,
+                                }}
+                              >
+                                {checkinActing === `${student.id}:reviewed`
+                                  ? <LoadingIndicator size={12} label="Saving review status" />
+                                  : <CheckCircle size={13} />}
+                                {checkinActing === `${student.id}:reviewed`
+                                  ? 'Saving…'
+                                  : reviewed ? 'Reviewed' : 'Mark reviewed'}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={Boolean(checkinActing)}
+                                onClick={() => handleGuidanceCheckin(student.id, 'contacted', !contacted)}
+                                aria-pressed={contacted}
+                                className="inline-flex min-h-9 items-center gap-1.5 rounded-xl px-3 text-[11px] font-bold transition disabled:cursor-wait disabled:opacity-60"
+                                style={{
+                                  background: contacted ? '#EAF5EE' : '#FDF9F2',
+                                  color: contacted ? '#2D6B47' : '#755B1A',
+                                  border: `1px solid ${contacted ? '#81B29A55' : '#E6B86A55'}`,
+                                }}
+                              >
+                                {checkinActing === `${student.id}:contacted`
+                                  ? <LoadingIndicator size={12} label="Saving contact status" />
+                                  : <CheckCircle size={13} />}
+                                {checkinActing === `${student.id}:contacted`
+                                  ? 'Saving…'
+                                  : contacted ? 'Contacted' : 'Mark contacted'}
+                              </button>
+                            </div>
+                            {(reviewed || contacted) && (
+                              <p className="mt-2 text-[10px]" style={{ color: WARM_TAN }}>
+                                {reviewed && student.checkin?.reviewed_at
+                                  && `Reviewed by ${student.checkin.reviewed_by_name || 'staff'} · ${new Date(student.checkin.reviewed_at).toLocaleDateString()}`}
+                                {reviewed && contacted && student.checkin?.contacted_at && ' · '}
+                                {contacted && student.checkin?.contacted_at
+                                  && `Contacted by ${student.checkin.contacted_by_name || 'staff'} · ${new Date(student.checkin.contacted_at).toLocaleDateString()}`}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 sm:text-right">
+                            <p className="text-sm font-extrabold" style={{ color: WARM_DARK }}>
+                              {student.entries} {student.entries === 1 ? 'entry' : 'entries'}
+                            </p>
+                            <p className="mt-0.5 text-[10px]" style={{ color: WARM_TAN }}>
+                              Latest {new Date(student.latestEntry).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  )}
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

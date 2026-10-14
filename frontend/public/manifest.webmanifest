@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "UniWell",
+  "short_name": "UniWell",
+  "description": "Your campus wellness sanctuary.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FDF9F2",
+  "theme_color": "#FDF9F2",
+  "icons": [
+    {
+      "src": "/sunflower.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
