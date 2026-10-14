@@ -1,3 +1,4 @@
+
 # UniWell
 
 UniWell is a university student-wellness SPA built with React 18, JavaScript/JSX, Vite, Tailwind CSS, React Router, Lucide, and Recharts. Supabase provides PostgreSQL, Auth, Row-Level Security, and Edge Functions. Vercel hosts the static SPA. There is no custom backend server.
@@ -11,6 +12,7 @@ The browser is untrusted. Frontend route guards improve navigation but do not au
 - Staff lifecycle operations and staff sign-ins write to `public.audit_log`.
 - Journal entries remain private to their author.
 - The Phase 2 migration intentionally leaves existing wellness-table RLS policies unchanged. Review and apply the separate counselor/active-user policy design before production. In particular, define the assignment or consent boundary that controls which students counselors may view.
+- Appearance defaults to light and can be changed to Light, Dark, or Device from student Profile or admin Settings. The preference is saved in the current browser.
 
 ## Wellness RLS proposal (not applied)
 
@@ -39,10 +41,14 @@ Replace role decisions based only on the cached JWT `app_metadata.role` with `is
 3. Apply migrations in chronological order. For a project that already ran the baseline schema, apply the migrations to a development project first:
    - `supabase/migrations/20260425_extend_mood_types.sql`
    - `supabase/migrations/20260425_strategy_favorites.sql`
+   - `supabase/migrations/20261005_add_counselor_role.sql` (run by itself as a separate SQL Editor query and wait for it to succeed; PostgreSQL requires the new enum value to commit before the staff migration can use it)
    - `supabase/migrations/20261005_unified_auth_and_staff_invites.sql`
    - `supabase/migrations/20261005_audit_security_functions.sql`
+   - `supabase/migrations/20261012_allow_undo_coping_moderation.sql`
+   - `supabase/migrations/20261014_counselor_admin_access.sql`
 4. Do not rerun `schema.sql` after the unified-auth migration; it contains the legacy auth trigger. Review and test each migration against a dev project before production.
 5. Run `supabase/tests/rls_auth_checks.sql` in a development project after replacing both student UUID placeholders. It should confirm a student can read their own profile, cannot read another student's profile, cannot read staff invites or audit logs, and cannot change their own role.
+6. The counselor access migration intentionally gives active counselors the same campus-wide administration tools and data access as admins, including analytics, moderation, and staff management. Journal entries remain available only to their owner or when explicitly shared with guidance. Review this permission expansion before applying it to production.
 
 ## Bootstrap the first admin
 
@@ -54,15 +60,17 @@ The script only promotes an existing user to `admin` and `active`; it does not c
 
 ## Invite staff
 
-1. Set Edge Function secrets in the Supabase project. Required values are `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL`; `ALLOWED_STAFF_EMAIL_DOMAIN` is optional. Keep all of these out of frontend environment files and source control.
-2. Deploy the functions:
+1. Set Edge Function secrets in the Supabase project. Required values are `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SITE_URL`; `ALLOWED_STAFF_EMAIL_DOMAIN` is optional. Set `ALLOWED_ORIGINS` to a comma-separated list of exact frontend origins if the app is served from a domain other than `SITE_URL`, `http://localhost:5173`, or `http://localhost:5174`. Keep all secrets out of frontend environment files and source control.
+2. Apply `supabase/migrations/20261014_counselor_admin_access.sql` in the Supabase SQL Editor to give active counselors the same administration tools as admins.
+3. Deploy the updated functions:
 
    ```bash
    supabase functions deploy invite-staff
    supabase functions deploy set-staff-status
    ```
 
-3. Sign in as the active admin and open `/staff/manage` to invite counselors or admins. The invitee follows the email link at `/accept-invite`, confirms their name, and sets a password.
+4. Active counselors and admins can then open the shared administration pages, including `/staff/manage` to invite counselors or admins. The invitee follows the email link at `/accept-invite`, confirms their name, and sets a password.
+5. If the browser reports that it could not send a request to an Edge Function, confirm the functions are deployed and that `SITE_URL` is a valid canonical frontend URL. Local origins `http://localhost:5173` and `http://localhost:5174` are allowed; add any other exact frontend origins (scheme and host, with no path), including Vercel preview deployments, to `ALLOWED_ORIGINS`. Redeploy the functions after changing their source or CORS configuration, then retry. Do not use `*` for production origins.
 
 ## Password recovery and Auth dashboard checklist
 

@@ -42,6 +42,7 @@ function renderLogin() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<p>Student dashboard reached</p>} />
         <Route path="/staff" element={<p>Staff hub reached</p>} />
+        <Route path="/admin" element={<p>Admin dashboard reached</p>} />
         <Route path="/accept-invite" element={<p>Invite acceptance reached</p>} />
       </Routes>
     </MemoryRouter>,
@@ -65,7 +66,7 @@ function renderProtectedRoute(initialPath, allowedRoles, profile) {
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/staff" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><p>Staff hub content</p></ProtectedRoute>} />
-        <Route path="/staff/manage" element={<ProtectedRoute allowedRoles={['admin']}><p>Manage staff content</p></ProtectedRoute>} />
+        <Route path="/staff/manage" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><p>Manage staff content</p></ProtectedRoute>} />
         <Route path="/dashboard" element={<p>Student home content</p>} />
         <Route path="/login" element={<p>Login content</p>} />
         <Route path="*" element={<LocationProbe />} />
@@ -84,8 +85,8 @@ afterEach(() => cleanup())
 describe('unified login', () => {
   it.each([
     ['student', '/dashboard', 'Student dashboard reached'],
-    ['counselor', '/staff', 'Staff hub reached'],
-    ['admin', '/staff', 'Staff hub reached'],
+    ['counselor', '/admin', 'Admin dashboard reached'],
+    ['admin', '/admin', 'Admin dashboard reached'],
   ])('redirects an active %s to their home', async (role, route, destination) => {
     mocks.supabase.auth.signInWithPassword.mockResolvedValue({
       data: { user: { id: 'user-1' } },
@@ -105,7 +106,7 @@ describe('unified login', () => {
       password: 'StrongPassword123!',
     })
     if (role !== 'student') expect(mocks.supabase.rpc).toHaveBeenCalledWith('log_staff_sign_in')
-    expect(route).toBe(role === 'student' ? '/dashboard' : '/staff')
+    expect(route).toBe(role === 'student' ? '/dashboard' : '/admin')
   })
 
   it('signs a disabled user out and shows the inactive message', async () => {
@@ -154,10 +155,9 @@ describe('role guards', () => {
     expect(screen.queryByText('Staff hub content')).not.toBeInTheDocument()
   })
 
-  it('blocks counselors from /staff/manage and redirects them to /staff', async () => {
-    renderProtectedRoute('/staff/manage', ['admin'], { role: 'counselor', status: 'active' })
-    expect(await screen.findByText('Staff hub content')).toBeInTheDocument()
-    expect(screen.queryByText('Manage staff content')).not.toBeInTheDocument()
+  it('allows counselors into the shared admin tools', async () => {
+    renderProtectedRoute('/staff/manage', ['counselor', 'admin'], { role: 'counselor', status: 'active' })
+    expect(await screen.findByText('Manage staff content')).toBeInTheDocument()
   })
 })
 

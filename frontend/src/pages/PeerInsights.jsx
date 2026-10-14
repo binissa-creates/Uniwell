@@ -422,7 +422,7 @@ export default function PeerInsights() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               
               {/* Left Column: Context Card */}
-              <div className="lg:col-span-4 bg-gradient-to-br from-[#FFFDF8] to-[#FFF8EA] rounded-2xl p-4 sm:p-5 border border-[#F6C945]/30 shadow-suncast flex flex-col justify-between relative overflow-hidden">
+              <div className="recommendation-context-card lg:col-span-4 bg-gradient-to-br from-[#FFFDF8] to-[#FFF8EA] rounded-2xl p-4 sm:p-5 border border-[#F6C945]/30 shadow-suncast flex flex-col justify-between relative overflow-hidden">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#F6C945]/15 rounded-full blur-2xl pointer-events-none" />
                 
                 <div>

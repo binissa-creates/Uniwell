@@ -29,8 +29,8 @@ const PORTAL_FALLBACK_MESSAGE = {
 
 const ROLE_HOME = {
   student: '/dashboard',
-  counselor: '/staff',
-  admin: '/staff',
+  counselor: '/admin',
+  admin: '/admin',
 }
 
 function normalizeRole(role) {

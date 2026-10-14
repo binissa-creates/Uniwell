@@ -1,6 +1,7 @@
 import { Component } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import { hasSupabaseConfig } from './lib/supabase'
 import { getHomeForRole } from './lib/portalAccess'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -22,9 +23,10 @@ import StudentWellnessOverview from './pages/StudentWellnessOverview'
 import AdminModeration from './pages/AdminModeration'
 import AdminComingSoon from './pages/AdminComingSoon'
 import ManageStaff from './pages/ManageStaff'
+import AdminSettings from './pages/AdminSettings'
 import FloatingSupportButton from './components/FloatingSupportButton'
 import LoadingScreen from './components/LoadingScreen'
-import { Stethoscope, Settings, HelpCircle } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 
 class AppErrorBoundary extends Component {
   state = { hasError: false }
@@ -125,22 +127,7 @@ function GuestRoute({ children }) {
 }
 
 function StaffHub() {
-  const { profile } = useAuth()
-  if (profile?.role === 'admin') return <AdminDashboard />
-
-  return (
-    <AdminComingSoon
-      eyebrow="Guidance Staff Hub"
-      title="Guidance"
-      accent="Hub"
-      icon={Stethoscope}
-      blurb="Your staff account is active. Guidance tools will appear here as they become available."
-      bullets={[
-        'Student access is controlled by database policies.',
-        'Private journal entries are not available to staff.',
-      ]}
-    />
-  )
+  return <Navigate to="/admin" replace />
 }
 
 function StudentSupportWrapper() {
@@ -151,12 +138,13 @@ function StudentSupportWrapper() {
 
 export default function App() {
   return (
-    <AppErrorBoundary>
-      {!hasSupabaseConfig ? (
-        <DeploymentConfigurationScreen />
-      ) : (
-        <AuthProvider>
-          <BrowserRouter>
+    <ThemeProvider>
+      <AppErrorBoundary>
+        {!hasSupabaseConfig ? (
+          <DeploymentConfigurationScreen />
+        ) : (
+          <AuthProvider>
+            <BrowserRouter>
             <StudentSupportWrapper />
             <Routes>
           {/* Public */}
@@ -178,7 +166,7 @@ export default function App() {
           {/* Staff */}
           <Route path="/staff" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><StaffHub /></ProtectedRoute>} />
           <Route path="/staff/manage" element={
-            <ProtectedRoute allowedRoles={['admin']}><ManageStaff /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={['counselor', 'admin']}><ManageStaff /></ProtectedRoute>
           } />
           <Route path="/staff/*" element={
             <ProtectedRoute allowedRoles={['counselor', 'admin']}>
@@ -187,30 +175,18 @@ export default function App() {
           } />
 
           {/* Admin */}
-          <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-          <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['admin']}><StudentWellnessOverview /></ProtectedRoute>} />
-          <Route path="/admin/alerts" element={<ProtectedRoute allowedRoles={['admin']}><StudentWellnessOverview /></ProtectedRoute>} />
-          <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={['admin']}><AdminModeration /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/students" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><StudentWellnessOverview /></ProtectedRoute>} />
+          <Route path="/admin/alerts" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><StudentWellnessOverview /></ProtectedRoute>} />
+          <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={['counselor', 'admin']}><AdminModeration /></ProtectedRoute>} />
           <Route path="/admin/settings" element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminComingSoon
-                eyebrow="Admin Hub · Preferences"
-                title="Admin"
-                accent="Settings"
-                icon={Settings}
-                blurb="Tune how UniWell surfaces data for your campus — alert thresholds, visibility, and team access."
-                bullets={[
-                  'Adjust the thresholds that produce alerts (silence period, critical streak length, low-average cutoff).',
-                  'Manage admin accounts and invite new guidance staff.',
-                  'Toggle which students appear in analytics by program or year level.',
-                  'Configure email templates used for outreach.',
-                ]}
-              />
+            <ProtectedRoute allowedRoles={['counselor', 'admin']}>
+              <AdminSettings />
             </ProtectedRoute>
           } />
           <Route path="/admin/help" element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['counselor', 'admin']}>
               <AdminComingSoon
                 eyebrow="Admin Hub · Resources"
                 title="Help &"
@@ -230,9 +206,10 @@ export default function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      )}
-    </AppErrorBoundary>
+            </BrowserRouter>
+          </AuthProvider>
+        )}
+      </AppErrorBoundary>
+    </ThemeProvider>
   )
 }

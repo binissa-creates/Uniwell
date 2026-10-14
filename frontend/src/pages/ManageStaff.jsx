@@ -1,18 +1,29 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Navbar from '../components/Navbar'
+import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
-import { AlertCircle, Check, Loader2, MailPlus, RefreshCw, Shield, UserRoundX, UserRoundCheck } from 'lucide-react'
+import { AlertCircle, Check, Loader2, MailPlus, RefreshCw, Shield, UserRoundX, UserRoundCheck, X } from 'lucide-react'
 
 const INITIAL_FORM = { fullName: '', email: '', role: 'counselor' }
 const ACTION_COPY = {
-  resend: 'Resend the invitation email to this staff member?',
-  revoke: 'Revoke this invitation? An unconfirmed account will be removed.',
-  deactivate: 'Deactivate this staff account? They will be blocked from signing in.',
-  reactivate: 'Reactivate this staff account and restore sign-in access?',
+  resend: 'resend the invitation email to',
+  revoke: 'revoke the invitation for',
+  deactivate: 'deactivate the staff account for',
+  reactivate: 'reactivate the staff account for',
+}
+const ACTION_DETAILS = {
+  resend: 'A new invitation email will be sent.',
+  revoke: 'The invitation will be cancelled and an unconfirmed account will be removed.',
+  deactivate: 'They will be blocked from signing in.',
+  reactivate: 'Their sign-in access will be restored.',
 }
 
-async function getFunctionError(error, data) {
+async function getFunctionError(error, data, functionName) {
   if (data?.error) return data.error
+  const message = error?.message || ''
+  if (error?.name === 'FunctionsFetchError' || /failed to send a request/i.test(message)) {
+    return `Could not contact the "${functionName}" Edge Function. Confirm it is deployed and that SITE_URL or ALLOWED_ORIGINS includes ${window.location.origin}. Check the browser network panel for CORS or connectivity errors.`
+  }
   try {
     const body = await error?.context?.json()
     if (body?.error) return body.error
@@ -32,6 +43,7 @@ function StatusBadge({ status }) {
 }
 
 export default function ManageStaff() {
+  const { user } = useAuth()
   const [staff, setStaff] = useState([])
   const [form, setForm] = useState(INITIAL_FORM)
   const [loading, setLoading] = useState(true)
@@ -39,6 +51,8 @@ export default function ManageStaff() {
   const [acting, setActing] = useState(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [confirmation, setConfirmation] = useState(null)
+  const cancelConfirmationRef = useRef(null)
 
   const loadStaff = useCallback(async () => {
     setLoading(true)
@@ -52,7 +66,7 @@ export default function ManageStaff() {
     if (queryError) {
       console.error('[ManageStaff] Could not load staff:', queryError)
       setStaff([])
-      setError('Staff could not be loaded. Check your connection and try again.')
+      setError(`Staff could not be loaded: ${queryError.message}`)
     } else {
       setStaff(data || [])
     }
@@ -61,8 +75,18 @@ export default function ManageStaff() {
 
   useEffect(() => { loadStaff() }, [loadStaff])
 
-  const handleInvite = async (event) => {
-    event.preventDefault()
+  useEffect(() => {
+    if (!confirmation) return undefined
+    cancelConfirmationRef.current?.focus()
+    const handleEscape = event => {
+      if (event.key === 'Escape') setConfirmation(null)
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [confirmation])
+
+  const sendInvite = async () => {
+    if (submitting) return
     setError('')
     setNotice('')
     setSubmitting(true)
@@ -74,7 +98,9 @@ export default function ManageStaff() {
           role: form.role,
         },
       })
-      if (functionError) throw new Error(await getFunctionError(functionError, data))
+      if (functionError) {
+        throw new Error(await getFunctionError(functionError, data, 'invite-staff'))
+      }
       if (data?.error) throw new Error(data.error)
       setForm(INITIAL_FORM)
       setNotice('Invitation sent.')
@@ -87,8 +113,20 @@ export default function ManageStaff() {
     }
   }
 
-  const handleAction = async (member, action) => {
-    if (!window.confirm(ACTION_COPY[action])) return
+  const requestInvite = (event) => {
+    event.preventDefault()
+    setError('')
+    setNotice('')
+    setConfirmation({
+      title: 'Send staff invitation?',
+      message: `Are you sure you want to invite ${form.fullName.trim()} (${form.email.trim()}) as ${form.role === 'admin' ? 'an admin' : 'a counselor'}? An invitation email will be sent.`,
+      confirmLabel: 'Send invitation',
+      onConfirm: sendInvite,
+    })
+  }
+
+  const runStaffAction = async (member, action) => {
+    if (acting) return
     setError('')
     setNotice('')
     setActing(`${member.id}:${action}`)
@@ -96,7 +134,7 @@ export default function ManageStaff() {
       const { data, error: functionError } = await supabase.functions.invoke('set-staff-status', {
         body: { targetId: member.id, action },
       })
-      if (functionError) throw new Error(await getFunctionError(functionError, data))
+      if (functionError) throw new Error(await getFunctionError(functionError, data, 'set-staff-status'))
       if (data?.error) throw new Error(data.error)
       setNotice(action === 'resend' ? 'Invitation resent.' : 'Staff account updated.')
       await loadStaff()
@@ -108,8 +146,27 @@ export default function ManageStaff() {
     }
   }
 
+  const requestStaffAction = (member, action) => {
+    const name = member.full_name || member.email || 'this staff member'
+    setError('')
+    setNotice('')
+    setConfirmation({
+      title: 'Confirm staff action',
+      message: `Are you sure you want to ${ACTION_COPY[action]} ${name}? ${ACTION_DETAILS[action]}`,
+      confirmLabel: action === 'resend' ? 'Resend invitation' : action[0].toUpperCase() + action.slice(1),
+      destructive: action === 'revoke' || action === 'deactivate',
+      onConfirm: () => runStaffAction(member, action),
+    })
+  }
+
+  const confirmAction = () => {
+    const action = confirmation?.onConfirm
+    setConfirmation(null)
+    action?.()
+  }
+
   return (
-    <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
+    <div className="admin-page min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       <div className="fixed top-0 right-0 h-[34rem] w-[34rem] rounded-full bg-[#F6C945]/5 blur-[100px] pointer-events-none" />
       <Navbar />
 
@@ -137,7 +194,7 @@ export default function ManageStaff() {
             </div>
           </div>
 
-          <form onSubmit={handleInvite} className="grid gap-4 md:grid-cols-[1fr_1fr_180px_auto] md:items-end">
+          <form onSubmit={requestInvite} className="grid gap-4 md:grid-cols-[1fr_1fr_180px_auto] md:items-end">
             <div>
               <label htmlFor="staff-name" className="mb-1.5 block text-xs font-bold text-[#755b00]">Full name</label>
               <input id="staff-name" type="text" autoComplete="name" value={form.fullName} onChange={event => setForm({ ...form, fullName: event.target.value })} minLength={2} maxLength={150} required className="w-full rounded-xl bg-[#FCF8F4] px-3.5 py-3 text-sm text-[#3a2b25] outline-none focus:ring-2 focus:ring-[#F8D272]" />
@@ -194,11 +251,11 @@ export default function ManageStaff() {
                     <td className="px-5 py-3 sm:px-7">
                       <div className="flex flex-wrap gap-2">
                         {member.status === 'invited' && <>
-                          <button type="button" disabled={Boolean(acting)} onClick={() => handleAction(member, 'resend')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#FDF9F2] px-3 text-xs font-bold text-[#755b00] disabled:opacity-50"><RefreshCw size={13} />Resend</button>
-                          <button type="button" disabled={Boolean(acting)} onClick={() => handleAction(member, 'revoke')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><UserRoundX size={13} />Revoke</button>
+                          <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'resend')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#FDF9F2] px-3 text-xs font-bold text-[#755b00] disabled:opacity-50"><RefreshCw size={13} />Resend</button>
+                          <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'revoke')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><UserRoundX size={13} />Revoke</button>
                         </>}
-                        {member.status === 'active' && <button type="button" disabled={Boolean(acting)} onClick={() => handleAction(member, 'deactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><UserRoundX size={13} />Deactivate</button>}
-                        {member.status === 'disabled' && <button type="button" disabled={Boolean(acting)} onClick={() => handleAction(member, 'reactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EAF2E6] px-3 text-xs font-bold text-[#2D5A29] disabled:opacity-50"><UserRoundCheck size={13} />Reactivate</button>}
+                        {member.status === 'active' && member.id !== user?.id && <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'deactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-red-50 px-3 text-xs font-bold text-red-700 disabled:opacity-50"><UserRoundX size={13} />Deactivate</button>}
+                        {member.status === 'disabled' && <button type="button" disabled={Boolean(acting)} onClick={() => requestStaffAction(member, 'reactivate')} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#EAF2E6] px-3 text-xs font-bold text-[#2D5A29] disabled:opacity-50"><UserRoundCheck size={13} />Reactivate</button>}
                         {acting?.startsWith(`${member.id}:`) && <Loader2 size={15} className="self-center animate-spin text-[#755b00]" aria-label="Updating staff account" />}
                       </div>
                     </td>
@@ -209,6 +266,68 @@ export default function ManageStaff() {
           </div>
         </section>
       </main>
+
+      {confirmation && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#241d1d]/45 p-4 backdrop-blur-sm"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget) setConfirmation(null)
+          }}
+        >
+          <section
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="staff-confirm-title"
+            aria-describedby="staff-confirm-message"
+            className="w-full max-w-sm rounded-2xl border border-warm/10 bg-white p-5 shadow-lift animate-scaleIn"
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                confirmation.destructive ? 'bg-red-50 text-red-600' : 'bg-[#F6C945]/20 text-[#755b00]'
+              }`}>
+                <AlertCircle size={19} />
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmation(null)}
+                className="rounded-lg p-1.5 text-warm/45 transition hover:bg-surface-low hover:text-warm"
+                aria-label="Cancel action"
+              >
+                <X size={17} />
+              </button>
+            </div>
+            <h2 id="staff-confirm-title" className="font-jakarta text-base font-extrabold text-warm">
+              {confirmation.title}
+            </h2>
+            <p id="staff-confirm-message" className="mt-2 text-sm leading-relaxed text-warm/65">
+              {confirmation.message}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                ref={cancelConfirmationRef}
+                onClick={() => setConfirmation(null)}
+                className="min-h-10 rounded-xl border border-warm/15 px-4 text-xs font-bold text-warm/70 transition hover:bg-surface-low"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmAction}
+                disabled={submitting || Boolean(acting)}
+                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  confirmation.destructive
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-[#755b00] hover:bg-[#5d4900]'
+                }`}
+              >
+                {(submitting || acting) && <Loader2 size={14} className="animate-spin" />}
+                {confirmation.confirmLabel}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
+import AppearanceSettings from '../components/AppearanceSettings'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
-  User, Mail, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle,
+  Mail, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle,
   Loader2, BookOpen, GraduationCap, Hash,
 } from 'lucide-react'
 
@@ -25,7 +26,7 @@ export default function StudentProfile() {
   const [pwMsg, setPwMsg] = useState(null)
   const [pwBusy, setPwBusy] = useState(false)
 
-  const [tab, setTab] = useState('email') // 'email' | 'password'
+  const [tab, setTab] = useState('email') // 'email' | 'password' | 'appearance'
 
   // Scroll to top on component mount
   useEffect(() => {
@@ -132,13 +133,14 @@ export default function StudentProfile() {
         </div>
 
         {/* ── Tabs ── */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
           {[
             { key: 'email', icon: Mail, label: 'Change Email' },
             { key: 'password', icon: Lock, label: 'Change Password' },
+            { key: 'appearance', icon: Palette, label: 'Appearance' },
           ].map(({ key, icon: Icon, label }) => (
-            <button key={key} onClick={() => setTab(key)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200
+            <button key={key} type="button" onClick={() => setTab(key)}
+              className={`flex shrink-0 items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200
                 ${tab === key
                   ? 'gradient-cta text-[#3E3006] shadow-glow'
                   : 'bg-white text-warm/50 shadow-suncast hover:text-warm hover:shadow-glow'}`}>
@@ -231,6 +233,10 @@ export default function StudentProfile() {
               </button>
             </form>
           </div>
+        )}
+
+        {tab === 'appearance' && (
+          <AppearanceSettings />
         )}
       </main>
     </div>

@@ -16,12 +16,12 @@ import {
 // ─────────────────────────────────────────────────────────────
 // DESIGN TOKENS — warm UniWell palette
 // ─────────────────────────────────────────────────────────────
-const WARM_DARK   = '#3a2b25'   // primary text / dark callout bg
-const WARM_BODY   = '#5D4037'   // softer body text
-const WARM_OLIVE  = '#6B5A10'   // olive accent (italic titles)
-const WARM_TAN    = '#AA8E7E'   // muted subheads
+const WARM_DARK   = 'var(--color-warm)'
+const WARM_BODY   = 'var(--color-warm)'
+const WARM_OLIVE  = 'var(--color-primary)'
+const WARM_TAN    = 'var(--color-outline)'
 const WARM_GOLD   = '#F6C945'   // primary accent
-const WARM_CREAM  = '#FDF9F2'   // page background
+const WARM_CREAM  = 'var(--color-surface-low)'
 
 // Data-viz accents
 const TEAL     = '#4DB6AC'
@@ -75,7 +75,7 @@ function StatCard({ label, value, sub, color, icon: Icon, trend, alert }) {
       </p>
       <p className="text-[11px] font-medium truncate" style={{ color: WARM_TAN }}>{sub}</p>
       {trend !== undefined && (
-        <div className="mt-4 pt-4 border-t flex items-center gap-2" style={{ borderColor: '#F3EEE4' }}>
+        <div className="mt-4 pt-4 border-t flex items-center gap-2" style={{ borderColor: 'var(--color-outline-variant)' }}>
           <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: accent }} />
           <span className="text-[10px] font-bold truncate" style={{ color: accent }}>{trend}</span>
         </div>
@@ -136,7 +136,7 @@ function PieLegend({ data }) {
 function EmptyChartState({ message }) {
   return (
     <div className="min-h-[112px] flex items-center justify-center rounded-2xl border border-dashed px-5 text-center"
-      style={{ borderColor: `${WARM_TAN}35`, background: WARM_CREAM }}>
+      style={{ borderColor: 'color-mix(in srgb, var(--color-outline) 25%, transparent)', background: WARM_CREAM }}>
       <p className="text-[10px] font-bold leading-relaxed" style={{ color: WARM_TAN }}>{message}</p>
     </div>
   )
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
   const maxMoodCount = moodList.length > 0 ? Math.max(...moodList.map(m => m.count)) : 1
 
   return (
-    <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
+    <div className="admin-page min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       {/* Soft blurred background orbs */}
       <div className="fixed top-0 right-0 w-[50rem] h-[50rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[40rem] h-[40rem] rounded-full bg-[#EF7B6C]/5 blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
         {/* ── PAGE HEADER ──────────────────────────────────────── */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4 animate-fadeIn">
-            <div className="h-px w-8" style={{ background: `${WARM_OLIVE}4d` }} />
+            <div className="h-px w-8" style={{ background: 'color-mix(in srgb, var(--color-primary) 30%, transparent)' }} />
             <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: WARM_OLIVE }}>
               Admin Hub · {rangeLabel}
             </p>
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
                 Wellness <span className="font-playfair italic font-bold" style={{ color: WARM_OLIVE }}>Analytics</span>
               </h1>
               <p className="text-base md:text-lg max-w-xl leading-relaxed font-medium"
-                style={{ color: `${WARM_DARK}80` }}>
+                style={{ color: 'color-mix(in srgb, var(--color-warm) 65%, transparent)' }}>
                 Real-time student feelings and mood contributions. Monitor how your campus community is feeling through exact mood entries.
               </p>
             </div>
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
 
         {/* ── SNAPSHOT BANNER ──────────────────────────────────── */}
         <div className="mb-8 rounded-[2rem] px-6 py-5 flex items-center gap-4 animate-fadeIn"
-          style={{ background: '#FFF8E7', border: `1px solid ${WARM_GOLD}35` }}>
+          style={{ background: 'var(--color-surface-container)', border: `1px solid ${WARM_GOLD}35` }}>
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
             style={{ background: `${WARM_GOLD}25`, color: WARM_OLIVE }}>
             <Heart size={17} />
@@ -502,7 +502,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="mt-6 pt-5 border-t flex items-center justify-between"
-              style={{ borderColor: '#F3EEE4' }}>
+              style={{ borderColor: 'var(--color-outline-variant)' }}>
               <span className="text-xs font-semibold" style={{ color: WARM_TAN }}>
                 Total recorded mood entries
               </span>
@@ -527,7 +527,7 @@ export default function AdminDashboard() {
                   </Pie>
                   <Tooltip
                     formatter={(val) => [val + ' reports', '']}
-                    contentStyle={{ borderRadius: 12, border: '1px solid #F3EEE4', fontSize: 11 }}
+                    contentStyle={{ borderRadius: 12, border: '1px solid var(--color-outline-variant)', fontSize: 11 }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
             <div className="space-y-2.5 overflow-y-auto pr-1" style={{ maxHeight: 250 }}>
               {recentLowLogs.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
-                  style={{ borderColor: `${WARM_TAN}40` }}>
+                  style={{ borderColor: 'color-mix(in srgb, var(--color-outline) 30%, transparent)' }}>
                   <p className="text-[10px] font-black uppercase" style={{ color: WARM_TAN }}>
                     No low mood entries
                   </p>
@@ -603,7 +603,7 @@ export default function AdminDashboard() {
               <div style={{ height: 210 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={yearPulse} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="4 4" stroke="#F3EEE4" vertical={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke="var(--color-outline-variant)" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false}
                       tick={{ fill: WARM_TAN, fontSize: 10, fontWeight: 600 }} dy={8} />
                     <YAxis axisLine={false} tickLine={false}
@@ -613,7 +613,7 @@ export default function AdminDashboard() {
                         `${val} mood entries`,
                         props.payload.name,
                       ]}
-                      contentStyle={{ borderRadius: 12, border: '1px solid #F3EEE4', fontSize: 11 }}
+                      contentStyle={{ borderRadius: 12, border: '1px solid var(--color-outline-variant)', fontSize: 11 }}
                     />
                     <Bar dataKey="count" fill={WARM_GOLD} radius={[10, 10, 0, 0]} barSize={32} />
                   </BarChart>
@@ -629,7 +629,7 @@ export default function AdminDashboard() {
             <SectionTitle eyebrow={`${pendingItems.length} awaiting`} title="Pending Review">
               <Link to="/admin/moderation"
                 className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:bg-[#F6C945]/20"
-                style={{ background: '#FDF9F2', color: WARM_TAN }}
+                style={{ background: WARM_CREAM, color: WARM_TAN }}
                 title="Open full queue">
                 <ExternalLink size={14} />
               </Link>
@@ -638,14 +638,14 @@ export default function AdminDashboard() {
             <div className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: 250 }}>
               {pendingItems.length === 0 ? (
                 <div className="py-10 text-center rounded-2xl border border-dashed"
-                  style={{ borderColor: `${WARM_TAN}40` }}>
+                  style={{ borderColor: 'color-mix(in srgb, var(--color-outline) 30%, transparent)' }}>
                   <p className="text-[10px] font-black uppercase" style={{ color: WARM_TAN }}>
                     All caught up
                   </p>
                 </div>
               ) : pendingItems.map((item) => (
                 <div key={item.id} className="p-3.5 rounded-2xl transition-all"
-                  style={{ background: '#FDF9F2', border: '1px solid #F3EEE4' }}>
+                  style={{ background: WARM_CREAM, border: '1px solid var(--color-outline-variant)' }}>
                   <h5 className="text-[11px] font-black mb-1" style={{ color: WARM_DARK }}>
                     {item.title}
                   </h5>

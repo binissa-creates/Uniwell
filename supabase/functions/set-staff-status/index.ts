@@ -1,5 +1,5 @@
 import { HttpError, errorResponse, jsonResponse, preflight } from '../_shared/http.ts'
-import { requireActiveAdmin } from '../_shared/auth.ts'
+import { requireActiveStaff } from '../_shared/auth.ts'
 import { writeAudit } from '../_shared/audit.ts'
 
 const LONG_BAN = '876000h'
@@ -26,7 +26,7 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const { client, user } = await requireActiveAdmin(request)
+    const { client, user } = await requireActiveStaff(request)
     let body: Record<string, unknown>
     try {
       body = await request.json()

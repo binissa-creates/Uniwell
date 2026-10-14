@@ -1,5 +1,5 @@
 import { HttpError, errorResponse, jsonResponse, preflight } from '../_shared/http.ts'
-import { requireActiveAdmin } from '../_shared/auth.ts'
+import { requireActiveStaff } from '../_shared/auth.ts'
 import { writeAudit } from '../_shared/audit.ts'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -12,7 +12,7 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const { client, user } = await requireActiveAdmin(request)
+    const { client, user } = await requireActiveStaff(request)
     let body: Record<string, unknown>
     try {
       body = await request.json()
@@ -37,6 +37,19 @@ Deno.serve(async (request) => {
     const allowedDomain = Deno.env.get('ALLOWED_STAFF_EMAIL_DOMAIN')?.trim().toLowerCase().replace(/^@/, '')
     if (allowedDomain && email.split('@')[1] !== allowedDomain) {
       throw new HttpError(400, `Staff email must use the ${allowedDomain} domain.`)
+    }
+
+    const siteUrl = Deno.env.get('SITE_URL')
+    if (!siteUrl) throw new HttpError(500, 'Server configuration is incomplete.')
+    let redirectTo: string
+    try {
+      const site = new URL(siteUrl)
+      if (site.protocol !== 'http:' && site.protocol !== 'https:') {
+        throw new Error('SITE_URL must use HTTP or HTTPS.')
+      }
+      redirectTo = new URL('/accept-invite', site).toString()
+    } catch {
+      throw new HttpError(500, 'Server configuration is incomplete.')
     }
 
     const { data: existingProfile, error: existingProfileError } = await client
@@ -70,9 +83,6 @@ Deno.serve(async (request) => {
       throw new HttpError(500, 'Could not create the staff invitation.')
     }
 
-    const siteUrl = Deno.env.get('SITE_URL')
-    if (!siteUrl) throw new HttpError(500, 'Server configuration is incomplete.')
-    const redirectTo = new URL('/accept-invite', siteUrl).toString()
     const { data: invited, error: inviteError } = await client.auth.admin.inviteUserByEmail(email, {
       redirectTo,
       data: { full_name: fullName },

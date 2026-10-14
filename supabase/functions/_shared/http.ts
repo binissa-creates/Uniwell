@@ -10,9 +10,26 @@ export class HttpError extends Error {
 function allowedOrigin(request: Request) {
   const origin = request.headers.get('origin')
   const siteUrl = Deno.env.get('SITE_URL')
-  const siteOrigin = siteUrl ? new URL(siteUrl).origin : '*'
-  const allowed = new Set([siteOrigin, 'http://localhost:5173'])
-  return origin && allowed.has(origin) ? origin : siteOrigin
+  let siteOrigin: string | null = null
+  if (siteUrl) {
+    try {
+      siteOrigin = new URL(siteUrl).origin
+    } catch (error) {
+      console.error('[Edge Function] Invalid SITE_URL; using configured CORS origins:', error)
+    }
+  }
+  const configuredOrigins = Deno.env.get('ALLOWED_ORIGINS')
+    ?.split(',')
+    .map(value => value.trim())
+    .filter(Boolean) ?? []
+  const allowed = new Set([
+    ...(siteOrigin ? [siteOrigin] : []),
+    'http://localhost:5173',
+    'http://localhost:5174',
+    ...configuredOrigins,
+  ])
+  if (origin && allowed.has(origin)) return origin
+  return siteOrigin ?? 'null'
 }
 
 export function corsHeaders(request: Request) {

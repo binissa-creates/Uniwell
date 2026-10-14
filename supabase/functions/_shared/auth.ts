@@ -9,7 +9,7 @@ export type StaffProfile = {
   status: 'active' | 'invited' | 'disabled'
 }
 
-export type AdminContext = {
+export type StaffContext = {
   client: SupabaseClient
   user: User
   profile: StaffProfile
@@ -25,7 +25,7 @@ export function createServiceClient() {
   })
 }
 
-export async function requireActiveAdmin(request: Request): Promise<AdminContext> {
+export async function requireActiveStaff(request: Request): Promise<StaffContext> {
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) throw new HttpError(401, 'Authentication is required.')
 
@@ -39,9 +39,9 @@ export async function requireActiveAdmin(request: Request): Promise<AdminContext
     .eq('id', userData.user.id)
     .maybeSingle()
 
-  if (profileError) throw new HttpError(500, 'Could not verify administrator access.')
-  if (profile?.role !== 'admin' || profile.status !== 'active') {
-    throw new HttpError(403, 'Active administrator access is required.')
+  if (profileError) throw new HttpError(500, 'Could not verify staff access.')
+  if (!profile || !['counselor', 'admin'].includes(profile.role) || profile.status !== 'active') {
+    throw new HttpError(403, 'Active guidance staff access is required.')
   }
 
   return { client, user: userData.user, profile }

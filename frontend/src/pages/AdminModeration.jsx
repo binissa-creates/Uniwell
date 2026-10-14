@@ -22,6 +22,7 @@ export default function AdminModeration() {
   const [viewStatus, setViewStatus] = useState('pending')
   const [acting, setActing] = useState(null)
   const [apiError, setApiError] = useState(false)
+  const [actionError, setActionError] = useState(null)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [selectedYearLevel, setSelectedYearLevel] = useState(null)
   const [selectedCard, setSelectedCard] = useState(null)
@@ -94,6 +95,7 @@ export default function AdminModeration() {
 
   const handleAction = async (id, status) => {
     setActing({ id, status })
+    setActionError(null)
     try {
       const { error } = await supabase.rpc('moderate_coping_strategy', {
         p_strategy_id: id,
@@ -102,15 +104,21 @@ export default function AdminModeration() {
       if (error) throw error
       setEntries((prev) => prev.filter((s) => s.id !== id))
       if (selectedCard?.id === id) setSelectedCard(null)
+      await fetchEntries()
     } catch (err) {
       console.error('[AdminModeration] action error:', err)
+      const message = err && typeof err === 'object' && 'message' in err && typeof err.message === 'string'
+        ? err.message
+        : 'Could not update this strategy. Please try again.'
+      setActionError(message)
+    } finally {
+      setActing(null)
     }
-    setActing(null)
   }
 
 
   return (
-    <div className="min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
+    <div className="admin-page min-h-screen bg-[#FDF9F2] relative overflow-x-hidden">
       {/* Dynamic Backgrounds */}
       <div className="fixed top-0 right-0 w-[50rem] h-[50rem] rounded-full bg-[#F6C945]/5 blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
@@ -181,6 +189,12 @@ export default function AdminModeration() {
             <button onClick={fetchEntries} className="px-5 py-2.5 rounded-xl bg-amber-200 text-amber-900 text-[10px] font-black uppercase tracking-widest hover:bg-amber-300 transition-all flex-shrink-0 min-h-[44px]">
               Retry
             </button>
+          </div>
+        )}
+
+        {actionError && (
+          <div role="alert" className="mb-8 bg-red-50 border border-red-200 rounded-3xl px-6 sm:px-8 py-4 sm:py-5 text-sm font-medium text-red-800 animate-fadeIn">
+            {actionError}
           </div>
         )}
 

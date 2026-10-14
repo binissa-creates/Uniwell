@@ -16,8 +16,8 @@ const {
 
 test('getHomeForRole maps student and staff roles to their landing pages', () => {
   assert.equal(getHomeForRole('student'), '/dashboard')
-  assert.equal(getHomeForRole('counselor'), '/staff')
-  assert.equal(getHomeForRole('admin'), '/staff')
+  assert.equal(getHomeForRole('counselor'), '/admin')
+  assert.equal(getHomeForRole('admin'), '/admin')
   assert.equal(getHomeForRole('unknown'), '/login')
   assert.equal(getHomeForRole(null), '/login')
 })

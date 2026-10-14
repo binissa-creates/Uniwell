@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, SmilePlus, BookOpen, Users, LogOut,
   ShieldCheck, ClipboardList, GraduationCap, ChevronDown,
-  FileBarChart2, Stethoscope, Bell, Settings, HelpCircle,
+  FileBarChart2, Bell, Settings, HelpCircle,
   MoreHorizontal, UserCircle, Heart, X,
 } from 'lucide-react'
 
@@ -29,10 +29,6 @@ const adminSecondary = [
   { to: '/admin/help', icon: HelpCircle, label: 'Help' },
 ]
 
-const counselorPrimary = [
-  { to: '/staff', icon: Stethoscope, label: 'Staff Hub' },
-]
-
 function isActivePath(to, pathname) {
   return pathname === to || (to === '/admin' && pathname === '/admin/analytics')
 }
@@ -41,6 +37,7 @@ export default function Navbar() {
   const { user, signOut, isAdmin } = useAuth()
   const isStudent = user?.role === 'student'
   const isStaff = user?.role === 'counselor' || isAdmin
+  const hasAdminAccess = isStaff
   const location = useLocation()
   const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
@@ -51,7 +48,7 @@ export default function Navbar() {
   const desktopMoreRef = useRef(null)
   const mobileMoreRef = useRef(null)
 
-  const primaryLinks = isAdmin ? adminPrimary : isStaff ? counselorPrimary : studentLinks
+  const primaryLinks = hasAdminAccess ? adminPrimary : studentLinks
   const displayName = (isAdmin || user?.role === 'admin')
     ? 'Guidance'
     : (user?.name && !user.name.includes('@')
@@ -59,7 +56,7 @@ export default function Navbar() {
         : (isStaff ? 'Staff' : 'Student'))
   const avatarLetter = (displayName || 'U').charAt(0).toUpperCase()
 
-  const overflowActive = isAdmin && adminSecondary.some(
+  const overflowActive = hasAdminAccess && adminSecondary.some(
     (i) => !i.divider && isActivePath(i.to, location.pathname)
   )
 
@@ -120,7 +117,7 @@ export default function Navbar() {
     <>
       {/* Mobile Top Header: Full width frosted bar so content cleanly scrolls underneath */}
       <header className="md:hidden fixed top-0 inset-x-0 h-16 bg-[#FDF9F2]/95 backdrop-blur-md border-b border-[#AA8E7E]/15 z-40 px-4 flex items-center justify-between shadow-xs">
-        <Link to={isStaff ? '/staff' : '/dashboard'} className="flex items-center gap-2 group flex-shrink-0">
+        <Link to={isStaff ? '/admin' : '/dashboard'} className="flex items-center gap-2 group flex-shrink-0">
           <div className="w-9 h-9 rounded-xl bg-white shadow-sm flex items-center justify-center border border-[#AA8E7E]/10 group-hover:rotate-12 transition-transform">
             <span className="text-lg">🌻</span>
           </div>
@@ -172,7 +169,7 @@ export default function Navbar() {
         <div className={`max-w-6xl mx-auto h-16 flex items-center justify-between gap-4 px-6 rounded-3xl transition-all duration-500 ${scrolled ? 'glass shadow-lift border border-white/50 py-2' : 'bg-transparent py-4 border border-transparent'}`}>
 
           {/* Logo */}
-          <Link to={isStaff ? '/staff' : '/dashboard'} className="flex items-center gap-2.5 group flex-shrink-0">
+          <Link to={isStaff ? '/admin' : '/dashboard'} className="flex items-center gap-2.5 group flex-shrink-0">
             <div className="w-10 h-10 rounded-2xl bg-white shadow-suncast flex items-center justify-center group-hover:rotate-12 transition-transform duration-500 border border-[#AA8E7E]/5">
               <span className="text-xl group-hover:scale-110 transition-transform">🌻</span>
             </div>
@@ -198,8 +195,7 @@ export default function Navbar() {
               )
             })}
 
-            {/* Admin-only "More" dropdown */}
-            {isAdmin && (
+            {hasAdminAccess && (
               <div className="relative" ref={desktopMoreRef}>
                 <button
                   onClick={() => setMoreOpen((v) => !v)}
@@ -318,7 +314,7 @@ export default function Navbar() {
               </Link>
             )
           })}
-          {isAdmin && (
+          {hasAdminAccess && (
             <button
               onClick={() => setMoreOpen((v) => !v)}
               className={`flex-1 flex flex-col items-center py-3 gap-1 rounded-[2rem] transition-all duration-300 relative ${overflowActive || moreOpen
@@ -332,7 +328,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile overflow sheet */}
-        {isAdmin && moreOpen && (
+        {hasAdminAccess && moreOpen && (
           <div className="absolute bottom-24 inset-x-0 bg-white rounded-[2rem] shadow-lift border border-white/70 p-2 animate-fadeIn">
             {adminSecondary.map((item, i) => {
               if (item.divider) {

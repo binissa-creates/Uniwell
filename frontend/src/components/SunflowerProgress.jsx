@@ -291,12 +291,8 @@ export default function SunflowerProgress({
 
       {/* ── Soft Botanical Card Environment ── */}
       <div
-        className={`absolute inset-0 pointer-events-none ${flowerOnly ? '' : 'rounded-[1.8rem]'}`}
-        style={{
-          background: flowerOnly
-            ? 'transparent'
-            : 'linear-gradient(120deg, #FFFDF8 0%, #FFFCF5 58%, #F2F7F1 100%)',
-        }}
+      className={`sunflower-environment absolute inset-0 pointer-events-none ${flowerOnly ? '' : 'rounded-[1.8rem]'}`}
+      style={{ background: flowerOnly ? 'transparent' : undefined }}
       >
         <div
           className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none ${
@@ -359,11 +355,10 @@ export default function SunflowerProgress({
           >
             {/* Ambient Breathing Solar Aura */}
             <div
-              className="absolute inset-0 rounded-full pointer-events-none transition-all duration-1000"
+              className="sunflower-aura absolute inset-0 rounded-full pointer-events-none transition-all duration-1000"
               style={{
                 background: `radial-gradient(circle, ${stateCfg.glowColor} 0%, rgba(246,201,69,0.18) 42%, transparent 74%)`,
                 animation: stateCfg.auraAnimation,
-                filter: 'blur(18px)',
               }}
             />
 
@@ -432,7 +427,7 @@ export default function SunflowerProgress({
               width={size + 20}
               height={size + 20}
               className="overflow-visible"
-              style={{ filter: `${stateCfg.flowerFilter} drop-shadow(0 10px 14px rgba(93,64,55,0.22))` }}
+              style={{ filter: `${stateCfg.flowerFilter} var(--color-sunflower-flower-shadow)` }}
             >
               <defs>
                 {/* 3D Front Petals Gradient */}

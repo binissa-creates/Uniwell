@@ -220,7 +220,7 @@ export default function MoodTracker() {
                         type="button"
                         onClick={() => setIntensity(n)}
                         className={`flex-1 h-3 rounded-full transition-all duration-300 ${n === intensity ? 'scale-y-125' : ''}`}
-                        style={{ backgroundColor: n <= intensity ? MOOD_LEVEL_COLORS[intensity] : '#F0E8E0' }}
+                        style={{ backgroundColor: n <= intensity ? MOOD_LEVEL_COLORS[intensity] : 'var(--color-surface-container-highest)' }}
                       />
                     ))}
                   </div>

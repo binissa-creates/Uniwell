@@ -94,11 +94,11 @@ const RadianceDose = () => {
           overflow: hidden;
         }
         .flip-card-front {
-          background-color: #fdfaf3;
+          background-color: var(--color-dose-front);
           border: 1px solid rgba(246, 201, 69, 0.3);
         }
         .flip-card-back {
-          background-color: #f4f8f3;
+          background-color: var(--color-dose-back);
           border: 1px solid rgba(168, 197, 160, 0.35);
           transform: rotateY(180deg);
         }
@@ -119,21 +119,21 @@ const RadianceDose = () => {
           <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-[radial-gradient(circle_at_top_right,rgba(246,201,69,0.18),transparent_70%)] pointer-events-none rounded-tr-[1.25rem]" />
           
           <div className="flex items-center justify-between z-10">
-            <div className="flex items-center gap-1.5 text-[#856804]">
+            <div className="flex items-center gap-1.5 dose-front-accent">
               <Sparkles size={13} strokeWidth={2.5} />
               <span className="font-jakarta text-[10px] font-black tracking-widest uppercase">Daily Dose</span>
             </div>
-            <div className="text-[#856804]/60 group-hover:text-[#856804] transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F6C945]/15 border border-[#F6C945]/30">
+            <div className="dose-front-muted transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#F6C945]/15 border border-[#F6C945]/30">
               <span className="font-jakarta text-[9px] font-black uppercase tracking-wider">Flip</span>
               <Repeat size={11} className="group-hover:rotate-180 transition-transform duration-500" />
             </div>
           </div>
 
           <div className="my-auto py-1 z-10">
-            <p className="font-playfair text-sm sm:text-base font-bold italic text-[#3a2b25] leading-snug line-clamp-3">
+            <p className="font-playfair text-sm sm:text-base font-bold italic dose-front-text leading-snug line-clamp-3">
               "{todayQuote.text}"
             </p>
-            <p className="font-jakarta text-[10px] font-bold text-[#856804] uppercase tracking-wider mt-1.5">
+            <p className="font-jakarta text-[10px] font-bold dose-front-accent uppercase tracking-wider mt-1.5">
               — {todayQuote.source}
             </p>
           </div>
@@ -142,7 +142,7 @@ const RadianceDose = () => {
             <span className="px-2 py-0.5 bg-[#F6C945]/20 text-[#6B5A10] rounded-full font-bold font-jakarta uppercase tracking-wider text-[9px]">
               {bonusLine}
             </span>
-            <span className="font-jakarta font-bold text-[#856804]/50 tracking-wider uppercase text-[9px]">
+            <span className="font-jakarta font-bold dose-front-muted tracking-wider uppercase text-[9px]">
               Quote · Side A
             </span>
           </div>
@@ -154,30 +154,30 @@ const RadianceDose = () => {
           <div className="absolute top-0 right-0 w-[120px] h-[120px] bg-[radial-gradient(circle_at_top_right,rgba(168,197,160,0.22),transparent_70%)] pointer-events-none rounded-tr-[1.25rem]" />
           
           <div className="flex items-center justify-between z-10">
-            <div className="flex items-center gap-1.5 text-[#2e4d2a]">
+            <div className="flex items-center gap-1.5 dose-back-accent">
               <BookOpen size={13} strokeWidth={2.5} />
               <span className="font-jakarta text-[10px] font-black tracking-widest uppercase">Bible Verse</span>
             </div>
-            <div className="text-[#2e4d2a]/60 group-hover:text-[#2e4d2a] transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#A8C5A0]/25 border border-[#A8C5A0]/40">
+            <div className="dose-back-muted transition-colors flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#A8C5A0]/25 border border-[#A8C5A0]/40">
               <span className="font-jakarta text-[9px] font-black uppercase tracking-wider">Flip</span>
               <Repeat size={11} className="group-hover:rotate-180 transition-transform duration-500" />
             </div>
           </div>
 
           <div className="my-auto py-1 z-10">
-            <p className="font-playfair text-sm sm:text-base font-bold italic text-[#2c3b2b] leading-snug line-clamp-3">
+            <p className="font-playfair text-sm sm:text-base font-bold italic dose-back-text leading-snug line-clamp-3">
               "{todayVerse.text}"
             </p>
-            <p className="font-jakarta text-[10px] font-bold text-[#4a6549] uppercase tracking-wider mt-1.5">
+            <p className="font-jakarta text-[10px] font-bold dose-back-secondary uppercase tracking-wider mt-1.5">
               — {todayVerse.source}
             </p>
           </div>
 
           <div className="z-10 pt-2 border-t border-[#A8C5A0]/20 flex justify-between items-center text-[10px]">
-            <span className="px-2 py-0.5 bg-[#b0cfad]/30 text-[#2e4d2a] rounded-full font-bold font-jakarta uppercase tracking-wider text-[9px]">
+            <span className="dose-back-chip px-2 py-0.5 rounded-full font-bold font-jakarta uppercase tracking-wider text-[9px]">
               {bonusLine}
             </span>
-            <span className="font-jakarta font-bold text-[#2e4d2a]/50 tracking-wider uppercase text-[9px]">
+            <span className="font-jakarta font-bold dose-back-muted tracking-wider uppercase text-[9px]">
               Verse · Side B
             </span>
           </div>

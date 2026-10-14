@@ -18,7 +18,7 @@ begin
     raise exception 'A signed-in user is required';
   end if;
 
-  select p.role, p.status
+  select p.role::text, p.status
     into v_role, v_status
     from public.profiles as p
    where p.id = v_actor_id;
@@ -99,7 +99,7 @@ begin
 
   perform pg_advisory_xact_lock(hashtext('uniwell_active_admin_status'));
 
-  select p.role, p.status
+  select p.role::text, p.status
     into v_actor_role, v_actor_status
     from public.profiles as p
    where p.id = p_actor_id
@@ -108,7 +108,7 @@ begin
     raise exception 'Active administrator access is required';
   end if;
 
-  select p.role, p.status
+  select p.role::text, p.status
     into v_target_role, v_target_status
     from public.profiles as p
    where p.id = p_target_id
