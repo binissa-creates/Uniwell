@@ -1,4 +1,4 @@
-import { HttpError, errorResponse, jsonResponse, preflight } from '../_shared/http.ts'
+import { HttpError, errorResponse, getSiteUrl, jsonResponse, preflight } from '../_shared/http.ts'
 import { requireActiveStaff } from '../_shared/auth.ts'
 import { writeAudit } from '../_shared/audit.ts'
 
@@ -39,18 +39,8 @@ Deno.serve(async (request) => {
       throw new HttpError(400, `Staff email must use the ${allowedDomain} domain.`)
     }
 
-    const siteUrl = Deno.env.get('SITE_URL')
-    if (!siteUrl) throw new HttpError(500, 'Server configuration is incomplete.')
-    let redirectTo: string
-    try {
-      const site = new URL(siteUrl)
-      if (site.protocol !== 'http:' && site.protocol !== 'https:') {
-        throw new Error('SITE_URL must use HTTP or HTTPS.')
-      }
-      redirectTo = new URL('/accept-invite', site).toString()
-    } catch {
-      throw new HttpError(500, 'Server configuration is incomplete.')
-    }
+    const siteUrl = getSiteUrl(request)
+    const redirectTo = new URL('/accept-invite', siteUrl).toString()
 
     const { data: existingProfile, error: existingProfileError } = await client
       .from('profiles')

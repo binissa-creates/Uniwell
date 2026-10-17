@@ -84,7 +84,7 @@ describe('staff action confirmations', () => {
 
   it('requires confirmation before deactivating staff and prevents self-deactivation', async () => {
     renderPage()
-    const adminRow = screen.getByRole('row', { name: /Guidance Admin/ })
+    const adminRow = await screen.findByRole('row', { name: /Guidance Admin/ })
     expect(within(adminRow).queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' }))
@@ -101,7 +101,7 @@ describe('staff action confirmations', () => {
 
   it('requires confirmation before permanently deleting a counselor account', async () => {
     renderPage()
-    const counselorRow = screen.getByRole('row', { name: /Alex Counselor/ })
+    const counselorRow = await screen.findByRole('row', { name: /Alex Counselor/ })
     fireEvent.click(within(counselorRow).getByRole('button', { name: 'Delete' }))
 
     expect(screen.getByRole('alertdialog')).toHaveTextContent('permanently delete the counselor account')

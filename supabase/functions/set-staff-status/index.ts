@@ -1,4 +1,4 @@
-import { HttpError, errorResponse, jsonResponse, preflight } from '../_shared/http.ts'
+import { HttpError, errorResponse, getSiteUrl, jsonResponse, preflight } from '../_shared/http.ts'
 import { requireActiveStaff } from '../_shared/auth.ts'
 import { writeAudit } from '../_shared/audit.ts'
 
@@ -129,8 +129,7 @@ Deno.serve(async (request) => {
         if (error) throw new HttpError(500, 'The old unconfirmed invitation could not be replaced.')
       }
 
-      const siteUrl = Deno.env.get('SITE_URL')
-      if (!siteUrl) throw new HttpError(500, 'Server configuration is incomplete.')
+      const siteUrl = getSiteUrl(request)
       const { error: resendError } = await client.auth.admin.inviteUserByEmail(invite.email, {
         redirectTo: new URL('/accept-invite', siteUrl).toString(),
         data: { full_name: invite.full_name },

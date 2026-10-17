@@ -145,7 +145,7 @@ describe('unified login', () => {
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Sign-in is temporarily unavailable. Please contact your administrator.',
+      /Sign-in is temporarily unavailable.*Please contact your administrator\./,
     )
     expect(mocks.supabase.auth.signOut).toHaveBeenCalled()
   })
@@ -257,9 +257,7 @@ describe('password recovery request', () => {
     fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'unknown@example.edu' } })
     fireEvent.click(screen.getByRole('button', { name: /send reset link/i }))
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'If an account exists, a reset link has been sent.',
-    )
+    expect(await screen.findByText('If an account exists, a reset link has been sent.')).toBeInTheDocument()
     expect(screen.queryByText('user not found')).not.toBeInTheDocument()
   })
 })

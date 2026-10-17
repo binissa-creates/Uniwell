@@ -40,7 +40,9 @@ export default function Login() {
       let role = null
       let status = null
 
-      const { data: rpcRole, error: rpcError } = await supabase.rpc('get_my_role')
+      const rpcResult = await supabase.rpc('get_my_role')
+      const rpcRole = rpcResult?.data
+      const rpcError = rpcResult?.error
       console.log('[Login] get_my_role result:', { rpcRole, rpcError })
 
       if (!rpcError && rpcRole) {

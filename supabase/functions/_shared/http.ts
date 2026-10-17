@@ -26,10 +26,44 @@ function allowedOrigin(request: Request) {
     ...(siteOrigin ? [siteOrigin] : []),
     'http://localhost:5173',
     'http://localhost:5174',
+    'https://uniwell-20.vercel.app',
     ...configuredOrigins,
   ])
-  if (origin && allowed.has(origin)) return origin
-  return siteOrigin ?? 'null'
+  if (origin) {
+    if (allowed.has(origin)) return origin
+    try {
+      const parsed = new URL(origin)
+      if (
+        parsed.protocol === 'https:' &&
+        (parsed.hostname === 'uniwell-20.vercel.app' ||
+         (parsed.hostname.endsWith('.vercel.app') && parsed.hostname.includes('uniwell')))
+      ) {
+        return origin
+      }
+    } catch {
+      // ignore invalid origin URLs
+    }
+  }
+  return siteOrigin ?? 'https://uniwell-20.vercel.app'
+}
+
+export function getSiteUrl(request?: Request): string {
+  const origin = request?.headers.get('origin')
+  if (request && origin && allowedOrigin(request) === origin) {
+    return origin
+  }
+  const siteUrl = Deno.env.get('SITE_URL')
+  if (siteUrl) {
+    try {
+      const url = new URL(siteUrl)
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        return url.origin
+      }
+    } catch (error) {
+      console.error('[Edge Function] Invalid SITE_URL:', error)
+    }
+  }
+  return 'https://uniwell-20.vercel.app'
 }
 
 export function corsHeaders(request: Request) {
