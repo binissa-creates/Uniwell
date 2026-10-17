@@ -1,0 +1,25 @@
+project_id = "bojzzzxvezyrpdzmlrjy"
+
+[auth]
+additional_redirect_urls = [
+  "https://uniwell-20.vercel.app/**",
+  "https://*.vercel.app/**",
+  "http://localhost:5173/**",
+  "http://localhost:5174/**"
+]
+site_url = "https://uniwell-20.vercel.app"
+
+[auth.email]
+max_frequency = "1m0s"
+otp_length = 8
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[storage.vector]
+enabled = false
