@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { X, Users, AlertTriangle, Moon, CloudRain, BellRing, ChevronDown, ChevronLeft, BookOpen, Heart } from 'lucide-react'
+import { X, Users, AlertTriangle, Moon, CloudRain, BellRing, ChevronDown, ChevronLeft, BookOpen, Heart, Search } from 'lucide-react'
+import StudentDetailModal from './StudentDetailModal'
 
 const WARM_DARK = '#3a2b25'
 const WARM_TAN = '#AA8E7E'
@@ -11,6 +12,7 @@ const SAGE = '#81B29A'
 export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [activeTab, setActiveTab] = useState('moods') // 'moods' | 'journals'
+  const [studentSearch, setStudentSearch] = useState('')
 
   if (!group) return null
 
@@ -134,65 +136,87 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
           </div>
 
           {/* Student List */}
-          <div className="bg-white rounded-[2rem] border border-warm/5">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-warm/5">
-              <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>
-                All Students ({group.students?.length || 0})
-              </h3>
-              <span className="text-[9px] text-warm/40">Click a student to view mood history</span>
+          <div className="bg-white rounded-[2rem] border border-warm/5 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-6 py-4 border-b border-warm/5 bg-[#FCF8F4]/40">
+              <div>
+                <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: WARM_TAN }}>
+                  All Students ({group.students?.length || 0})
+                </h3>
+                <span className="text-[9px] text-warm/40">Click a student to view mood history</span>
+              </div>
+
+              {(group.students?.length || 0) > 4 && (
+                <div className="relative w-full sm:w-56">
+                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm/40" />
+                  <input
+                    type="text"
+                    value={studentSearch}
+                    onChange={e => setStudentSearch(e.target.value)}
+                    placeholder="Search in program..."
+                    className="w-full bg-white rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none border border-warm/10 focus:ring-1 focus:ring-[#F8D272]"
+                  />
+                </div>
+              )}
             </div>
 
             {(!group.students || group.students.length === 0) ? (
-              <p className="px-6 py-8 text-sm italic text-warm/30">No students in this group.</p>
+              <p className="px-6 py-8 text-sm italic text-warm/30 text-center">No students in this group.</p>
             ) : (
               <div className="max-h-72 overflow-y-auto custom-scrollbar divide-y divide-warm/5">
-                {group.students.map((s, i) => {
-                  const studentLowCount = s.moodEntries?.filter(m =>
-                    ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused'].includes(m.mood_type)
-                  ).length || 0
+                {group.students
+                  .filter(s => {
+                    if (!studentSearch.trim()) return true
+                    const q = studentSearch.trim().toLowerCase()
+                    return (s.fullName || s.name || '').toLowerCase().includes(q) || (s.id || '').toLowerCase().includes(q)
+                  })
+                  .map((s, i) => {
+                    const studentLowCount = s.moodEntries?.filter(m =>
+                      ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused'].includes(m.mood_type)
+                    ).length || 0
 
-                  const hasCritical = s.moodEntries?.some(m => ['awful', 'bad'].includes(m.mood_type))
-                  const topEm = Object.entries(s.emotionTally || {}).sort((a, b) => b[1] - a[1])[0]
+                    const hasCritical = s.moodEntries?.some(m => ['awful', 'bad'].includes(m.mood_type))
+                    const topEm = Object.entries(s.emotionTally || {}).sort((a, b) => b[1] - a[1])[0]
+                    const displayName = s.fullName || s.name || 'Unknown'
 
-                  return (
-                    <div
-                      key={i}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleStudentSelect(s)}
-                      onKeyDown={e => { if (e.key === 'Enter') handleStudentSelect(s) }}
-                      className="flex items-center justify-between px-6 py-3.5 hover:bg-[#FDF9F2] cursor-pointer transition-colors group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-lg">
-                          {topEm ? (moodMeta[topEm[0]]?.emoji || '😶') : '—'}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold" style={{ color: WARM_DARK }}>{s.name}</span>
-                            <span className="text-[10px] text-warm/40 font-medium">({s.id})</span>
-                            {studentLowCount > 0 && (
-                              <span
-                                className="text-[9px] font-black px-2 py-0.5 rounded-full"
-                                style={{
-                                  background: hasCritical ? '#FEE9E7' : '#FDF3E3',
-                                  color: hasCritical ? CORAL : GOLD
-                                }}
-                              >
-                                {studentLowCount} low {studentLowCount === 1 ? 'mood' : 'moods'}
-                              </span>
-                            )}
+                    return (
+                      <div
+                        key={i}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleStudentSelect(s)}
+                        onKeyDown={e => { if (e.key === 'Enter') handleStudentSelect(s) }}
+                        className="flex items-center justify-between px-6 py-3.5 hover:bg-[#FDF9F2] cursor-pointer transition-colors group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-lg flex-shrink-0">
+                            {topEm ? (moodMeta[topEm[0]]?.emoji || '😶') : '—'}
                           </div>
-                          <p className="text-[10px] text-warm/40">
-                            {s.logCount} {s.logCount === 1 ? 'entry' : 'entries'} ·{' '}
-                            {s.lastLogged ? new Date(s.lastLogged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No entries'}
-                          </p>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-bold truncate" style={{ color: WARM_DARK }}>{displayName}</span>
+                              <span className="text-[10px] text-warm/40 font-mono">({s.id})</span>
+                              {studentLowCount > 0 && (
+                                <span
+                                  className="text-[9px] font-black px-2 py-0.5 rounded-full"
+                                  style={{
+                                    background: hasCritical ? '#FEE9E7' : '#FDF3E3',
+                                    color: hasCritical ? CORAL : GOLD
+                                  }}
+                                >
+                                  {studentLowCount} low {studentLowCount === 1 ? 'mood' : 'moods'}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-warm/40 truncate">
+                              {s.logCount} {s.logCount === 1 ? 'entry' : 'entries'} ·{' '}
+                              {s.lastLogged ? new Date(s.lastLogged).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : 'No entries'}
+                            </p>
+                          </div>
                         </div>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-warm/25 group-hover:text-warm/60 transition-colors flex-shrink-0 ml-2">View →</span>
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-warm/25 group-hover:text-warm/60 transition-colors">View →</span>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
               </div>
             )}
           </div>
@@ -221,129 +245,6 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
           moodMeta={moodMeta}
         />
       )}
-    </div>
-  )
-}
-
-function StudentDetailModal({ student, activeTab, setActiveTab, onClose, moodMeta }) {
-  const moodEntries = student.moodEntries || []
-  const sharedJournals = student.sharedJournals || []
-
-  return (
-    <div
-      className="absolute inset-0 z-[110] flex items-center justify-center bg-[#3a2b25]/50 backdrop-blur-sm animate-fadeIn rounded-[3rem]"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-[2.5rem] w-full max-w-lg shadow-2xl animate-scaleIn overflow-hidden flex flex-col max-h-[75vh] mx-4"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Sub-modal header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-warm/10">
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-warm/50 hover:text-warm transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <div>
-              <h4 className="font-jakarta font-black text-base" style={{ color: WARM_DARK }}>{student.name}</h4>
-              <p className="text-[10px] text-warm/40 font-medium">{student.id} · {student.course} · Year {student.year}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-[#FDF9F2] flex items-center justify-center text-warm/30 hover:text-warm transition-colors">
-            <X size={15} />
-          </button>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-warm/10 px-6">
-          <TabBtn active={activeTab === 'moods'} onClick={() => setActiveTab('moods')} icon={Heart} label="Mood Entries" count={moodEntries.length} />
-          <TabBtn active={activeTab === 'journals'} onClick={() => setActiveTab('journals')} icon={BookOpen} label="Shared Journal" count={sharedJournals.length} />
-        </div>
-
-        {/* Tab Content */}
-        <div className="overflow-y-auto flex-1 custom-scrollbar">
-          {activeTab === 'moods' ? (
-            <div className="p-4 space-y-2">
-              {moodEntries.length === 0 ? (
-                <EmptyTabState icon="😶" title="No mood entries" sub="This student hasn't logged any moods in the last 90 days." />
-              ) : (
-                moodEntries.map((entry, i) => {
-                  const meta = moodMeta[entry.mood_type] || { emoji: '😶', label: entry.mood_type }
-                  const dt = new Date(entry.logged_at)
-                  const dateStr = dt.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                  const timeStr = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-                  return (
-                    <div key={i} className="flex items-start gap-3 p-3 rounded-2xl bg-[#FDF9F2] border border-warm/5">
-                      <span className="text-xl flex-shrink-0 mt-0.5">{meta.emoji}</span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="text-sm font-bold capitalize" style={{ color: WARM_DARK }}>{meta.label}</span>
-                          <span className="text-[9px] text-warm/40 font-medium whitespace-nowrap">{dateStr} · {timeStr}</span>
-                        </div>
-                        {entry.note && (
-                          <p className="text-xs text-warm/70 leading-relaxed italic">"{entry.note}"</p>
-                        )}
-                        {entry.triggers?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {entry.triggers.map((t, ti) => (
-                              <span key={ti} className="text-[9px] px-2 py-0.5 rounded-full bg-warm/8 text-warm/50 font-semibold">{t}</span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {sharedJournals.length === 0 ? (
-                <EmptyTabState icon="📖" title="No shared journal entries" sub="This student hasn't shared any journal entries with guidance yet." />
-              ) : (
-                sharedJournals.map((j, i) => (
-                  <div key={i} className="p-4 rounded-2xl bg-[#FDF9F2] border border-warm/5">
-                    {j.prompt && <p className="text-[10px] font-bold text-[#755b00] mb-1 uppercase tracking-wider">{j.prompt}</p>}
-                    <p className="text-xs text-warm/80 leading-relaxed">{j.content}</p>
-                    <p className="text-[9px] text-warm/35 mt-2 font-medium">
-                      {new Date(j.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function TabBtn({ active, onClick, icon: Icon, label, count }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-1.5 px-1 py-3 mr-5 text-[11px] font-black uppercase tracking-wider border-b-2 transition-colors ${
-        active ? 'border-gold text-warm' : 'border-transparent text-warm/40 hover:text-warm/70'
-      }`}
-    >
-      <Icon size={12} />
-      {label}
-      {count > 0 && (
-        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${active ? 'bg-gold/20 text-[#755b00]' : 'bg-warm/10 text-warm/40'}`}>
-          {count}
-        </span>
-      )}
-    </button>
-  )
-}
-
-function EmptyTabState({ icon, title, sub }) {
-  return (
-    <div className="text-center py-12 px-4">
-      <div className="text-4xl mb-3 opacity-30">{icon}</div>
-      <h4 className="font-bold text-sm text-warm mb-1">{title}</h4>
-      <p className="text-xs text-warm/40 max-w-xs mx-auto">{sub}</p>
     </div>
   )
 }

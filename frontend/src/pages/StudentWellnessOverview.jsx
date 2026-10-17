@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
+import StudentDetailModal from '../components/StudentDetailModal'
 import { normalizeCourse } from '../lib/data'
 import { ACADEMIC_PROGRAMS, academicDepartmentSortIndex, academicProgramSortIndex, departmentForProgram } from '../lib/academicPrograms'
 
@@ -52,6 +53,7 @@ export default function StudentWellnessOverview() {
   const [courseFilter, setCourseFilter] = useState('')
   const [yearFilter, setYearFilter] = useState(null)
   const [selectedGroup, setSelectedGroup] = useState(null)
+  const [selectedStudent, setSelectedStudent] = useState(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -123,6 +125,37 @@ export default function StudentWellnessOverview() {
     return map
   }, [logs])
 
+  // Individual student records enriched with stats and journals
+  const allStudents = useMemo(() => {
+    const LOW_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
+    const CRITICAL_KEYS = ['awful', 'bad']
+
+    return profiles.map(p => {
+      const c = normalizeCourse(p.course || 'General')
+      const y = p.year_level || 1
+      const stats = userStats[p.id]
+      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_KEYS.includes(l.mood_type))
+      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_KEYS.includes(l.mood_type))
+
+      return {
+        uuid: p.id,
+        id: p.student_id || 'N/A',
+        name: p.name || 'Unknown',
+        fullName: p.name || 'Unknown',
+        course: c,
+        year: y,
+        department: departmentForProgram(c)?.name || 'Other',
+        moodEntries: stats?.moodEntries || [],
+        emotionTally: stats?.emotionTally || {},
+        lastLogged: stats?.last || null,
+        logCount: stats?.count || 0,
+        lowMoodCount: studentLowMoodEntries.length,
+        criticalCount: studentCriticalEntries.length,
+        sharedJournals: sharedJournalsByUser[p.id] || [],
+      }
+    })
+  }, [profiles, userStats, sharedJournalsByUser])
+
   // Compute group-level emotion tallies
   const groupStats = useMemo(() => {
     const groups = {}
@@ -158,15 +191,13 @@ export default function StudentWellnessOverview() {
       buckets.forEach(b => b.totalStudents++)
 
       const stats = userStats[p.id]
-      const nameParts = (p.name || '').split(' ')
-      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : p.name || 'Unknown'
-
       const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_KEYS.includes(l.mood_type))
       const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_KEYS.includes(l.mood_type))
 
       const studentRecord = {
-        id: p.student_id,
-        name: lastName,
+        uuid: p.id,
+        id: p.student_id || 'N/A',
+        name: p.name || 'Unknown',
         fullName: p.name || 'Unknown',
         course: c,
         year: y,
@@ -224,7 +255,7 @@ export default function StudentWellnessOverview() {
       academicProgramSortIndex(a.course) - academicProgramSortIndex(b.course) ||
       a.year - b.year
     )
-  }, [profiles, userStats])
+  }, [profiles, userStats, sharedJournalsByUser])
 
   const courses = useMemo(() => {
     const existing = new Set(profiles.map(p => normalizeCourse(p.course)).filter(Boolean))
@@ -233,10 +264,18 @@ export default function StudentWellnessOverview() {
   }, [profiles])
 
   const filteredGroups = useMemo(() => {
+    const trimmed = (search || '').trim().toLowerCase()
     return groupStats.filter(g => {
       if (departmentFilter && departmentForProgram(g.course)?.name !== departmentFilter) return false
       if (courseFilter && g.course !== courseFilter) return false
-      if (search && !g.course.toLowerCase().includes(search.toLowerCase())) return false
+      if (trimmed) {
+        const courseMatch = g.course.toLowerCase().includes(trimmed)
+        const studentMatch = g.students.some(s =>
+          (s.fullName || s.name || '').toLowerCase().includes(trimmed) ||
+          (s.id || '').toLowerCase().includes(trimmed)
+        )
+        if (!courseMatch && !studentMatch) return false
+      }
       return true
     }).map(g => yearFilter ? g.yearStats[yearFilter] : g)
       .filter(Boolean)
@@ -272,7 +311,7 @@ export default function StudentWellnessOverview() {
             Wellness <span className="font-playfair italic font-bold" style={{ color: WARM_OLIVE }}>Monitor</span>
           </h1>
           <p className="text-lg max-w-2xl leading-relaxed font-medium text-warm/60">
-            Search by department, program, or year level to view student wellness data. Select a program to view individual student emotion entries.
+            Search by student name (e.g. Kaye Tolentino), student ID, academic program, or year level to view real-time student wellness data and monitor them directly.
           </p>
         </div>
 
@@ -285,6 +324,7 @@ export default function StudentWellnessOverview() {
             <StudentListTable
               groups={filteredGroups}
               courses={courses}
+              students={allStudents}
               search={search}
               setSearch={setSearch}
               departmentFilter={departmentFilter}
@@ -294,16 +334,34 @@ export default function StudentWellnessOverview() {
               yearFilter={yearFilter}
               setYearFilter={setYearFilter}
               onSelect={setSelectedGroup}
+              onSelectStudent={setSelectedStudent}
             />
           </div>
         )}
       </main>
 
+      {/* Program Detail Modal */}
       <ProgramDetailModal
         group={selectedGroup}
         onClose={() => setSelectedGroup(null)}
         moodMeta={MOOD_META}
       />
+
+      {/* Direct Individual Student Detail Modal */}
+      {selectedStudent && (
+        <StudentDetailModal
+          student={selectedStudent}
+          onClose={() => setSelectedStudent(null)}
+          onViewProgram={() => {
+            const group = groupStats.find(g => g.course === selectedStudent.course)
+            if (group) {
+              setSelectedStudent(null)
+              setSelectedGroup(yearFilter ? group.yearStats[yearFilter] || group : group)
+            }
+          }}
+          moodMeta={MOOD_META}
+        />
+      )}
     </div>
   )
 }
