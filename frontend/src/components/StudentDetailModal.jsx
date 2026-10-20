@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, ChevronLeft, Heart, BookOpen, GraduationCap, AlertTriangle } from 'lucide-react'
+import { X, ChevronLeft, Heart, BookOpen, GraduationCap } from 'lucide-react'
 
 const WARM_DARK = '#3a2b25'
 const WARM_TAN = '#AA8E7E'
@@ -28,9 +28,9 @@ export default function StudentDetailModal({
 
   if (!student) return null
 
+  const displayName = student.fullName || student.name || 'Student'
   const moodEntries = student.moodEntries || []
   const sharedJournals = student.sharedJournals || []
-  const displayName = student.fullName || student.name || 'Student'
 
   return (
     <div

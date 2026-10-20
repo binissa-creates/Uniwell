@@ -352,6 +352,10 @@ export default function StudentWellnessOverview() {
         <StudentDetailModal
           student={selectedStudent}
           onClose={() => setSelectedStudent(null)}
+          onDelete={() => {
+            setSelectedStudent(null)
+            fetchData()
+          }}
           onViewProgram={() => {
             const group = groupStats.find(g => g.course === selectedStudent.course)
             if (group) {

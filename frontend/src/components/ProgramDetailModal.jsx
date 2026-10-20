@@ -242,9 +242,11 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onClose={handleStudentClose}
+          onDelete={() => setSelectedStudent(null)}
           moodMeta={moodMeta}
         />
       )}
+
     </div>
   )
 }
