@@ -13,6 +13,7 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
   const [selectedStudent, setSelectedStudent] = useState(null)
   const [activeTab, setActiveTab] = useState('moods') // 'moods' | 'journals'
   const [studentSearch, setStudentSearch] = useState('')
+  const [sortOrder, setSortOrder] = useState('latest') // 'latest' | 'oldest'
 
   if (!group) return null
 
@@ -40,6 +41,13 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
   const stressCount = (group.emotionTally?.burned_out || 0) + (group.emotionTally?.frustrated || 0) + (group.emotionTally?.nervous || 0)
   const distressCount = (group.emotionTally?.lonely || 0) + (group.emotionTally?.angry || 0) + (group.emotionTally?.confused || 0)
   const lowMoodCount = awfulAndBadCount + stressCount + distressCount
+
+  // Sort students by last logged date
+  const sortedStudents = [...(group.students || [])].sort((a, b) => {
+    const dateA = a.lastLogged ? new Date(a.lastLogged).getTime() : 0
+    const dateB = b.lastLogged ? new Date(b.lastLogged).getTime() : 0
+    return sortOrder === 'latest' ? dateB - dateA : dateA - dateB
+  })
 
   return (
     <div
@@ -104,36 +112,6 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
             )}
           </div>
 
-          {/* Low Mood Breakdown */}
-          <div className="mb-6">
-            <h3 className="text-[10px] font-black uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: WARM_TAN }}>
-              <AlertTriangle size={12} className="text-coral" />
-              Low Mood & At-Risk Entries
-            </h3>
-            <div className="grid grid-cols-3 gap-3">
-              <RiskItem
-                icon={AlertTriangle}
-                color={CORAL}
-                label="Rough & Awful"
-                count={awfulAndBadCount}
-                description="Awful 😢 & Bad 😔 entries"
-              />
-              <RiskItem
-                icon={CloudRain}
-                color={GOLD}
-                label="Stress & Burnt Out"
-                count={stressCount}
-                description="Burnt out 🥱, Frustrated 😤, Nervous 😰"
-              />
-              <RiskItem
-                icon={Moon}
-                color={LAVENDER}
-                label="Distress & Lonely"
-                count={distressCount}
-                description="Lonely 🥺, Angry 😠, Confused 😕"
-              />
-            </div>
-          </div>
 
           {/* Student List */}
           <div className="bg-white rounded-[2rem] border border-warm/5 overflow-hidden">
@@ -145,25 +123,51 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
                 <span className="text-[9px] text-warm/40">Click a student to view mood history</span>
               </div>
 
-              {(group.students?.length || 0) > 4 && (
-                <div className="relative w-full sm:w-56">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm/40" />
-                  <input
-                    type="text"
-                    value={studentSearch}
-                    onChange={e => setStudentSearch(e.target.value)}
-                    placeholder="Search in program..."
-                    className="w-full bg-white rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none border border-warm/10 focus:ring-1 focus:ring-[#F8D272]"
-                  />
+              <div className="flex items-center gap-2 flex-wrap justify-end">
+                {/* Latest / Oldest toggle */}
+                <div className="flex items-center bg-[#F3EDE4] rounded-full p-1 gap-0.5">
+                  <button
+                    onClick={() => setSortOrder('latest')}
+                    className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-200"
+                    style={{
+                      background: sortOrder === 'latest' ? '#E6B86A' : 'transparent',
+                      color: sortOrder === 'latest' ? '#fff' : '#AA8E7E',
+                    }}
+                  >
+                    Latest
+                  </button>
+                  <button
+                    onClick={() => setSortOrder('oldest')}
+                    className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-200"
+                    style={{
+                      background: sortOrder === 'oldest' ? '#E6B86A' : 'transparent',
+                      color: sortOrder === 'oldest' ? '#fff' : '#AA8E7E',
+                    }}
+                  >
+                    Oldest
+                  </button>
                 </div>
-              )}
+
+                {(group.students?.length || 0) > 4 && (
+                  <div className="relative w-full sm:w-56">
+                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-warm/40" />
+                    <input
+                      type="text"
+                      value={studentSearch}
+                      onChange={e => setStudentSearch(e.target.value)}
+                      placeholder="Search in program..."
+                      className="w-full bg-white rounded-xl pl-8 pr-3 py-1.5 text-xs outline-none border border-warm/10 focus:ring-1 focus:ring-[#F8D272]"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             {(!group.students || group.students.length === 0) ? (
               <p className="px-6 py-8 text-sm italic text-warm/30 text-center">No students in this group.</p>
             ) : (
               <div className="max-h-72 overflow-y-auto custom-scrollbar divide-y divide-warm/5">
-                {group.students
+                {sortedStudents
                   .filter(s => {
                     if (!studentSearch.trim()) return true
                     const q = studentSearch.trim().toLowerCase()
