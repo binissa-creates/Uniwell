@@ -758,12 +758,7 @@ export default function PeerInsights() {
                 </div>
               </div>
 
-              <button 
-                onClick={() => setShowSubmit(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#755b00] bg-[#f6c945]/20 hover:bg-[#f6c945]/30 px-3.5 py-1.5 rounded-full transition-all"
-              >
-                <PlusCircle size={13} /> Add New
-              </button>
+
             </div>
 
             {mineLoading ? (

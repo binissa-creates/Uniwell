@@ -16,8 +16,8 @@ const TRIGGERS = ['Academics', 'Social', 'Family', 'Health', 'Finance', 'Relatio
 const MOOD_LEVEL_LABELS = { 1: 'Very Low', 2: 'Low', 3: 'Moderate', 4: 'High', 5: 'Very High' }
 
 // Animation Categories
-const POSITIVE_MOODS = ['rad', 'glowing', 'good', 'excited', 'hopeful', 'grateful', 'proud', 'content', 'calm', 'relieved', 'motivated']
-const NEGATIVE_MOODS = ['bad', 'awful', 'lonely', 'burned_out', 'frustrated', 'angry', 'nervous', 'confused', 'overwhelmed', 'disappointed', 'embarrassed']
+const POSITIVE_MOODS = ['rad', 'glowing', 'good', 'excited', 'hopeful', 'grateful', 'proud', 'content', 'calm', 'relieved', 'motivated', 'loved', 'inspired', 'curious']
+const NEGATIVE_MOODS = ['bad', 'awful', 'lonely', 'burned_out', 'frustrated', 'angry', 'nervous', 'confused', 'overwhelmed', 'disappointed', 'embarrassed', 'anxious', 'sad', 'scared', 'bored', 'jealous', 'guilty', 'heartbroken', 'disgusted']
 
 const MOOD_LEVEL_COLORS = {
   1: '#ccebc7', 2: '#b0cfad', 3: '#f6c945', 4: '#f0b040', 5: '#e8843a'
@@ -138,7 +138,7 @@ export default function MoodTracker() {
       setMood(''); setIntensity(3); setTriggers([]); setNote('')
       setOtherActive(false); setOtherText('')
 
-      if (mood === 'bad' || mood === 'awful') {
+      if (['bad', 'awful', 'sad', 'heartbroken'].includes(mood)) {
         setTimeout(() => setShowSupportPrompt(true), 1000)
       }
 
@@ -194,7 +194,7 @@ export default function MoodTracker() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           
           {/* ── LEFT COLUMN: MOOD LOGGER (5 cols) ── */}
-          <div className="lg:col-span-5 flex flex-col">
+          <div className="lg:col-span-5 flex flex-col relative">
             <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-5 sm:p-6 shadow-suncast border border-warm/10 flex flex-col justify-between h-full space-y-4">
               
               <div className="space-y-4">
@@ -350,30 +350,42 @@ export default function MoodTracker() {
                       const logDate = new Date(h.logged_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                       const logTime = new Date(h.logged_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 
+                      const customTriggerMatch = h.note ? h.note.match(/\[Other Trigger:\s*([^\]]+)\]/) : null
+                      const cleanNoteText = h.note ? h.note.replace(/\[Other Trigger:\s*[^\]]+\]\s*/g, '').trim() : ''
+
                       return (
                         <div
                           key={h.id}
                           onClick={() => setSelectedEntry(h)}
-                          className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FDF9F2]/80 hover:bg-[#FDF9F2] border border-transparent hover:border-[#F6C945]/30 transition-all cursor-pointer group shadow-sm"
+                          className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FDF9F2]/75 hover:bg-white border border-warm/10 hover:border-[#F6C945]/40 transition-all cursor-pointer group shadow-xs hover:shadow-suncast"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <span className="text-2xl flex-shrink-0">{moodItem.emoji}</span>
+                            <span className="text-2xl sm:text-3xl flex-shrink-0 transition-transform group-hover:scale-110">{moodItem.emoji}</span>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <p className="text-xs font-bold text-warm capitalize leading-tight">{moodItem.label}</p>
                                 {h.intensity && (
-                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-warm/10 text-warm/70">
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-[#F6C945]/20 text-[#755b00] border border-[#F6C945]/30">
                                     Lvl {h.intensity}
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[10px] text-warm/45 mt-0.5">
+                              <p className="text-[10px] text-warm/45 mt-0.5 font-medium">
                                 {logDate} · {logTime}
                               </p>
-                              {h.note && (
-                                <p className="text-xs text-warm/70 line-clamp-1 mt-1 font-medium italic">
-                                  "{h.note}"
-                                </p>
+                              {(customTriggerMatch || cleanNoteText) && (
+                                <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                  {customTriggerMatch && (
+                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#3a2b25]/5 text-[#3a2b25] border border-warm/10">
+                                      {customTriggerMatch[1]}
+                                    </span>
+                                  )}
+                                  {cleanNoteText && (
+                                    <p className="text-xs text-warm/70 line-clamp-1 font-medium italic">
+                                      "{cleanNoteText}"
+                                    </p>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -452,21 +464,34 @@ export default function MoodTracker() {
               </button>
             </div>
 
-            {selectedEntry.note && (
-              <div className="bg-[#FDF9F2] rounded-xl p-3 border border-warm/5">
-                <p className="text-xs text-warm/80 leading-relaxed whitespace-pre-wrap">{selectedEntry.note}</p>
-              </div>
-            )}
+            {(() => {
+              const customTriggerMatch = selectedEntry.note ? selectedEntry.note.match(/\[Other Trigger:\s*([^\]]+)\]/) : null
+              const cleanModalNote = selectedEntry.note ? selectedEntry.note.replace(/\[Other Trigger:\s*[^\]]+\]\s*/g, '').trim() : ''
+              const allModalTriggers = [
+                ...(selectedEntry.triggers || []),
+                ...(customTriggerMatch ? [customTriggerMatch[1]] : [])
+              ]
 
-            {selectedEntry.triggers?.length > 0 && (
-              <div className="flex flex-wrap gap-1 pt-1">
-                {selectedEntry.triggers.map((t, idx) => (
-                  <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary-container text-secondary">
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
+              return (
+                <>
+                  {cleanModalNote && (
+                    <div className="bg-[#FDF9F2] rounded-xl p-3 border border-warm/10">
+                      <p className="text-xs text-warm/80 leading-relaxed whitespace-pre-wrap">{cleanModalNote}</p>
+                    </div>
+                  )}
+
+                  {allModalTriggers.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {allModalTriggers.map((t, idx) => (
+                        <span key={idx} className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#f3ece6] text-[#3a2b25] border border-warm/10">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
 
             <div className="pt-2 border-t border-warm/10 flex justify-end">
               <button

@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { normalizeMoodLog } from './data'
 
 // Category affinities mapped to emotional mood states
 const MOOD_CATEGORY_AFFINITIES = {
@@ -80,7 +81,7 @@ export async function getPersonalizedRecommendations(userId) {
         .eq('user_id', userId)
     ])
 
-    const recentMoods = moodsRes.data || []
+    const recentMoods = (moodsRes.data || []).map(r => normalizeMoodLog(r))
     const recentJournals = journalsRes.data || []
     const allStrategies = strategiesRes.data || []
     const votedIds = new Set((votesRes.data || []).map(v => v.strategy_id))

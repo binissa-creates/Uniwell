@@ -21,18 +21,27 @@ export function ThemeProvider({ children }) {
   const [mode, setMode] = useState(getSavedMode)
 
   useLayoutEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const mediaQuery = typeof window.matchMedia === 'function'
+      ? window.matchMedia('(prefers-color-scheme: dark)')
+      : null
     const applyTheme = () => {
       const theme = mode === 'device'
-        ? (mediaQuery.matches ? 'dark' : 'light')
+        ? (mediaQuery?.matches ? 'dark' : 'light')
         : mode
       document.documentElement.dataset.theme = theme
       document.documentElement.style.colorScheme = theme
     }
 
     applyTheme()
-    mediaQuery.addEventListener('change', applyTheme)
-    return () => mediaQuery.removeEventListener('change', applyTheme)
+    if (!mediaQuery) return undefined
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', applyTheme)
+      return () => mediaQuery.removeEventListener?.('change', applyTheme)
+    }
+
+    mediaQuery.addListener?.(applyTheme)
+    return () => mediaQuery.removeListener?.(applyTheme)
   }, [mode])
 
   useEffect(() => {

@@ -138,8 +138,8 @@ function StudentSupportWrapper() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppErrorBoundary>
+    <AppErrorBoundary>
+      <ThemeProvider>
         {!hasSupabaseConfig ? (
           <DeploymentConfigurationScreen />
         ) : (
@@ -209,7 +209,7 @@ export default function App() {
             </BrowserRouter>
           </AuthProvider>
         )}
-      </AppErrorBoundary>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   )
 }

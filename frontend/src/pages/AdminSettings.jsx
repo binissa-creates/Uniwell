@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BarChart3, Mail, Settings, SlidersHorizontal, Users } from 'lucide-react'
+import { ArrowRight, BarChart3, Settings, SlidersHorizontal, Users } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import AppearanceSettings from '../components/AppearanceSettings'
+import StaffEmailSettings from '../components/StaffEmailSettings'
+import { useAuth } from '../context/AuthContext'
 
 const plannedSettings = [
   { icon: SlidersHorizontal, text: 'Configure alert thresholds and quiet periods.' },
   { icon: BarChart3, text: 'Choose which programs and year levels appear in analytics.' },
-  { icon: Mail, text: 'Manage email templates for staff and student outreach.' },
 ]
 
 export default function AdminSettings() {
+  const { user } = useAuth()
+
   return (
     <div className="admin-page relative min-h-screen overflow-x-hidden bg-surface">
       <div className="pointer-events-none fixed right-0 top-0 h-[34rem] w-[34rem] rounded-full bg-[#F6C945]/5 blur-[100px]" />
@@ -30,6 +33,9 @@ export default function AdminSettings() {
 
         <div className="space-y-6">
           <AppearanceSettings />
+          {['admin', 'counselor'].includes(user?.role) && (
+            <StaffEmailSettings userId={user.id} email={user.email} />
+          )}
 
           <section className="rounded-2xl border border-outline-variant bg-surface-lowest p-5 shadow-suncast sm:rounded-3xl sm:p-8">
             <div className="mb-5 flex items-center gap-3">

@@ -883,7 +883,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
             await navigator.share({
               files: [file],
               title: 'My Journey Scrapbook',
-              text: 'Weekly Bloom — Growing with every day at UniWell.',
+              text: 'A look back at my journey with UniWell.',
             })
             setShareState('success')
           } else {
@@ -930,7 +930,7 @@ function PageShareCustomizer({ scrapbookData, onClose, onBack }) {
           My Journey Scrapbook
         </h2>
         <p className="text-[11px] text-white/60 font-medium">
-          Edit your photos, words, and scrapbook design before sharing.
+          Arrange your saved moments into a story you can keep or share.
         </p>
       </div>
 

@@ -23,6 +23,7 @@ export default function AdminModeration() {
   const [viewStatus, setViewStatus] = useState('pending')
   const [acting, setActing] = useState(null)
   const [apiError, setApiError] = useState(false)
+  const [auditError, setAuditError] = useState(null)
   const [actionError, setActionError] = useState(null)
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [selectedYearLevel, setSelectedYearLevel] = useState(null)
@@ -62,6 +63,7 @@ export default function AdminModeration() {
   const fetchEntries = useCallback(async () => {
     setLoading(true)
     setApiError(false)
+    setAuditError(null)
     try {
       const { data, error } = await supabase
         .from('coping_strategies')
@@ -69,15 +71,31 @@ export default function AdminModeration() {
         .eq('status', viewStatus)
         .order('created_at', { ascending: sortBy === 'oldest' })
       if (error) throw error
-      // Flatten nested submitter
-      setEntries(
-        (data || []).map((s) => ({
-          ...s,
-          course: s.submitter?.course,
-          year_level: s.submitter?.year_level,
-          submitter_name: s.submitter?.name,
-        }))
-      )
+      const strategies = data || []
+      let historyByStrategy = {}
+      if (strategies.length > 0) {
+        const { data: history, error: historyError } = await supabase.rpc('get_coping_strategy_moderation_history', {
+          p_strategy_ids: strategies.map(strategy => strategy.id),
+        })
+        if (historyError) {
+          console.error('[AdminModeration] audit history error:', historyError)
+          setAuditError('Moderation decisions are not available right now. Please try again later.')
+        } else {
+          historyByStrategy = (history || []).reduce((result, event) => {
+            const id = String(event.strategy_id)
+            result[id] = [...(result[id] || []), event]
+            return result
+          }, {})
+        }
+      }
+
+      setEntries(strategies.map(s => ({
+        ...s,
+        course: s.submitter?.course,
+        year_level: s.submitter?.year_level,
+        submitter_name: s.submitter?.name,
+        moderation_history: historyByStrategy[String(s.id)] || [],
+      })))
     } catch (err) {
       console.error('[AdminModeration] fetch error:', err)
       setApiError(true)
@@ -196,6 +214,11 @@ export default function AdminModeration() {
         {actionError && (
           <div role="alert" className="mb-8 bg-red-50 border border-red-200 rounded-3xl px-6 sm:px-8 py-4 sm:py-5 text-sm font-medium text-red-800 animate-fadeIn">
             {actionError}
+          </div>
+        )}
+        {auditError && (
+          <div role="alert" className="mb-8 bg-amber-50 border border-amber-200 rounded-3xl px-6 sm:px-8 py-4 sm:py-5 text-sm font-medium text-amber-900 animate-fadeIn">
+            {auditError}
           </div>
         )}
 
@@ -350,6 +373,21 @@ export default function AdminModeration() {
                         </span>
                       </div>
 
+                      {s.moderation_history?.[0] && (
+                        <p className="text-[10px] leading-relaxed text-[#5D4037]/70">
+                          <ShieldCheck size={11} className="inline mr-1 text-[#6B5A10]" />
+                          {s.moderation_history[0].action === 'coping_strategy.approved'
+                            ? 'Approved'
+                            : s.moderation_history[0].action === 'coping_strategy.rejected'
+                            ? 'Dismissed'
+                            : 'Returned to pending'} by{' '}
+                          <span className="font-bold text-[#3a2b25]">{s.moderation_history[0].actor_name}</span>
+                          {s.moderation_history[0].actor_role && ` · ${s.moderation_history[0].actor_role}`}
+                          {' · '}
+                          {new Date(s.moderation_history[0].created_at).toLocaleString()}
+                        </p>
+                      )}
+
                       {/* Trigger tags */}
                       {tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5">
@@ -481,6 +519,35 @@ export default function AdminModeration() {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {s.moderation_history?.length > 0 && (
+                  <section className="mt-5 border-t border-[#FDF9F2] pt-4">
+                    <h3 className="mb-3 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#6B5A10]">
+                      <ShieldCheck size={13} /> Moderation history
+                    </h3>
+                    <ol className="space-y-2.5">
+                      {s.moderation_history.map(event => (
+                        <li key={`${event.action}-${event.created_at}`} className="flex items-start gap-2 text-xs text-[#5D4037]/75">
+                          <Clock size={12} className="mt-0.5 shrink-0 text-[#AA8E7E]" />
+                          <span>
+                            <span className="font-bold text-[#3a2b25]">
+                              {event.action === 'coping_strategy.approved'
+                                ? 'Approved'
+                                : event.action === 'coping_strategy.rejected'
+                                ? 'Dismissed'
+                                : 'Returned to pending'}
+                            </span>
+                            {' by '}
+                            <span className="font-semibold">{event.actor_name}</span>
+                            {event.actor_role && ` (${event.actor_role})`}
+                            {' · '}
+                            {new Date(event.created_at).toLocaleString()}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </section>
                 )}
               </div>
 

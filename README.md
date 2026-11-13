@@ -48,9 +48,12 @@ Replace role decisions based only on the cached JWT `app_metadata.role` with `is
    - `supabase/migrations/20261014_counselor_admin_access.sql`
    - `supabase/migrations/20261014_student_guidance_checkins.sql`
    - `supabase/migrations/20261014_student_notifications.sql`
+   - `supabase/migrations/20261113_coping_moderation_history.sql`
+   - `supabase/migrations/20261113_staff_wellness_email_preferences.sql`
 4. Do not rerun `schema.sql` after the unified-auth migration; it contains the legacy auth trigger. Review and test each migration against a dev project before production.
 5. Run `supabase/tests/rls_auth_checks.sql` in a development project after replacing both student UUID placeholders. It should confirm a student can read their own profile, cannot read another student's profile, cannot read staff invites or audit logs, and cannot change their own role.
 6. The counselor access migration intentionally gives active counselors the same campus-wide administration tools and data access as admins, including analytics, moderation, and staff management. Journal entries remain available only to their owner or when explicitly shared with guidance. Review this permission expansion before applying it to production.
+7. The moderation-history migration exposes only coping-strategy decision history to active counselors and admins. Apply it after the counselor-access migration.
 
 ## Bootstrap the first admin
 
@@ -73,6 +76,7 @@ The script only promotes an existing user to `admin` and `active`; it does not c
 
 4. Active counselors and admins can then open the shared administration pages, including `/staff/manage` to invite counselors or admins. The invitee follows the email link at `/accept-invite`, confirms their name, and sets a password.
 5. If the browser reports that it could not send a request to an Edge Function, confirm the functions are deployed and that `SITE_URL` is a valid canonical frontend URL. Local origins `http://localhost:5173` and `http://localhost:5174` are allowed; add any other exact frontend origins (scheme and host, with no path), including Vercel preview deployments, to `ALLOWED_ORIGINS`. Redeploy the functions after changing their source or CORS configuration, then retry. Do not use `*` for production origins.
+
 6. `/staff/manage` can permanently delete counselor accounts. Deletion is blocked when an account owns wellness records so those records are not cascade-deleted; deactivate the account instead. Deploy the updated `set-staff-status` function to enable this action.
 7. The Admin Hub's Campus Attention review supports separate reviewed and contacted follow-up markers. Apply `20261014_student_guidance_checkins.sql`; a newer difficult mood entry automatically makes follow-up pending again. Check-in actions are audit logged and do not expose journal content.
 8. The navigation notification center shows students a gentle in-app mood-check-in reminder when they have not logged a mood today, with a welcome-back message after three or more days since their last mood check-in. Active guidance staff see counts of students whose latest difficult mood entry still needs review/contact and pending coping strategies. Mood and follow-up reminders refresh through Supabase Realtime; the pending moderation count refreshes when the notification center opens. Time away is based on mood check-ins, not authentication login history.
@@ -91,6 +95,22 @@ The script only promotes an existing user to `admin` and `active`; it does not c
 3. Add only the VAPID public key to the frontend deployment environment as `VITE_WEB_PUSH_PUBLIC_KEY`, then rebuild/redeploy the frontend. Local development can use the same public key in `frontend/.env.local`; do not put the private key there.
 4. Enable `pg_cron`, `pg_net`, and Vault in the Supabase project if they are not already enabled. Follow [daily-dose-push.sql](./supabase/schedules/daily-dose-push.sql) to store the function URL, anon key, and same cron secret in Vault, then schedule `send-daily-dose` hourly. The function sends at most once per student's selected local date and hour. Use the SQL Editor to configure and verify the scheduled job.
 5. Apply the migration before enabling the UI in production. Test opt-in, denied permission, opt-out, local delivery time, expired device subscriptions, and tapping the notification on supported Android browsers and iPhone Home Screen web apps. Push delivery depends on device/browser support and internet access.
+
+## Weekly Campus Wellness email
+
+Active counselors and admins can opt in under Admin Settings. Email is off by default and can be turned off there at any time. The Monday 9:00 a.m. local-time email uses the recipient’s UniWell sign-in address and includes only aggregate totals for mood check-ins, recently approved strategies, and strategies awaiting moderation—never student names, journal entries, or individual wellness details.
+
+1. Apply `supabase/migrations/20261113_staff_wellness_email_preferences.sql` after `20261014_student_notifications.sql`.
+2. Verify a sender domain with Resend, then configure the Edge Function secrets and deploy:
+
+   ```bash
+   supabase secrets set RESEND_API_KEY="<resend-api-key>" WELLNESS_EMAIL_FROM="UniWell Campus Wellness <wellness@your-verified-domain.edu>" WELLNESS_EMAIL_CRON_SECRET="<long-random-secret>"
+   supabase functions deploy send-weekly-wellness-email
+   ```
+
+   Keep the Resend key and cron secret out of the frontend and source control. `SITE_URL` must point to the canonical UniWell frontend URL for the sign-in link.
+3. Enable `pg_cron`, `pg_net`, and Vault if needed. Run [weekly-wellness-email.sql](./supabase/schedules/weekly-wellness-email.sql) once in the SQL Editor after replacing its project URL, anon key, and cron-secret placeholders. The hourly job sends only when a recipient’s own local time is Monday at 9:00 a.m.; the database claim prevents duplicate weekly sends.
+4. Verify the sender domain, schedule, and test recipient in a non-production project before asking staff to opt in. Delivery requires a configured Resend account and the scheduled Supabase job.
 
 ## Password recovery and Auth dashboard checklist
 

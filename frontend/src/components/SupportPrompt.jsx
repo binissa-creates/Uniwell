@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, X, ArrowRight } from 'lucide-react';
+import { PhoneCall, X, ArrowRight } from 'lucide-react';
 
 export default function SupportPrompt({ isOpen, onViewSupport, onClose }) {
   if (!isOpen) return null;
@@ -13,7 +13,7 @@ export default function SupportPrompt({ isOpen, onViewSupport, onClose }) {
         <div className="relative z-10">
           <div className="flex items-start justify-between mb-4">
             <div className="w-10 h-10 rounded-2xl bg-[#F6C945]/20 flex items-center justify-center text-[#F6C945]">
-              <Heart size={20} fill="currentColor" />
+              <PhoneCall size={20} />
             </div>
             <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
               <X size={18} />

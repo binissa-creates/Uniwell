@@ -1,28 +1,17 @@
 import { supabase } from './supabase'
+import { MOOD_META, normalizeMoodLog } from './data'
 
-const MOOD_VALUES = {
-  rad: 5, glowing: 5, excited: 5, proud: 5, motivated: 5,
-  good: 4, hopeful: 4, grateful: 4, calm: 4, relieved: 4,
-  meh: 3, neutral: 3, content: 3, confused: 3,
-  bad: 2, nervous: 2, frustrated: 2, lonely: 2, overwhelmed: 2, disappointed: 2, dissapointed: 2, embarrassed: 2,
-  awful: 1, angry: 1, burned_out: 1
-}
+const MOOD_VALUES = Object.fromEntries(
+  Object.entries(MOOD_META).map(([k, v]) => [k, v.score || 3])
+)
 
-const MOOD_EMOJIS = {
-  rad: '🤩', glowing: '🤩', excited: '😆', proud: '💪', motivated: '🎯',
-  good: '😊', hopeful: '🌟', grateful: '🙏', calm: '😌', relieved: '😌',
-  meh: '😐', neutral: '😐', content: '🎯', confused: '🤔',
-  bad: '😔', nervous: '😰', frustrated: '😤', lonely: '🥺', overwhelmed: '🫠', disappointed: '😕', dissapointed: '😕', embarrassed: '😳',
-  awful: '😢', angry: '😠', burned_out: '🥱'
-}
+const MOOD_EMOJIS = Object.fromEntries(
+  Object.entries(MOOD_META).map(([k, v]) => [k, v.emoji || '✨'])
+)
 
-const MOOD_LABELS = {
-  rad: 'Glowing', glowing: 'Glowing', excited: 'Excited', proud: 'Proud', motivated: 'Motivated',
-  good: 'Good', hopeful: 'Hopeful', grateful: 'Grateful', calm: 'Relieved', relieved: 'Relieved',
-  meh: 'Neutral', neutral: 'Neutral', content: 'Motivated', confused: 'Confused',
-  bad: 'Bad', nervous: 'Nervous', frustrated: 'Frustrated', lonely: 'Lonely', overwhelmed: 'Overwhelmed', disappointed: 'Disappointed', dissapointed: 'Disappointed', embarrassed: 'Embarrassed',
-  awful: 'Awful', angry: 'Angry', burned_out: 'Burnt Out'
-}
+const MOOD_LABELS = Object.fromEntries(
+  Object.entries(MOOD_META).map(([k, v]) => [k, v.label || k])
+)
 
 /**
  * Calculates time difference label (e.g., "30 days ago", "4 weeks ago", "July 26")
@@ -65,14 +54,7 @@ export async function getReflectionCapsuleData(userId) {
         .order('created_at', { ascending: false })
     ])
 
-    const moodLogs = (moodsRes.data || []).map(row => ({
-      id: row.id,
-      mood_type: row.mood_type,
-      intensity: row.intensity || MOOD_VALUES[row.mood_type] || 3,
-      note: row.note,
-      logged_at: row.logged_at,
-      triggers: (row.mood_triggers || []).map(t => t.trigger_category)
-    }))
+    const moodLogs = (moodsRes.data || []).map(row => normalizeMoodLog(row))
 
     const journalEntries = journalsRes.data || []
 

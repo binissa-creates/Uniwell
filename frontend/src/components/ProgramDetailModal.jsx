@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, Users, AlertTriangle, Moon, CloudRain, BellRing, ChevronDown, ChevronLeft, BookOpen, Heart, Search } from 'lucide-react'
 import StudentDetailModal from './StudentDetailModal'
+import { MOOD_META, LOW_MOOD_KEYS, CRITICAL_MOOD_KEYS } from '../lib/data'
 
 const WARM_DARK = '#3a2b25'
 const WARM_TAN = '#AA8E7E'
@@ -30,17 +31,16 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
     .map(([key, count]) => ({
       key,
       count,
-      emoji: moodMeta[key]?.emoji || '😶',
-      label: moodMeta[key]?.label || key,
+      emoji: moodMeta[key]?.emoji || MOOD_META[key]?.emoji || '😶',
+      label: moodMeta[key]?.label || MOOD_META[key]?.label || key,
     }))
 
   const totalEmotionEntries = sortedEmotions.reduce((s, e) => s + e.count, 0)
 
   // Categorize low/difficult mood entries directly from real logs
-  const awfulAndBadCount = (group.emotionTally?.awful || 0) + (group.emotionTally?.bad || 0)
-  const stressCount = (group.emotionTally?.burned_out || 0) + (group.emotionTally?.frustrated || 0) + (group.emotionTally?.nervous || 0)
-  const distressCount = (group.emotionTally?.lonely || 0) + (group.emotionTally?.angry || 0) + (group.emotionTally?.confused || 0)
-  const lowMoodCount = awfulAndBadCount + stressCount + distressCount
+  const lowMoodCount = Object.entries(group.emotionTally || {}).reduce((sum, [key, count]) => {
+    return LOW_MOOD_KEYS.includes(key) ? sum + count : sum
+  }, 0)
 
   // Sort students by last logged date
   const sortedStudents = [...(group.students || [])].sort((a, b) => {
@@ -174,11 +174,8 @@ export default function ProgramDetailModal({ group, onClose, moodMeta = {} }) {
                     return (s.fullName || s.name || '').toLowerCase().includes(q) || (s.id || '').toLowerCase().includes(q)
                   })
                   .map((s, i) => {
-                    const studentLowCount = s.moodEntries?.filter(m =>
-                      ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused'].includes(m.mood_type)
-                    ).length || 0
-
-                    const hasCritical = s.moodEntries?.some(m => ['awful', 'bad'].includes(m.mood_type))
+                    const studentLowCount = s.moodEntries?.filter(m => LOW_MOOD_KEYS.includes(m.mood_type)).length || 0
+                    const hasCritical = s.moodEntries?.some(m => CRITICAL_MOOD_KEYS.includes(m.mood_type))
                     const topEm = Object.entries(s.emotionTally || {}).sort((a, b) => b[1] - a[1])[0]
                     const displayName = s.fullName || s.name || 'Unknown'
 

@@ -13,6 +13,14 @@ import {
   Heart, Smile, AlertTriangle, CheckCircle, Flag,
   ExternalLink, ShieldAlert, Sparkles, ArrowRight, X,
 } from 'lucide-react'
+import {
+  MOOD_META,
+  LOW_MOOD_KEYS,
+  CRITICAL_MOOD_KEYS,
+  normalizeMoodLog,
+} from '../lib/data'
+
+export { MOOD_META }
 
 // ─────────────────────────────────────────────────────────────
 // DESIGN TOKENS — warm UniWell palette
@@ -30,28 +38,6 @@ const SAGE     = '#81B29A'
 const LAVENDER = '#9C8EC1'
 const CORAL    = '#EF7B6C'
 const GOLD     = '#E6B86A'
-
-export const MOOD_META = {
-  rad:        { emoji: '🤩', label: 'Radiant', color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00' },
-  good:       { emoji: '😊', label: 'Good', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-  meh:        { emoji: '😐', label: 'Meh', color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D' },
-  bad:        { emoji: '😔', label: 'Bad', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
-  awful:      { emoji: '😢', label: 'Awful', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
-  excited:    { emoji: '😆', label: 'Excited', color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00' },
-  hopeful:    { emoji: '🌟', label: 'Hopeful', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-  grateful:   { emoji: '🙏', label: 'Grateful', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-  calm:       { emoji: '😌', label: 'Calm', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-  content:    { emoji: '🥰', label: 'Content', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-  nervous:    { emoji: '😰', label: 'Nervous', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
-  frustrated: { emoji: '😤', label: 'Frustrated', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
-  lonely:     { emoji: '🥺', label: 'Lonely', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A' },
-  angry:      { emoji: '😠', label: 'Angry', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
-  burned_out: { emoji: '🥱', label: 'Burnt Out', color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B' },
-  confused:   { emoji: '😕', label: 'Confused', color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D' },
-  proud:      { emoji: '💪', label: 'Proud', color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47' },
-}
-
-const LOW_MOOD_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
 
 function isGuidanceStageComplete(student, stage) {
   const completedThrough = student.checkin?.[`${stage}_through_log_id`]
@@ -207,10 +193,7 @@ export default function AdminDashboard() {
       if (pRes.error) throw pRes.error
       setAnalytics(aRes.data)
       setPending(pRes.data || [])
-      setRecentLowLogs((recentLowRes.data || []).map(row => ({
-        ...row,
-        triggers: (row.mood_triggers || []).map(t => t.trigger_category)
-      })))
+      setRecentLowLogs((recentLowRes.data || []).map(row => normalizeMoodLog(row)))
     } catch (err) {
       console.error('Failed to fetch admin data', err)
       setLoadError(err?.message || 'Unable to load admin analytics. Please try again.')
@@ -265,14 +248,14 @@ export default function AdminDashboard() {
       while (true) {
         const { data, error } = await supabase
           .from('mood_logs')
-          .select('id, user_id, mood_type, logged_at')
+          .select('id, user_id, mood_type, note, logged_at')
           .in('mood_type', LOW_MOOD_KEYS)
           .gte('logged_at', since)
           .order('logged_at', { ascending: false })
           .order('id', { ascending: false })
           .range(offset, offset + pageSize - 1)
         if (error) throw error
-        logs.push(...(data || []))
+        logs.push(...(data || []).map(row => normalizeMoodLog(row)))
         if (!data || data.length < pageSize) break
         offset += pageSize
       }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronLeft, Heart, BookOpen, GraduationCap } from 'lucide-react'
+import { MOOD_META, LOW_MOOD_KEYS, normalizeMoodLog } from '../lib/data'
 
 const WARM_DARK = '#3a2b25'
 const WARM_TAN = '#AA8E7E'
@@ -142,8 +143,9 @@ export default function StudentDetailModal({
                   sub="This student hasn't recorded any mood entries within the last 90 days."
                 />
               ) : (
-                moodEntries.map((entry, i) => {
-                  const meta = moodMeta[entry.mood_type] || { emoji: '😶', label: entry.mood_type }
+                moodEntries.map((rawEntry, i) => {
+                  const entry = normalizeMoodLog(rawEntry)
+                  const meta = moodMeta[entry.mood_type] || MOOD_META[entry.mood_type] || { emoji: '😶', label: entry.mood_type }
                   const dt = new Date(entry.logged_at)
                   const dateStr = dt.toLocaleDateString(undefined, {
                     month: 'short',
@@ -154,9 +156,7 @@ export default function StudentDetailModal({
                     hour: 'numeric',
                     minute: '2-digit',
                   })
-                  const isLow = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused'].includes(
-                    entry.mood_type
-                  )
+                  const isLow = LOW_MOOD_KEYS.includes(entry.mood_type)
 
                   return (
                     <div
@@ -170,6 +170,11 @@ export default function StudentDetailModal({
                             <span className="text-sm font-bold capitalize text-[#3a2b25]">
                               {meta.label}
                             </span>
+                            {entry.intensity && (
+                              <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-warm/10 text-[#6B5A10]">
+                                Lvl {entry.intensity}
+                              </span>
+                            )}
                             {isLow && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#FEE9E7] text-[#A3302A]">
                                 Low mood

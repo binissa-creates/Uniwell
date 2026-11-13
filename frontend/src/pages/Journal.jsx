@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Navbar from '../components/Navbar'
 import LoadingIndicator from '../components/LoadingIndicator'
-
 import ReflectionCapsuleModal from '../components/ReflectionCapsuleModal'
+
 import { supabase } from '../lib/supabase'
 import { journalPromptForToday, JOURNAL_PROMPTS } from '../lib/data'
-import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
 import { toggleSaveToJourney, isSavedToJourney } from '../lib/journeyScrapbook'
 import { saveJournalDraft, getJournalDraft, clearJournalDraft } from '../lib/journalDraft'
+import { getReflectionCapsuleData } from '../lib/reflectionCapsule'
 import { Trash2, CheckCircle2, PenLine, BookOpen, Sparkles, Clock, ChevronDown, Type, ArrowRight, X, Calendar, ChevronRight, Share2, Lock, Star, Camera, Search, Check } from 'lucide-react'
 
 const PROMPT_GROUPS = [
@@ -57,14 +57,14 @@ function PromptPicker({ value, onChange }) {
 
       {isOpen && createPortal(
         <div
-          className="fixed inset-0 z-[120] flex items-center justify-center bg-[#3a2b25]/55 p-0 backdrop-blur-md"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-[#3a2b25]/55 p-4 backdrop-blur-md"
           role="presentation"
           onMouseDown={event => {
             if (event.target === event.currentTarget) setIsOpen(false)
           }}
         >
           <div
-            className="flex h-dvh w-full max-w-none min-h-0 flex-col overflow-hidden rounded-none bg-[#FFFDF9] shadow-2xl"
+            className="relative w-full max-w-sm sm:max-w-md flex flex-col max-h-[82vh] overflow-hidden rounded-3xl bg-[#FFFDF9] shadow-2xl border border-warm/10"
             role="dialog"
             aria-modal="true"
             aria-label="Choose a reflection prompt"
@@ -132,7 +132,7 @@ function PromptPicker({ value, onChange }) {
               )}
             </div>
 
-            <div className="shrink-0 border-t border-warm/10 bg-[#FFFDF9] px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-3">
+            <div className="shrink-0 border-t border-warm/10 bg-[#FFFDF9] px-5 py-4 sm:px-6">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -213,7 +213,6 @@ export default function Journal() {
         supabase
           .from('journal_entries')
           .select('id, content, prompt, created_at, shared_with_guidance')
-
           .eq('user_id', auth.user.id)
           .order('created_at', { ascending: false }),
         getReflectionCapsuleData(auth.user.id),
@@ -529,7 +528,7 @@ export default function Journal() {
                     {capsuleData.flashback.mood.emoji} — open to revisit your growth.
                   </>
                 ) : (
-                  "Revisit past milestones, track your resilience over time, and seal letters for your future self."
+                  'Revisit past milestones, track your resilience over time, and seal letters for your future self.'
                 )}
               </p>
 

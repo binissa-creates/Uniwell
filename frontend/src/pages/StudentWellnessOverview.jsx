@@ -6,39 +6,20 @@ import { ShieldAlert } from 'lucide-react'
 import StudentListTable from '../components/StudentListTable'
 import ProgramDetailModal from '../components/ProgramDetailModal'
 import StudentDetailModal from '../components/StudentDetailModal'
-import { normalizeCourse } from '../lib/data'
+import {
+  normalizeCourse,
+  MOOD_META,
+  MOOD_SCORE,
+  LOW_MOOD_KEYS,
+  CRITICAL_MOOD_KEYS,
+  normalizeMoodLog,
+} from '../lib/data'
 import { ACADEMIC_PROGRAMS, academicDepartmentSortIndex, academicProgramSortIndex, departmentForProgram } from '../lib/academicPrograms'
 
 const WARM_DARK = '#3a2b25'
 const WARM_OLIVE = '#6B5A10'
 
 const REPORTING_DAYS = 90
-
-const MOOD_SCORE = {
-  rad: 5, good: 4, meh: 3, bad: 2, awful: 1,
-  excited: 5, hopeful: 4, grateful: 5, calm: 4, content: 4, proud: 5,
-  nervous: 2, frustrated: 2, lonely: 2, angry: 1, burned_out: 1, confused: 2,
-}
-
-const MOOD_META = {
-  rad:        { emoji: '🤩', label: 'Radiant' },
-  good:       { emoji: '😊', label: 'Good' },
-  meh:        { emoji: '😐', label: 'Meh' },
-  bad:        { emoji: '😔', label: 'Bad' },
-  awful:      { emoji: '😢', label: 'Awful' },
-  excited:    { emoji: '😆', label: 'Excited' },
-  hopeful:    { emoji: '🌟', label: 'Hopeful' },
-  grateful:   { emoji: '🙏', label: 'Grateful' },
-  calm:       { emoji: '😌', label: 'Calm' },
-  content:    { emoji: '🥰', label: 'Content' },
-  nervous:    { emoji: '😰', label: 'Nervous' },
-  frustrated: { emoji: '😤', label: 'Frustrated' },
-  lonely:     { emoji: '🥺', label: 'Lonely' },
-  angry:      { emoji: '😠', label: 'Angry' },
-  burned_out: { emoji: '🥱', label: 'Burnt' },
-  confused:   { emoji: '😕', label: 'Confused' },
-  proud:      { emoji: '💪', label: 'Proud' },
-}
 
 export default function StudentWellnessOverview() {
   const [profiles, setProfiles] = useState([])
@@ -83,10 +64,7 @@ export default function StudentWellnessOverview() {
       const sharedJournals = j.error ? [] : (j.data || [])
 
       setProfiles(p.data || [])
-      setLogs((m.data || []).map(row => ({
-        ...row,
-        triggers: (row.mood_triggers || []).map(t => t.trigger_category)
-      })))
+      setLogs((m.data || []).map(row => normalizeMoodLog(row)))
       // Store shared journals keyed by user_id for easy lookup
       const journalByUser = {}
       sharedJournals.forEach(entry => {
@@ -127,15 +105,12 @@ export default function StudentWellnessOverview() {
 
   // Individual student records enriched with stats and journals
   const allStudents = useMemo(() => {
-    const LOW_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
-    const CRITICAL_KEYS = ['awful', 'bad']
-
     return profiles.map(p => {
       const c = normalizeCourse(p.course || 'General')
       const y = p.year_level || 1
       const stats = userStats[p.id]
-      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_KEYS.includes(l.mood_type))
-      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_KEYS.includes(l.mood_type))
+      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_MOOD_KEYS.includes(l.mood_type))
+      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_MOOD_KEYS.includes(l.mood_type))
 
       return {
         uuid: p.id,
@@ -171,9 +146,6 @@ export default function StudentWellnessOverview() {
       students: [], // full student records with mood entries
     })
 
-    const LOW_KEYS = ['awful', 'bad', 'angry', 'burned_out', 'lonely', 'frustrated', 'nervous', 'confused']
-    const CRITICAL_KEYS = ['awful', 'bad']
-
     for (const p of profiles) {
       const c = normalizeCourse(p.course || 'General')
       const y = p.year_level || 1
@@ -191,8 +163,8 @@ export default function StudentWellnessOverview() {
       buckets.forEach(b => b.totalStudents++)
 
       const stats = userStats[p.id]
-      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_KEYS.includes(l.mood_type))
-      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_KEYS.includes(l.mood_type))
+      const studentLowMoodEntries = (stats?.moodEntries || []).filter(l => LOW_MOOD_KEYS.includes(l.mood_type))
+      const studentCriticalEntries = (stats?.moodEntries || []).filter(l => CRITICAL_MOOD_KEYS.includes(l.mood_type))
 
       const studentRecord = {
         uuid: p.id,

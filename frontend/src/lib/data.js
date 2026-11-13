@@ -37,9 +37,14 @@ const DB_SAFE_ENUM_MAP = {
   content: 'content',
   motivated: 'rad',
   proud: 'proud',
+  loved: 'good',
+  inspired: 'excited',
+  curious: 'meh',
 
   // Heavy / negative extensions
   nervous: 'nervous',
+  anxious: 'nervous',
+  scared: 'nervous',
   frustrated: 'frustrated',
   lonely: 'lonely',
   confused: 'confused',
@@ -49,6 +54,12 @@ const DB_SAFE_ENUM_MAP = {
   disappointed: 'bad',
   dissapointed: 'bad',
   embarrassed: 'bad',
+  sad: 'bad',
+  bored: 'meh',
+  jealous: 'frustrated',
+  guilty: 'bad',
+  heartbroken: 'awful',
+  disgusted: 'frustrated',
 }
 
 /**
@@ -58,6 +69,122 @@ const DB_SAFE_ENUM_MAP = {
 export function safeMoodKey(key) {
   if (!key) return 'meh'
   return DB_SAFE_ENUM_MAP[key] || 'meh'
+}
+
+/**
+ * Universal emotional metadata for all 32 feelings + aliases.
+ * Shared across Student and Admin monitoring views.
+ */
+export const MOOD_META = {
+  // Core Radiance
+  rad:          { emoji: '🤩', label: 'Glowing',      color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  glowing:      { emoji: '🤩', label: 'Glowing',      color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  radiant:      { emoji: '🤩', label: 'Glowing',      color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  good:         { emoji: '😊', label: 'Good',         color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 4 },
+  meh:          { emoji: '😐', label: 'Neutral',      color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D', score: 3 },
+  neutral:      { emoji: '😐', label: 'Neutral',      color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D', score: 3 },
+  bad:          { emoji: '😔', label: 'Bad',          color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true, isCritical: true },
+  awful:        { emoji: '😢', label: 'Awful',        color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B', score: 1, isLow: true, isCritical: true },
+
+  // Uplifting & Radiant
+  excited:      { emoji: '😆', label: 'Excited',      color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  hopeful:      { emoji: '🌟', label: 'Hopeful',      color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 4 },
+  grateful:     { emoji: '🙏', label: 'Grateful',     color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 5 },
+  loved:        { emoji: '🥰', label: 'Loved',        color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  content:      { emoji: '🥰', label: 'Content',      color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 4 },
+  inspired:     { emoji: '💡', label: 'Inspired',     color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  motivated:    { emoji: '🎯', label: 'Motivated',    color: '#F6C945', bg: '#FEF9E7', text: '#8A6A00', score: 5 },
+  proud:        { emoji: '💪', label: 'Proud',        color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 5 },
+
+  // Peaceful & Grounded
+  calm:         { emoji: '🍃', label: 'Calm',         color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 4 },
+  relieved:     { emoji: '😌', label: 'Relieved',     color: '#81B29A', bg: '#EAF5EE', text: '#2D6B47', score: 4 },
+  curious:      { emoji: '🧐', label: 'Curious',      color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D', score: 3 },
+
+  // Tension & Unease
+  anxious:      { emoji: '🫨', label: 'Anxious',      color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  nervous:      { emoji: '😰', label: 'Nervous',      color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  scared:       { emoji: '😨', label: 'Scared',       color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  overwhelmed:  { emoji: '🫠', label: 'Overwhelmed',  color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  bored:        { emoji: '😑', label: 'Bored',        color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D', score: 3 },
+  embarrassed:  { emoji: '😳', label: 'Embarrassed',  color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  confused:     { emoji: '🤔', label: 'Confused',     color: '#E6B86A', bg: '#FDF3E3', text: '#7A4F0D', score: 2, isLow: true },
+
+  // Heavy & Vulnerable
+  sad:          { emoji: '😥', label: 'Sad',          color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true, isCritical: true },
+  heartbroken:  { emoji: '💔', label: 'Heartbroken',  color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B', score: 1, isLow: true, isCritical: true },
+  disappointed: { emoji: '😕', label: 'Disappointed', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  dissapointed: { emoji: '😕', label: 'Disappointed', color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  lonely:       { emoji: '🥺', label: 'Lonely',       color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  frustrated:   { emoji: '😤', label: 'Frustrated',   color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  jealous:      { emoji: '😒', label: 'Jealous',      color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  guilty:       { emoji: '🫣', label: 'Guilty',       color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+  burned_out:   { emoji: '🥱', label: 'Burnt Out',    color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B', score: 1, isLow: true },
+  angry:        { emoji: '😠', label: 'Angry',        color: '#E53E3E', bg: '#FEE2E2', text: '#991B1B', score: 1, isLow: true },
+  disgusted:    { emoji: '🤢', label: 'Disgusted',    color: '#EF7B6C', bg: '#FEE9E7', text: '#A3302A', score: 2, isLow: true },
+}
+
+export const LOW_MOOD_KEYS = Object.keys(MOOD_META).filter(k => MOOD_META[k].isLow)
+export const CRITICAL_MOOD_KEYS = Object.keys(MOOD_META).filter(k => MOOD_META[k].isCritical)
+export const MOOD_SCORE = Object.fromEntries(
+  Object.entries(MOOD_META).map(([k, v]) => [k, v.score || 3])
+)
+
+/**
+ * Universal mood row normalizer.
+ * Restores true student emotion from note metadata [Feeling: XYZ] and custom triggers [Other Trigger: ABC].
+ * Strips raw tags so notes are clean and human-readable for both students and guidance counselors.
+ */
+export function normalizeMoodLog(row) {
+  if (!row) return row
+
+  let resolvedMood = row.mood_type || 'meh'
+  let rawNote = row.note || ''
+  let customTrigger = null
+
+  // 1. Extract [Feeling: XYZ]
+  if (rawNote && rawNote.includes('[Feeling:')) {
+    const feelingMatch = rawNote.match(/\[Feeling:\s*([a-zA-Z_]+)\]/)
+    if (feelingMatch && feelingMatch[1]) {
+      resolvedMood = feelingMatch[1].toLowerCase()
+      rawNote = rawNote.replace(/\[Feeling:\s*[a-zA-Z_]+\]\s*/g, '')
+    }
+  }
+
+  // 2. Extract [Other Trigger: XYZ]
+  if (rawNote && rawNote.includes('[Other Trigger:')) {
+    const triggerMatch = rawNote.match(/\[Other Trigger:\s*([^\]]+)\]/)
+    if (triggerMatch && triggerMatch[1]) {
+      customTrigger = triggerMatch[1].trim()
+      rawNote = rawNote.replace(/\[Other Trigger:\s*[^\]]+\]\s*/g, '')
+    }
+  }
+
+  const cleanedNote = rawNote.trim() || null
+
+  // 3. Assemble triggers array cleanly
+  const rawTriggers = Array.isArray(row.triggers)
+    ? row.triggers
+    : (row.mood_triggers || []).map((t) => t.trigger_category).filter(Boolean)
+
+  let combinedTriggers = [...rawTriggers]
+  if (customTrigger) {
+    if (combinedTriggers.includes('Other')) {
+      combinedTriggers = combinedTriggers.map((t) => (t === 'Other' ? customTrigger : t))
+    } else if (!combinedTriggers.includes(customTrigger)) {
+      combinedTriggers.push(customTrigger)
+    }
+  }
+
+  return {
+    ...row,
+    mood_type: resolvedMood,
+    intensity: row.intensity || 3,
+    note: cleanedNote,
+    logged_at: row.logged_at,
+    triggers: combinedTriggers,
+    raw_mood_type: row.mood_type,
+  }
 }
 
 export const JOURNAL_PROMPTS = [
@@ -157,28 +284,47 @@ export async function fetchMoodHistory(days = 7) {
 
   const { data, error } = await query
   if (error) throw error
-  return (data || []).map((row) => {
-    let resolvedMood = row.mood_type
-    let cleanedNote = row.note || ''
+  return (data || []).map((row) => normalizeMoodLog(row))
+}
 
-    // Parse specific feeling if preserved in note metadata
-    if (cleanedNote && cleanedNote.includes('[Feeling:')) {
-      const match = cleanedNote.match(/\[Feeling:\s*([a-zA-Z_]+)\]/)
-      if (match && match[1]) {
-        resolvedMood = match[1]
-        cleanedNote = cleanedNote.replace(/\[Feeling:\s*[a-zA-Z_]+\]\n*/, '').trim()
-      }
-    }
+function getLocalCheckInDay(loggedAt) {
+  const date = new Date(loggedAt)
+  if (Number.isNaN(date.getTime())) return null
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
 
-    return {
-      id: row.id,
-      mood_type: resolvedMood,
-      intensity: row.intensity,
-      note: cleanedNote || null,
-      logged_at: row.logged_at,
-      triggers: (row.mood_triggers || []).map((t) => t.trigger_category),
-    }
-  })
+export async function fetchDistinctCheckInDayCount(userId, targetCount = 7) {
+  if (!userId) return 0
+  if (!Number.isInteger(targetCount) || targetCount < 1) {
+    throw new RangeError('targetCount must be a positive integer')
+  }
+
+  const pageSize = 500
+  const distinctDays = new Set()
+  let offset = 0
+
+  while (distinctDays.size < targetCount) {
+    const { data, error } = await supabase
+      .from('mood_logs')
+      .select('id, logged_at')
+      .eq('user_id', userId)
+      .order('logged_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + pageSize - 1)
+
+    if (error) throw error
+
+    const rows = data || []
+    rows.forEach(row => {
+      const day = getLocalCheckInDay(row.logged_at)
+      if (day) distinctDays.add(day)
+    })
+
+    if (rows.length < pageSize) break
+    offset += pageSize
+  }
+
+  return Math.min(distinctDays.size, targetCount)
 }
 
 /**
@@ -200,9 +346,8 @@ export function computeStreak(logs) {
 export function computeStreakMetrics(logs) {
   const days = Array.from(
     new Set((logs || []).map((l) => {
-      const d = new Date(l.logged_at)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    }))
+      return getLocalCheckInDay(l.logged_at)
+    }).filter(Boolean))
   ).sort((a, b) => new Date(b) - new Date(a))
 
   const totalDays = days.length

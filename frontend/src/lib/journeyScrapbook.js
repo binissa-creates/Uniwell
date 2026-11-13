@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { computeStreakMetrics } from './data'
+import { computeStreakMetrics, normalizeMoodLog } from './data'
 import { getReflectionCapsuleData } from './reflectionCapsule'
 
 /**
@@ -202,14 +202,7 @@ export async function buildJourneyScrapbook(userId) {
       getReflectionCapsuleData(userId),
     ])
 
-    const moodLogs = (moodsRes.data || []).map(r => ({
-      id: r.id,
-      mood_type: r.mood_type,
-      intensity: r.intensity,
-      note: r.note,
-      logged_at: r.logged_at,
-      triggers: (r.mood_triggers || []).map(t => t.trigger_category).filter(Boolean),
-    }))
+    const moodLogs = (moodsRes.data || []).map(r => normalizeMoodLog(r))
 
     const journals = journalsRes.data || []
     const favStrategies = (favsRes.data || []).map(r => r.coping_strategies).filter(Boolean)
