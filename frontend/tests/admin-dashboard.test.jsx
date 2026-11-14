@@ -50,6 +50,8 @@ const studentProfiles = [
 
 let checkinRows = []
 let moodDistributionForTest = []
+let guidanceCheckinErrorForTest = null
+let moodTypeFilters = []
 
 function mockRpc(name, args) {
   if (name === 'set_student_guidance_checkin') {
@@ -75,7 +77,10 @@ function configureQueries() {
     const result = {
       select: vi.fn(() => result),
       eq: vi.fn(() => result),
-      in: vi.fn(() => result),
+      in: vi.fn((column, values) => {
+        if (table === 'mood_logs' && column === 'mood_type') moodTypeFilters.push(values)
+        return result
+      }),
       gte: vi.fn(() => result),
       order: vi.fn(() => result),
       limit: vi.fn(() => result),
@@ -88,7 +93,8 @@ function configureQueries() {
         if (table === 'mood_logs' && state.ranged) data = lowMoodLogs
         if (table === 'profiles') data = studentProfiles
         if (table === 'student_guidance_checkins') data = checkinRows
-        return Promise.resolve({ data, error: null }).then(resolve, reject)
+        const error = table === 'student_guidance_checkins' ? guidanceCheckinErrorForTest : null
+        return Promise.resolve({ data, error }).then(resolve, reject)
       },
     }
     return result
@@ -105,6 +111,8 @@ beforeEach(() => {
   vi.clearAllMocks()
   checkinRows = []
   moodDistributionForTest = []
+  guidanceCheckinErrorForTest = null
+  moodTypeFilters = []
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
   const channel = {
     on: vi.fn(() => channel),
@@ -137,7 +145,27 @@ describe('admin campus guidance check-in', () => {
     expect(within(dialog).getByText('3')).toBeInTheDocument()
     expect(mocks.from).toHaveBeenCalledWith('mood_logs')
     expect(mocks.from).toHaveBeenCalledWith('profiles')
+    expect(moodTypeFilters.length).toBeGreaterThan(0)
+    moodTypeFilters.forEach(filter => {
+      expect(filter).toContain('nervous')
+      expect(filter).not.toContain('anxious')
+      expect(filter).not.toContain('scared')
+    })
     expect(screen.getByText(/Private journal content is not shown/)).toBeInTheDocument()
+  })
+
+  it('explains how to restore the follow-up list when its migration is missing', async () => {
+    guidanceCheckinErrorForTest = {
+      code: 'PGRST205',
+      message: "Could not find the table 'public.student_guidance_checkins' in the schema cache",
+    }
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    renderDashboard([{ mood_type: 'bad', count: 1 }])
+
+    fireEvent.click(await screen.findByRole('button', { name: /^1 low or difficult mood entries/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('20261014_student_guidance_checkins.sql')
+    expect(screen.getByRole('button', { name: 'Retry loading' })).toBeInTheDocument()
   })
 
   it('uses the calm community state when the selected period has no low entries', async () => {

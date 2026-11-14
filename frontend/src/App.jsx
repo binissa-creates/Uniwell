@@ -21,12 +21,14 @@ import StudentProfile from './pages/StudentProfile'
 import AdminDashboard from './pages/AdminDashboard'
 import StudentWellnessOverview from './pages/StudentWellnessOverview'
 import AdminModeration from './pages/AdminModeration'
-import AdminComingSoon from './pages/AdminComingSoon'
+import AdminHelpResources from './pages/AdminHelpResources'
 import ManageStaff from './pages/ManageStaff'
 import AdminSettings from './pages/AdminSettings'
+import GettingStartedGuide from './pages/GettingStartedGuide'
 import FloatingSupportButton from './components/FloatingSupportButton'
+import FirstLoginGuidePrompt from './components/FirstLoginGuidePrompt'
+import GuidedProductTour from './components/GuidedProductTour'
 import LoadingScreen from './components/LoadingScreen'
-import { HelpCircle } from 'lucide-react'
 
 class AppErrorBoundary extends Component {
   state = { hasError: false }
@@ -155,6 +157,11 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invite" element={<AcceptInvite />} />
+          <Route path="/guide" element={
+            <ProtectedRoute allowedRoles={['student', 'counselor']}>
+              <GettingStartedGuide />
+            </ProtectedRoute>
+          } />
 
           {/* Student */}
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['student']}><Dashboard /></ProtectedRoute>} />
@@ -187,25 +194,15 @@ export default function App() {
           } />
           <Route path="/admin/help" element={
             <ProtectedRoute allowedRoles={['counselor', 'admin']}>
-              <AdminComingSoon
-                eyebrow="Admin Hub · Resources"
-                title="Help &"
-                accent="Resources"
-                icon={HelpCircle}
-                blurb="Documentation, best practices, and quick references for running a campus wellness program."
-                bullets={[
-                  'How to interpret mood scores and trigger patterns responsibly.',
-                  'Outreach scripts that balance care with student autonomy.',
-                  'Privacy boundaries: what admins can and cannot see (journal entries are never accessible).',
-                  'Crisis escalation flow and external referral contacts.',
-                ]}
-              />
+              <AdminHelpResources />
             </ProtectedRoute>
           } />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
+            <FirstLoginGuidePrompt />
+            <GuidedProductTour />
             </BrowserRouter>
           </AuthProvider>
         )}

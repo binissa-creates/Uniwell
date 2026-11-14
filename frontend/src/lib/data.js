@@ -125,6 +125,7 @@ export const MOOD_META = {
 }
 
 export const LOW_MOOD_KEYS = Object.keys(MOOD_META).filter(k => MOOD_META[k].isLow)
+export const LOW_MOOD_DB_KEYS = [...new Set(LOW_MOOD_KEYS.map(safeMoodKey))]
 export const CRITICAL_MOOD_KEYS = Object.keys(MOOD_META).filter(k => MOOD_META[k].isCritical)
 export const MOOD_SCORE = Object.fromEntries(
   Object.entries(MOOD_META).map(([k, v]) => [k, v.score || 3])

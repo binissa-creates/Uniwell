@@ -235,14 +235,14 @@ export default function Login() {
           </div>
 
           <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4 text-[9px] font-extrabold text-[#AA8E7E]/60 tracking-[0.25em] justify-center text-center w-full uppercase">
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Emergency</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Privacy</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Disclaimer</span>
+            <span>Emergency</span>
+            <span>Privacy</span>
+            <span>Disclaimer</span>
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-4 text-[#AA8E7E]/40">
             <div className="h-px bg-[#AA8E7E]/10 flex-1 max-w-[60px]"></div>
-            <span className="text-[10px] font-bold tracking-widest uppercase">© 2024 UniWell Campus</span>
+            <span className="text-[10px] font-bold tracking-widest uppercase">© 2026 UniWell Campus</span>
             <div className="h-px bg-[#AA8E7E]/10 flex-1 max-w-[60px]"></div>
           </div>
 

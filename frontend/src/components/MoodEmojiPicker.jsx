@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronUp, X, Sparkles } from 'lucide-react'
 
 // Core moods (always visible in top 5-column row)
@@ -70,6 +71,10 @@ export const ALL_MOODS = [
 export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
   const [showOthers, setShowOthers] = useState(false)
   const [activeCategory, setActiveCategory] = useState('all')
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true
+    return window.matchMedia('(min-width: 1024px)').matches
+  })
   const paletteRef = useRef(null)
   const buttonRef = useRef(null)
 
@@ -82,18 +87,39 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
   const selectedIsExtended = MOODS_EXTENDED.some(m => m.key === value) || ['content', 'dissapointed'].includes(value)
   const selectedExtendedItem = ALL_MOODS.find(m => m.key === value)
 
+  // Track screen size changes (desktop side-float vs mobile center-modal)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mql = window.matchMedia('(min-width: 1024px)')
+    const handler = (e) => setIsDesktop(e.matches)
+    if (mql.addEventListener) {
+      mql.addEventListener('change', handler)
+    } else {
+      mql.addListener(handler)
+    }
+    return () => {
+      if (mql.removeEventListener) {
+        mql.removeEventListener('change', handler)
+      } else {
+        mql.removeListener(handler)
+      }
+    }
+  }, [])
+
   // Close when clicking outside on desktop
   useEffect(() => {
     if (!showOthers) return
 
     const handlePointerDown = (e) => {
-      if (
-        paletteRef.current &&
-        !paletteRef.current.contains(e.target) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target)
-      ) {
-        setShowOthers(false)
+      if (isDesktop) {
+        if (
+          paletteRef.current &&
+          !paletteRef.current.contains(e.target) &&
+          buttonRef.current &&
+          !buttonRef.current.contains(e.target)
+        ) {
+          setShowOthers(false)
+        }
       }
     }
 
@@ -109,7 +135,17 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
       document.removeEventListener('pointerdown', handlePointerDown)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showOthers])
+  }, [showOthers, isDesktop])
+
+  // Prevent background scrolling when mobile modal is open
+  useEffect(() => {
+    if (!showOthers || isDesktop) return
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = originalOverflow
+    }
+  }, [showOthers, isDesktop])
 
   const filteredFeelings = activeCategory === 'all'
     ? MOODS_EXTENDED
@@ -211,35 +247,14 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
         </button>
       </div>
 
-      {/* ── Floating Side Palette (Anchored upward level with the card top to avoid scrolling!) ── */}
-      {showOthers && (
-        <>
-          {/* Backdrop for mobile / tablet screens */}
-          <div
-            className="lg:hidden fixed inset-0 bg-black/35 backdrop-blur-xs z-50 animate-fadeIn"
-            onClick={() => setShowOthers(false)}
-          />
-
-          {/* Floating Palette Container */}
-          <div
-            ref={paletteRef}
-            className={`
-              z-50 bg-white/98 backdrop-blur-md rounded-3xl p-4 sm:p-5 shadow-2xl border border-warm/15
-              animate-scaleIn transition-all flex flex-col
-
-              /* Mobile & Tablet modal positioning */
-              fixed inset-x-3 bottom-3 sm:inset-auto sm:fixed sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2
-              max-h-[82vh] sm:w-[450px]
-
-              /* Desktop floating-on-the-side: Lifted upward (-top-9) to align perfectly level with the top of the card! */
-              lg:inset-auto lg:absolute lg:left-[calc(100%+1.5rem)] lg:-top-9 lg:w-[450px] xl:w-[470px]
-              lg:max-h-[510px] lg:shadow-suncast lg:border-[#F6C945]/40 lg:translate-x-0 lg:translate-y-0
-            `}
-          >
+      {/* ── Floating Palette: Desktop (Side-Floating) vs Mobile (Centered Viewport Modal via Portal) ── */}
+      {showOthers && (() => {
+        const paletteContent = (
+          <>
             {/* Header */}
-            <div className="flex items-center justify-between pb-3 mb-2.5 border-b border-warm/10">
+            <div className="flex items-center justify-between pb-3 mb-2.5 border-b border-warm/10 shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755b00]">
+                <div className="w-8 h-8 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755b00] shrink-0">
                   <Sparkles size={15} />
                 </div>
                 <div>
@@ -261,14 +276,15 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
                   onClick={() => setShowOthers(false)}
                   className="w-7 h-7 rounded-xl flex items-center justify-center text-warm/50 hover:text-warm hover:bg-[#FDF9F2] transition-colors"
                   title="Close palette"
+                  aria-label="Close emotional vocabulary palette"
                 >
                   <X size={15} />
                 </button>
               </div>
             </div>
 
-            {/* Category Filter Pills (Evenly distributed, zero horizontal scrolling) */}
-            <div className="grid grid-cols-5 gap-1 pb-2.5 mb-2 border-b border-warm/10">
+            {/* Category Filter Pills (Evenly distributed, responsive) */}
+            <div className="grid grid-cols-5 gap-1 pb-2.5 mb-2 border-b border-warm/10 shrink-0">
               {CATEGORIES.map(cat => {
                 const isActive = activeCategory === cat.id
                 return (
@@ -276,7 +292,7 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
                     key={cat.id}
                     type="button"
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`text-[9.5px] py-1 px-1 rounded-xl font-bold transition-all flex items-center justify-center gap-1 ${
+                    className={`text-[9px] sm:text-[9.5px] py-1 px-1 rounded-xl font-bold transition-all flex items-center justify-center gap-1 ${
                       isActive
                         ? 'bg-[#3a2b25] text-white shadow-xs'
                         : 'bg-[#FDF9F2] text-warm/60 hover:text-warm hover:bg-[#f3ece6]'
@@ -295,8 +311,8 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
               })}
             </div>
 
-            {/* Emotional Grid (Responsive, no text truncation, uniform card heights) */}
-            <div className="overflow-y-auto custom-scrollbar pr-1 py-1 flex-1 max-h-[330px]">
+            {/* Emotional Grid (Smooth scrollable, responsive) */}
+            <div className="overflow-y-auto custom-scrollbar pr-1 py-1 flex-1 min-h-0 max-h-[46vh] sm:max-h-[330px]">
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2">
                 {filteredFeelings.map(({ key, emoji, label }) => {
                   const selected = value === key
@@ -324,7 +340,7 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
             </div>
 
             {/* Footer helper */}
-            <div className="pt-2.5 mt-2 border-t border-warm/10 flex items-center justify-between text-[9px] text-warm/50 font-medium">
+            <div className="pt-2.5 mt-2 border-t border-warm/10 flex items-center justify-between text-[9px] text-warm/50 font-medium shrink-0">
               <span>Tap any feeling to apply instantly</span>
               {selectedIsExtended && (
                 <button
@@ -336,9 +352,42 @@ export default function MoodEmojiPicker({ value, onChange, size = 'md' }) {
                 </button>
               )}
             </div>
+          </>
+        )
+
+        return isDesktop ? (
+          /* Desktop: Float level with the card top */
+          <div
+            ref={paletteRef}
+            className="absolute left-[calc(100%+1.5rem)] -top-9 w-[450px] xl:w-[470px] max-h-[515px] z-50 bg-white/98 backdrop-blur-md rounded-3xl p-5 shadow-suncast border border-[#F6C945]/40 animate-scaleIn flex flex-col"
+            role="dialog"
+            aria-modal="false"
+            aria-label="Emotional Vocabulary"
+          >
+            {paletteContent}
           </div>
-        </>
-      )}
+        ) : createPortal(
+          /* Mobile / Tablet: Centered viewport modal via Portal with backdrop */
+          <div
+            className="fixed inset-0 z-[120] flex items-center justify-center p-3.5 sm:p-5 bg-[#3a2b25]/55 backdrop-blur-xs animate-fadeIn"
+            role="presentation"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setShowOthers(false)
+            }}
+          >
+            <div
+              ref={paletteRef}
+              className="relative w-full max-w-sm sm:max-w-md bg-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-warm/15 animate-scaleIn flex flex-col max-h-[85vh] overflow-hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Emotional Vocabulary"
+            >
+              {paletteContent}
+            </div>
+          </div>,
+          document.body
+        )
+      })()}
     </div>
   )
 }

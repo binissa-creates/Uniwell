@@ -199,7 +199,7 @@ export default function MoodTracker() {
               
               <div className="space-y-4">
                 {/* Mood Picker */}
-                <div>
+                <div data-tour="mood-picker">
                   <label className="text-[10px] font-black uppercase tracking-widest text-[#AA8E7E] mb-2.5 block">
                     Current Radiance
                   </label>
@@ -207,7 +207,7 @@ export default function MoodTracker() {
                 </div>
 
                 {/* Mood Level / Intensity */}
-                <div>
+                <div data-tour="mood-intensity">
                   <div className="flex justify-between items-center mb-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#AA8E7E]">Mood Level</label>
                     <span className="text-[11px] font-bold text-[#3a2b25] px-2.5 py-0.5 rounded-lg bg-[#FDF9F2] border border-warm/10">
@@ -228,7 +228,7 @@ export default function MoodTracker() {
                 </div>
 
                 {/* Triggers */}
-                <div>
+                <div data-tour="mood-triggers">
                   <label className="text-[10px] font-black uppercase tracking-widest text-[#AA8E7E] mb-2 block">
                     Contributing Factors
                   </label>
@@ -279,7 +279,7 @@ export default function MoodTracker() {
                 </div>
 
                 {/* Reflective Note */}
-                <div>
+                <div data-tour="mood-note">
                   <label className="text-[10px] font-black uppercase tracking-widest text-[#AA8E7E] mb-1.5 block">
                     Reflective Note
                   </label>
@@ -308,6 +308,7 @@ export default function MoodTracker() {
                 <button
                   type="submit"
                   disabled={!mood || loading}
+                  data-tour="mood-save"
                   className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-3 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
                 >
                   {loading ? <LoadingIndicator size={12} label="Recording mood entry" /> : <Sparkles size={14} />}
@@ -322,7 +323,7 @@ export default function MoodTracker() {
 
             <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-suncast border border-warm/10 flex flex-col h-full">
 
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-warm/10">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-warm/10" data-tour="mood-history">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755b00]">
                     <Clock size={16} />

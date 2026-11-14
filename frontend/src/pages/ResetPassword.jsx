@@ -322,9 +322,9 @@ export default function ResetPassword() {
           </div>
 
           <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4 text-[9px] font-extrabold text-[#AA8E7E]/60 tracking-[0.25em] justify-center text-center w-full uppercase">
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Emergency</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Privacy</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Disclaimer</span>
+            <span>Emergency</span>
+            <span>Privacy</span>
+            <span>Disclaimer</span>
           </div>
         </div>
       </div>

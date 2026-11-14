@@ -50,6 +50,8 @@ Replace role decisions based only on the cached JWT `app_metadata.role` with `is
    - `supabase/migrations/20261014_student_notifications.sql`
    - `supabase/migrations/20261113_coping_moderation_history.sql`
    - `supabase/migrations/20261113_staff_wellness_email_preferences.sql`
+   - `supabase/migrations/20261113_student_counselor_onboarding.sql`
+   The onboarding migration preserves existing users' experience and enables the optional first-login guide for accounts created afterward.
 4. Do not rerun `schema.sql` after the unified-auth migration; it contains the legacy auth trigger. Review and test each migration against a dev project before production.
 5. Run `supabase/tests/rls_auth_checks.sql` in a development project after replacing both student UUID placeholders. It should confirm a student can read their own profile, cannot read another student's profile, cannot read staff invites or audit logs, and cannot change their own role.
 6. The counselor access migration intentionally gives active counselors the same campus-wide administration tools and data access as admins, including analytics, moderation, and staff management. Journal entries remain available only to their owner or when explicitly shared with guidance. Review this permission expansion before applying it to production.

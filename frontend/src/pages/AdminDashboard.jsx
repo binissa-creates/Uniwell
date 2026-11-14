@@ -16,6 +16,7 @@ import {
 import {
   MOOD_META,
   LOW_MOOD_KEYS,
+  LOW_MOOD_DB_KEYS,
   CRITICAL_MOOD_KEYS,
   normalizeMoodLog,
 } from '../lib/data'
@@ -38,6 +39,24 @@ const SAGE     = '#81B29A'
 const LAVENDER = '#9C8EC1'
 const CORAL    = '#EF7B6C'
 const GOLD     = '#E6B86A'
+
+function getAffectedStudentsErrorMessage(error) {
+  const message = String(error?.message || '').toLowerCase()
+  const code = error?.code
+
+  if (
+    ['42P01', 'PGRST205'].includes(code)
+    && message.includes('student_guidance_checkins')
+  ) {
+    return 'Guidance follow-up storage is missing. Apply supabase/migrations/20261014_student_guidance_checkins.sql after 20261014_counselor_admin_access.sql in this Supabase project, then retry. If it is already applied, refresh the Supabase API schema cache.'
+  }
+
+  if (code === '42501' || error?.status === 403) {
+    return 'This staff account cannot access the follow-up data. Confirm the account is active and that the counselor/admin access and guidance check-in migrations have been applied.'
+  }
+
+  return 'Affected students could not be loaded. Check the Supabase migration and staff-access setup, then retry.'
+}
 
 function isGuidanceStageComplete(student, stage) {
   const completedThrough = student.checkin?.[`${stage}_through_log_id`]
@@ -184,7 +203,7 @@ export default function AdminDashboard() {
         supabase
           .from('mood_logs')
           .select('id, mood_type, intensity, note, logged_at, mood_triggers(trigger_category)')
-          .in('mood_type', LOW_MOOD_KEYS)
+          .in('mood_type', LOW_MOOD_DB_KEYS)
           .gte('logged_at', since)
           .order('logged_at', { ascending: false })
           .limit(6),
@@ -249,7 +268,7 @@ export default function AdminDashboard() {
         const { data, error } = await supabase
           .from('mood_logs')
           .select('id, user_id, mood_type, note, logged_at')
-          .in('mood_type', LOW_MOOD_KEYS)
+          .in('mood_type', LOW_MOOD_DB_KEYS)
           .gte('logged_at', since)
           .order('logged_at', { ascending: false })
           .order('id', { ascending: false })
@@ -334,7 +353,7 @@ export default function AdminDashboard() {
       ))
     } catch (error) {
       console.error('[AdminDashboard] Could not load affected students:', error)
-      setAttentionError('Affected students could not be loaded. Please close this panel and try again.')
+      setAttentionError(getAffectedStudentsErrorMessage(error))
     } finally {
       setAttentionLoading(false)
     }
@@ -374,7 +393,7 @@ export default function AdminDashboard() {
         schema: 'public',
         table: 'mood_logs',
       }, payload => {
-        if (!LOW_MOOD_KEYS.includes(payload.new?.mood_type)) return
+        if (!LOW_MOOD_DB_KEYS.includes(payload.new?.mood_type)) return
         fetchAnalytics()
         if (attentionOpen) openAttentionList()
       })
@@ -464,7 +483,7 @@ export default function AdminDashboard() {
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── PAGE HEADER ──────────────────────────────────────── */}
-        <div className="mb-12">
+        <div className="mb-12" data-tour="staff-overview">
           <div className="flex items-center gap-3 mb-4 animate-fadeIn">
             <div className="h-px w-8" style={{ background: 'color-mix(in srgb, var(--color-primary) 30%, transparent)' }} />
             <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: WARM_OLIVE }}>
@@ -931,7 +950,14 @@ export default function AdminDashboard() {
                 </div>
               ) : attentionError ? (
                 <div role="alert" className="rounded-2xl bg-red-50 p-5 text-sm font-medium text-red-800">
-                  {attentionError}
+                  <p>{attentionError}</p>
+                  <button
+                    type="button"
+                    onClick={() => openAttentionList()}
+                    className="mt-4 min-h-10 rounded-full border border-red-800/20 px-4 text-xs font-bold transition hover:bg-red-100"
+                  >
+                    Retry loading
+                  </button>
                 </div>
               ) : attentionStudents.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-warm/15 bg-white px-5 py-12 text-center">

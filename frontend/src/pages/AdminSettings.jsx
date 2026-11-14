@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ArrowRight, BarChart3, Settings, SlidersHorizontal, Users } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Settings, SlidersHorizontal, Users } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import AppearanceSettings from '../components/AppearanceSettings'
 import StaffEmailSettings from '../components/StaffEmailSettings'
@@ -35,6 +35,29 @@ export default function AdminSettings() {
           <AppearanceSettings />
           {['admin', 'counselor'].includes(user?.role) && (
             <StaffEmailSettings userId={user.id} email={user.email} />
+          )}
+
+          {user?.role === 'counselor' && (
+            <section className="flex flex-col gap-4 rounded-2xl border border-outline-variant bg-surface-lowest p-5 shadow-suncast sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-8" data-tour="staff-guide-setting">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-container/25 text-primary">
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <h2 className="font-jakarta font-bold text-warm">Need a refresher?</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-warm/65">
+                    Revisit the guided tour of the Staff Hub.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/guide"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary-container px-5 py-3 text-sm font-bold text-[#3E3006] transition hover:shadow-glow"
+              >
+                Open user guide
+                <ArrowRight size={15} />
+              </Link>
+            </section>
           )}
 
           <section className="rounded-2xl border border-outline-variant bg-surface-lowest p-5 shadow-suncast sm:rounded-3xl sm:p-8">

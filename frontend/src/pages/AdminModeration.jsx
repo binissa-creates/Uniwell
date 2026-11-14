@@ -146,7 +146,7 @@ export default function AdminModeration() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 relative z-10 page-enter">
 
         {/* ── Page Header ── */}
-        <div className="mb-14">
+        <div className="mb-14" data-tour="staff-moderation">
           <div className="flex items-center gap-3 mb-4 animate-fadeIn">
             <div className="h-px w-8 bg-[#6B5A10]/30"></div>
             <p className="text-[#6B5A10] text-[10px] font-black uppercase tracking-[0.4em]">Review Sanctuary</p>

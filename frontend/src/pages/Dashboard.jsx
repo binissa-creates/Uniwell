@@ -111,7 +111,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── HERO: 3D Gamified Sunflower Card ── */}
-        <div className="max-w-3xl mx-auto mb-7">
+        <div className="max-w-3xl mx-auto mb-7" data-tour="dashboard-streak">
           <div className="p-px rounded-[1.9rem] bg-gradient-to-br from-[#F6C945]/45 via-[#F4EBD5]/40 to-[#81B29A]/45 shadow-[0_12px_32px_-18px_rgba(93,64,55,0.24)] transition-shadow hover:shadow-[0_16px_36px_-16px_rgba(93,64,55,0.3)]">
             <div className="bg-white/95 backdrop-blur-xl rounded-[1.85rem] overflow-hidden p-2 transition-all">
               <SunflowerProgress
@@ -128,13 +128,14 @@ export default function Dashboard() {
                 {!streakMetrics.loggedToday ? (
                   <Link
                     to="/mood"
+                    data-tour="dashboard-log-mood"
                     className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-gradient-to-r from-[#F6C945] via-[#FFD152] to-[#ECA800] hover:brightness-105 text-[#3E3006] font-black text-[11px] sm:text-xs uppercase tracking-wider transition-all shadow-[0_8px_20px_-6px_rgba(246,201,69,0.45)] active:scale-[0.98] text-center"
                   >
                     <Droplet size={14} className="text-[#3E3006] flex-shrink-0" fill="currentColor" />
                     <span>Water Your Sunflower · Log Today</span>
                   </Link>
                 ) : (
-                  <div className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-center shadow-sm">
+                  <div data-tour="dashboard-log-mood" className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-2xl bg-white/90 border border-[#81B29A]/40 text-center shadow-sm">
                     <span className="font-jakarta text-[11px] sm:text-xs font-extrabold leading-snug">
                       <span className="font-playfair italic font-bold text-[#6B5A10]">Watered today!</span>
                       <span className="text-[#2D6B47]"> Your sunflower feels cared for</span>

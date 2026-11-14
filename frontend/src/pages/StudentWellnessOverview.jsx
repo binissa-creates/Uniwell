@@ -272,7 +272,7 @@ export default function StudentWellnessOverview() {
       <Navbar />
 
       <main className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10">
-        <div className="mb-12">
+        <div className="mb-12" data-tour="staff-student-monitor">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px w-8 bg-warm/20" />
             <p className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: WARM_OLIVE }}>

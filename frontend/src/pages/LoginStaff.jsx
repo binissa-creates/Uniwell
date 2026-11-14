@@ -187,9 +187,9 @@ export default function LoginStaff() {
           </div>
 
           <div className="mt-12 flex flex-wrap gap-x-8 gap-y-4 text-[9px] font-extrabold text-[#AA8E7E]/60 tracking-[0.25em] justify-center text-center w-full uppercase">
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Protocol</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Governance</span>
-            <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">Privacy</span>
+            <span>Protocol</span>
+            <span>Governance</span>
+            <span>Privacy</span>
           </div>
 
           <div className="mt-6 flex items-center justify-center gap-4 text-[#AA8E7E]/40">

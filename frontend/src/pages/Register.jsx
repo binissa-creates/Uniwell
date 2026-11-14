@@ -228,7 +228,7 @@ export default function Register() {
             <span className="hover:text-[#6B5A10] cursor-pointer transition-colors">WELLNESS DISCLAIMER</span>
             <div className="w-full flex items-center justify-center gap-4 text-[#AA8E7E]/50">
               <div className="h-px bg-[#AA8E7E]/20 flex-1 max-w-[40px]"></div>
-              <span>© 2024 UNIWELL CAMPUS WELLNESS SYSTEM</span>
+              <span>© 2026 UNIWELL CAMPUS WELLNESS SYSTEM</span>
               <div className="h-px bg-[#AA8E7E]/20 flex-1 max-w-[40px]"></div>
             </div>
           </div>

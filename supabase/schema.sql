@@ -64,6 +64,7 @@ create table if not exists public.profiles (
   course      varchar(100) not null,
   year_level  smallint     not null check (year_level between 1 and 4),
   role        public.user_role not null default 'student',
+  onboarding_completed boolean not null default false,
   created_at  timestamptz  not null default now()
 );
 
@@ -242,8 +243,8 @@ grant select, insert,        delete on public.helpful_votes      to authenticate
 grant select, insert, delete on public.strategy_favorites        to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
 
--- profiles: read own + anyone can read displayed names for approved coping;
--- admins can read all; updates via functions/triggers only.
+-- Profiles are readable by their owner and admins; onboarding state updates are
+-- granted separately by the onboarding migration.
 drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles
   for select to authenticated

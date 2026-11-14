@@ -384,6 +384,7 @@ export default function PeerInsights() {
           </div>
           <button 
             onClick={() => setShowSubmit(true)}
+            data-tour="peer-share"
             className="flex items-center justify-center gap-2 gradient-cta text-on-primary font-bold text-xs sm:text-sm px-5 py-2.5 rounded-full shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all duration-200 flex-shrink-0 self-start sm:self-center"
           >
             <PlusCircle size={15} /> Share a Strategy
@@ -398,6 +399,7 @@ export default function PeerInsights() {
               <button 
                 key={key} 
                 onClick={() => setTab(key)}
+                data-tour={key === 'community' ? 'peer-community-tab' : key === 'mine' ? 'peer-mine-tab' : undefined}
                 className={`flex-1 min-w-[110px] sm:min-w-0 flex items-center justify-center gap-2 px-4 py-2 rounded-xl sm:rounded-full text-xs font-bold transition-all duration-200 ${
                   isActive 
                     ? 'gradient-cta text-[#3E3006] shadow-sm' 
@@ -423,7 +425,7 @@ export default function PeerInsights() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
               
               {/* Left Column: Context Card */}
-              <div className="recommendation-context-card lg:col-span-4 bg-gradient-to-br from-[#FFFDF8] to-[#FFF8EA] rounded-2xl p-4 sm:p-5 border border-[#F6C945]/30 shadow-suncast flex flex-col justify-between relative overflow-hidden">
+              <div className="recommendation-context-card lg:col-span-4 bg-gradient-to-br from-[#FFFDF8] to-[#FFF8EA] rounded-2xl p-4 sm:p-5 border border-[#F6C945]/30 shadow-suncast flex flex-col justify-between relative overflow-hidden" data-tour="peer-for-you">
                 <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#F6C945]/15 rounded-full blur-2xl pointer-events-none" />
                 
                 <div>
@@ -619,7 +621,7 @@ export default function PeerInsights() {
         {tab === 'community' && (
           <div className="space-y-5 animate-fadeIn">
             {/* Filter & Search Bar */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 shadow-suncast border border-warm/10 space-y-3">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-3 sm:p-4 shadow-suncast border border-warm/10 space-y-3" data-tour="peer-community">
               <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
                 <div className="relative flex-1">
                   <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-warm/40 pointer-events-none" />
@@ -747,7 +749,7 @@ export default function PeerInsights() {
         {/* ── MY STRATEGIES TAB ── */}
         {tab === 'mine' && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="flex items-center justify-between bg-white/70 backdrop-blur-sm rounded-2xl p-4 shadow-suncast border border-warm/10">
+            <div className="flex items-center justify-between bg-white/70 backdrop-blur-sm rounded-2xl p-4 shadow-suncast border border-warm/10" data-tour="peer-my-strategies">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#f6c945]/20 flex items-center justify-center text-[#755b00]">
                   <Library size={16} />
@@ -856,6 +858,7 @@ export default function PeerInsights() {
               </div>
               <button 
                 onClick={() => setShowSubmit(false)} 
+                data-tour="peer-strategy-close"
                 className="text-warm/40 hover:text-warm transition-colors rounded-xl p-1.5 hover:bg-surface-container"
               >
                 <X size={18} />
@@ -873,7 +876,7 @@ export default function PeerInsights() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1" data-tour="peer-strategy-category">
                     <label className="text-[11px] font-bold text-warm/55 uppercase tracking-wider">Category</label>
                     <select 
                       required 
@@ -894,7 +897,7 @@ export default function PeerInsights() {
                       />
                     )}
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1" data-tour="peer-strategy-title">
                     <label className="text-[11px] font-bold text-warm/55 uppercase tracking-wider">Title</label>
                     <input 
                       required 
@@ -906,7 +909,7 @@ export default function PeerInsights() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1" data-tour="peer-strategy-description">
                   <label className="text-[11px] font-bold text-warm/55 uppercase tracking-wider">Description & Instructions</label>
                   <textarea 
                     required 
@@ -918,7 +921,7 @@ export default function PeerInsights() {
                   />
                 </div>
 
-                <div>
+                <div data-tour="peer-strategy-triggers">
                   <p className="text-[11px] font-bold text-warm/55 uppercase tracking-wider mb-2">Helpful for (triggers)</p>
                   <div className="flex flex-wrap gap-1.5">
                     {TRIGGERS.map(t => {
@@ -972,6 +975,7 @@ export default function PeerInsights() {
                 <button 
                   type="submit" 
                   disabled={submitting}
+                  data-tour="peer-strategy-submit"
                   className="w-full gradient-cta text-on-primary font-bold rounded-full py-2.5 sm:py-3 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow hover:opacity-95 active:scale-[0.98] transition-all disabled:opacity-40 text-xs sm:text-sm mt-3"
                 >
                   {submitting && <LoadingIndicator size={12} label="Submitting strategy" />}

@@ -97,7 +97,7 @@ export function AuthProvider({ children }) {
 
     // The stored status is authoritative for distinguishing pending invites from active staff.
     supabase.from('profiles')
-      .select('id, name, student_id, course, year_level, role, status, created_at')
+      .select('id, name, student_id, course, year_level, role, status, created_at, onboarding_completed')
       .eq('id', session.user.id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -170,7 +170,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, name, student_id, course, year_level, role, status, created_at')
+        .select('id, name, student_id, course, year_level, role, status, created_at, onboarding_completed')
         .eq('id', userId)
         .maybeSingle()
       if (error) throw error

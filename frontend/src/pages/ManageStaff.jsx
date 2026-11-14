@@ -290,9 +290,8 @@ export default function ManageStaff() {
             className="w-full max-w-sm rounded-2xl border border-warm/10 bg-white p-5 shadow-lift animate-scaleIn"
           >
             <div className="mb-4 flex items-start justify-between gap-3">
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                confirmation.destructive ? 'bg-red-50 text-red-600' : 'bg-[#F6C945]/20 text-[#755b00]'
-              }`}>
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${confirmation.destructive ? 'bg-red-50 text-red-600' : 'bg-[#F6C945]/20 text-[#755b00]'
+                }`}>
                 <AlertCircle size={19} />
               </div>
               <button
@@ -323,11 +322,10 @@ export default function ManageStaff() {
                 type="button"
                 onClick={confirmAction}
                 disabled={submitting || Boolean(acting)}
-                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                  confirmation.destructive
+                className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 text-xs font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-60 ${confirmation.destructive
                     ? 'bg-red-600 hover:bg-red-700'
                     : 'bg-[#755b00] hover:bg-[#5d4900]'
-                }`}
+                  }`}
               >
                 {(submitting || acting) && <LoadingIndicator size={12} label="Updating staff account" />}
                 {confirmation.confirmLabel}

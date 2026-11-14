@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import AppearanceSettings from '../components/AppearanceSettings'
 import LoadingIndicator from '../components/LoadingIndicator'
@@ -6,7 +7,7 @@ import NotificationSettings from '../components/NotificationSettings'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import {
-  Mail, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle,
+  Mail, Lock, Eye, EyeOff, CheckCircle2, AlertTriangle, ArrowRight,
   BookOpen, GraduationCap, Hash, Bell, Palette,
 } from 'lucide-react'
 
@@ -244,6 +245,26 @@ export default function StudentProfile() {
         {tab === 'notifications' && user?.id && (
           <NotificationSettings userId={user.id} />
         )}
+
+        <section className="mt-8 flex flex-col gap-4 rounded-2xl border border-outline-variant bg-surface-lowest p-5 shadow-suncast sm:flex-row sm:items-center sm:justify-between sm:rounded-3xl sm:p-6">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary-container/25 text-primary">
+              <BookOpen size={18} />
+            </div>
+            <div>
+              <h2 className="font-jakarta font-bold text-warm">Need a refresher?</h2>
+              <p className="mt-1 text-sm leading-relaxed text-warm/60">
+                Revisit the interactive tour of UniWell.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/guide"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary-container px-5 py-3 text-sm font-bold text-[#3E3006] transition hover:shadow-glow"
+          >
+            Open user guide <ArrowRight size={16} />
+          </Link>
+        </section>
       </main>
     </div>
   )

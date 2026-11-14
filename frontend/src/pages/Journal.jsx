@@ -46,6 +46,7 @@ function PromptPicker({ value, onChange }) {
     <>
       <button
         type="button"
+        data-tour="journal-prompt"
         onClick={() => setIsOpen(true)}
         className="w-full min-h-[44px] flex items-center justify-between gap-3 rounded-xl bg-[#FDF9F2] px-3 py-2 text-left text-xs font-bold text-warm border border-[#F6C945]/30 hover:border-[#F6C945] focus:outline-none focus:ring-2 focus:ring-[#F6C945]/30 transition-all"
         aria-haspopup="dialog"
@@ -111,6 +112,7 @@ function PromptPicker({ value, onChange }) {
                         <button
                           key={item}
                           type="button"
+                          data-tour="journal-prompt-option"
                           onClick={() => handleSelect(item)}
                           className={`flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left text-sm leading-snug transition-colors ${
                             selected ? 'bg-[#FFF3C4] text-[#5D4037]' : 'text-warm/80 hover:bg-[#FDF9F2]'
@@ -387,7 +389,7 @@ export default function Journal() {
               <form onSubmit={handleSubmit} className="space-y-3.5">
                 
                 {/* Header */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between" data-tour="journal-compose">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-xl bg-[#F6C945]/20 flex items-center justify-center text-[#755b00]">
                       <PenLine size={16} />
@@ -469,6 +471,7 @@ export default function Journal() {
                   <textarea
                     value={content}
                     onChange={handleContentChange}
+                    data-tour="journal-entry"
                     placeholder="Begin your reflection..."
                     className="w-full rounded-xl bg-[#FDF9F2] p-3.5 text-xs sm:text-sm text-warm placeholder-warm/30 outline-none focus:ring-1 focus:ring-[#F6C945] border border-warm/10 focus:border-[#F6C945] transition-all resize-none leading-relaxed font-medium min-h-[160px]"
                   />
@@ -492,6 +495,7 @@ export default function Journal() {
                 <button
                   type="submit"
                   disabled={!content.trim() || loading}
+                  data-tour="journal-save"
                   className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-2.5 flex items-center justify-center gap-2 shadow-suncast hover:shadow-glow transition-all active:scale-[0.98] disabled:opacity-30 text-xs"
                 >
                   {loading ? <LoadingIndicator size={12} label="Saving reflection" /> : <Sparkles size={14} />}
@@ -548,6 +552,7 @@ export default function Journal() {
             {/* Mobile Compose Button */}
             <button 
               onClick={() => setShowMobileCompose(true)}
+              data-tour="journal-compose"
               className="lg:hidden w-full gradient-cta text-[#3E3006] py-3 rounded-2xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 shadow-suncast"
             >
               <PenLine size={14} /> Write New Entry
@@ -561,7 +566,7 @@ export default function Journal() {
             <div className="bg-white rounded-2xl sm:rounded-3xl shadow-suncast border border-warm/10 overflow-hidden">
 
               {/* Timeline Header */}
-              <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-warm/10">
+              <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-warm/10" data-tour="journal-timeline">
                 <div className="flex items-center gap-2">
                   <BookOpen size={16} className="text-[#755b00]" />
                   <h2 className="font-jakarta font-bold text-warm text-sm">Reflection Timeline</h2>
@@ -751,6 +756,7 @@ export default function Journal() {
               <textarea
                 value={content}
                 onChange={handleContentChange}
+                data-tour="journal-entry"
                 rows={6}
                 placeholder="Begin your reflection..."
                 className="w-full rounded-xl bg-[#FDF9F2] p-3 text-xs text-warm outline-none border border-warm/10 resize-none leading-relaxed"
@@ -759,6 +765,7 @@ export default function Journal() {
               <button
                 type="submit"
                 disabled={!content.trim() || loading}
+                data-tour="journal-save"
                 className="w-full gradient-cta text-[#3E3006] font-bold uppercase tracking-wider rounded-xl py-2.5 text-xs flex items-center justify-center gap-2"
               >
                 {loading ? <LoadingIndicator size={12} label="Saving reflection" /> : <Sparkles size={14} />}
