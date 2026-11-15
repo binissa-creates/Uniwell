@@ -24,12 +24,9 @@ export function formatCapsuleDate(dateString) {
   
   if (diffDays === 0) return 'Today'
   if (diffDays === 1) return 'Yesterday'
-  if (diffDays >= 28 && diffDays <= 32) return '1 month ago today'
   if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`
   if (diffDays >= 7 && diffDays < 14) return '1 week ago'
-  if (diffDays >= 14 && diffDays < 28) return `${Math.floor(diffDays / 7)} weeks ago`
-  if (diffDays > 32 && diffDays < 60) return `${Math.floor(diffDays / 30)} month ago`
-  if (diffDays >= 60) return `${Math.floor(diffDays / 30)} months ago`
+  if (diffDays >= 14) return `${Math.floor(diffDays / 7)} weeks ago`
   
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
@@ -61,40 +58,21 @@ export async function getReflectionCapsuleData(userId) {
     const now = Date.now()
     const msPerDay = 86400000
 
-    // 1. Find Memory Flashback ("1 month ago" ± 4 days window)
-    const target30DaysAgo = now - (30 * msPerDay)
-    const toleranceWindow = 4 * msPerDay
+    // 1. Find a memory from around one week ago
+    const target7DaysAgo = now - (7 * msPerDay)
+    const toleranceWindow = 2 * msPerDay
 
     let flashbackMood = moodLogs.find(m => {
       const logTime = new Date(m.logged_at).getTime()
-      return Math.abs(logTime - target30DaysAgo) <= toleranceWindow
+      return Math.abs(logTime - target7DaysAgo) <= toleranceWindow
     })
 
     let flashbackJournal = journalEntries.find(j => {
       const entryTime = new Date(j.created_at).getTime()
-      return Math.abs(entryTime - target30DaysAgo) <= toleranceWindow
+      return Math.abs(entryTime - target7DaysAgo) <= toleranceWindow
     })
 
-    let milestoneType = '30_days'
-
-    // If no 30-day memory, fallback to 14 days, 7 days, or earliest memory
-    if (!flashbackMood && !flashbackJournal) {
-      const target14Days = now - (14 * msPerDay)
-      flashbackMood = moodLogs.find(m => Math.abs(new Date(m.logged_at).getTime() - target14Days) <= (2 * msPerDay))
-      flashbackJournal = journalEntries.find(j => Math.abs(new Date(j.created_at).getTime() - target14Days) <= (2 * msPerDay))
-      if (flashbackMood || flashbackJournal) {
-        milestoneType = '14_days'
-      }
-    }
-
-    if (!flashbackMood && !flashbackJournal) {
-      const target7Days = now - (7 * msPerDay)
-      flashbackMood = moodLogs.find(m => Math.abs(new Date(m.logged_at).getTime() - target7Days) <= (2 * msPerDay))
-      flashbackJournal = journalEntries.find(j => Math.abs(new Date(j.created_at).getTime() - target7Days) <= (2 * msPerDay))
-      if (flashbackMood || flashbackJournal) {
-        milestoneType = '7_days'
-      }
-    }
+    let milestoneType = '7_days'
 
     // If still none, check earliest record
     if (!flashbackMood && !flashbackJournal) {
@@ -175,8 +153,8 @@ export async function getReflectionCapsuleData(userId) {
           label: MOOD_LABELS[flashbackMood.mood_type] || 'Mood'
         } : null,
         journal: flashbackJournal,
-        date: flashbackMood?.logged_at || flashbackJournal?.created_at || new Date(target30DaysAgo).toISOString(),
-        dateLabel: formatCapsuleDate(flashbackMood?.logged_at || flashbackJournal?.created_at || target30DaysAgo)
+        date: flashbackMood?.logged_at || flashbackJournal?.created_at || new Date(target7DaysAgo).toISOString(),
+        dateLabel: formatCapsuleDate(flashbackMood?.logged_at || flashbackJournal?.created_at || target7DaysAgo)
       },
       growth: {
         recentAvg: recentScoreAvg.toFixed(1),

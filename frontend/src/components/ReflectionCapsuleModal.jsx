@@ -122,10 +122,10 @@ export default function ReflectionCapsuleModal({ isOpen, onClose, capsuleData, u
               <div className="text-center sm:text-left">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F6C945]/15 text-[#856804] text-xs font-bold uppercase tracking-wider">
                   <Calendar className="w-3.5 h-3.5" />
-                  {flashback?.dateLabel || '1 month ago today'}
+                  {flashback?.dateLabel || '1 week ago'}
                 </span>
                 <h3 className="text-2xl font-extrabold font-jakarta text-[#5D4037] mt-2">
-                  "On This Day In Your Journey..."
+                  "From Last Week In Your Journey..."
                 </h3>
                 <p className="text-sm text-[#5D4037]/75 mt-1">
                   A glimpse into your emotional landscape from the past.
@@ -177,7 +177,7 @@ export default function ReflectionCapsuleModal({ isOpen, onClose, capsuleData, u
                   </div>
                   <h4 className="font-bold text-[#5D4037]">Your Garden is Growing</h4>
                   <p className="text-sm text-[#5D4037]/70 max-w-md mx-auto">
-                    You're in the foundational stages of your UniWell timeline! As you continue logging your daily pulse, your monthly flashbacks will blossom here.
+                    You're in the foundational stages of your UniWell timeline! As you continue logging your daily pulse, your weekly flashbacks will blossom here.
                   </p>
                 </div>
               )}
@@ -385,7 +385,7 @@ export default function ReflectionCapsuleModal({ isOpen, onClose, capsuleData, u
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-[#5D4037]/70">Seal for:</span>
-                      {[7, 30, 90].map((days) => (
+                      {[7, 30].map((days) => (
                         <button
                           key={days}
                           type="button"
@@ -396,7 +396,7 @@ export default function ReflectionCapsuleModal({ isOpen, onClose, capsuleData, u
                               : 'bg-warm/10 text-[#5D4037]/70 hover:bg-warm/15'
                           }`}
                         >
-                          {days === 7 ? '1 Week' : days === 30 ? '30 Days' : '3 Months'}
+                          {days === 7 ? '1 Week' : '1 Month'}
                         </button>
                       ))}
                     </div>
